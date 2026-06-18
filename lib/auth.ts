@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import type { Role, AccountTier } from "@/lib/schemas";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const SECRET = process.env.AUTH_SECRET || "dev-insecure-secret-change-me";
 
@@ -109,9 +109,13 @@ export function updateUser(id: string, patch: Partial<User>): User | undefined {
 }
 
 /* ---------- admin seeding ---------- */
+// Keeps the admin account in sync with ADMIN_EMAIL / ADMIN_PASSWORD on every
+// start: creates it if missing, otherwise updates the password/role so you can
+// always sign in with the credentials set in the environment.
 export function ensureSeed() {
-  if (!findByEmail(ADMIN_EMAIL)) {
-    const { salt, hash } = hashPassword(ADMIN_PASSWORD);
+  const { salt, hash } = hashPassword(ADMIN_PASSWORD);
+  const existing = findByEmail(ADMIN_EMAIL);
+  if (!existing) {
     addUser({
       id: newId(),
       name: ADMIN_NAME,
@@ -124,6 +128,14 @@ export function ensureSeed() {
       salt,
       hash,
       createdAt: new Date().toISOString(),
+    });
+  } else {
+    updateUser(existing.id, {
+      role: "admin",
+      tier: "platinum",
+      canFreezeLocation: true,
+      salt,
+      hash,
     });
   }
 }

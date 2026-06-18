@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { findByEmail, getUserById } from "@/lib/auth";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const LOADS_FILE = path.join(DATA_DIR, "loads.json");
 const NOTIFS_FILE = path.join(DATA_DIR, "notifications.json");
 
