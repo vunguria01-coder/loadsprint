@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { inviteSchema } from "@/lib/schemas";
 import { currentUser } from "@/lib/guard";
+import { hasActiveSub } from "@/lib/auth";
 import { createInvite, getInvitesBy } from "@/lib/invites";
 import { driverLimitForTier, getLimits } from "@/lib/settings";
 
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
   // Dispatchers need an active plan to add drivers (admin is exempt).
-  if (me.role === "dispatcher" && me.tier === "none") {
+  if (me.role === "dispatcher" && !hasActiveSub(me)) {
     return NextResponse.json(
       { ok: false, error: "Activate a plan first to add drivers." },
       { status: 402 }

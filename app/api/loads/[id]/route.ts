@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
+import { findByEmail } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import {
   getLoadById,
@@ -15,6 +16,9 @@ import {
   setShareLocationWithBroker,
   sendDocumentToDriver,
   setBrokerInfo,
+  setInvoice,
+  markInvoiceSent,
+  pushNotification,
   LOAD_STATUSES,
   DOC_TYPES,
   PHOTO_PHASES,
@@ -46,6 +50,8 @@ function serialize(load: Load, user: User) {
     delete base.internalUpdatedAt;
     delete base.heldPoint;
     delete base.sharePausedPoint;
+    // The driver-pay invoice is internal — never shown to a broker.
+    delete base.driverInvoice;
     if (load.shareLocationWithBroker === false) {
       // Honest paused state: hold at the last shared point, label it clearly.
       base.point = load.sharePausedPoint ?? currentPoint(load);
@@ -56,6 +62,10 @@ function serialize(load: Load, user: User) {
       base.brokerPaused = true;
       base.brokerPausedLabel = "Parked at rest stop";
     }
+  }
+  // A driver doesn't need the broker-billing invoice.
+  if (user.role === "driver") {
+    delete base.brokerInvoice;
   }
   return base;
 }
@@ -128,6 +138,48 @@ export async function POST(
         email: body.email !== undefined ? String(body.email) : undefined,
         phone: body.phone !== undefined ? String(body.phone) : undefined,
       });
+      break;
+    }
+    case "invoice_set": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const kind = body.kind === "driver" ? "driver" : "broker";
+      const amount = Number(body.amount);
+      if (!Number.isFinite(amount) || amount < 0)
+        return NextResponse.json({ ok: false, error: "Invalid amount" }, { status: 400 });
+      updated = setInvoice(
+        id,
+        kind,
+        { amount, notes: String(body.notes || ""), currency: String(body.currency || "$") },
+        me.name
+      );
+      break;
+    }
+    case "invoice_sent": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const kind = body.kind === "driver" ? "driver" : "broker";
+      updated = markInvoiceSent(id, kind, me.name);
+      if (updated) {
+        if (kind === "driver" && updated.driverInvoice) {
+          const driver = findByEmail(updated.driverEmail);
+          if (driver)
+            pushNotification(
+              driver.id,
+              `Invoice ${updated.driverInvoice.number}: ${updated.driverInvoice.currency}${updated.driverInvoice.amount} sent to you.`,
+              updated
+            );
+        } else if (kind === "broker" && updated.brokerInvoice) {
+          const broker = findByEmail(updated.brokerEmail);
+          if (broker)
+            pushNotification(
+              broker.id,
+              `Invoice ${updated.brokerInvoice.number} received: ${updated.brokerInvoice.currency}${updated.brokerInvoice.amount}`,
+              updated
+            );
+          // External brokers (no account) receive it by email — simulated for now.
+        }
+      }
       break;
     }
     case "send_doc": {

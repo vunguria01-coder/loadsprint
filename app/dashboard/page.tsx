@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Package, Users, BarChart3 } from "lucide-react";
 import { currentUser } from "@/lib/guard";
+import { subDaysLeft } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { TierBadge } from "@/components/tier-badge";
 import { LogoutButton } from "@/components/logout-button";
@@ -40,6 +41,8 @@ export default async function DashboardPage() {
 
   const cards = me.role === "dispatcher" ? dispatcherCards : brokerCards;
   const invites = me.role === "dispatcher" ? getInvitesBy(me.id) : [];
+  const daysLeft = subDaysLeft(me);
+  const expired = me.tier !== "none" && daysLeft !== null && daysLeft < 0;
 
   return (
     <>
@@ -76,9 +79,33 @@ export default async function DashboardPage() {
             <div className="plan-row">
               <span className="pl">Current plan:</span>
               <TierBadge tier={me.tier} />
+              {me.tier !== "none" && (
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: expired ? "#fca5a5" : "var(--muted)",
+                  }}
+                >
+                  {daysLeft === null
+                    ? "No expiry"
+                    : expired
+                    ? `Expired ${-daysLeft} day(s) ago — contact your administrator`
+                    : `${daysLeft} day(s) left`}
+                </span>
+              )}
               <Link href="/pricing" className="btn btn-ghost" style={{ padding: "9px 16px" }}>
                 {me.tier === "none" ? "Choose a plan" : "Manage plan"}
               </Link>
+              {me.role === "dispatcher" && (
+                <Link
+                  href="/invoice-settings"
+                  className="btn btn-ghost"
+                  style={{ padding: "9px 16px" }}
+                >
+                  Invoice details
+                </Link>
+              )}
               <Link href="/loads" className="btn btn-primary" style={{ padding: "9px 16px" }}>
                 Open loads
               </Link>

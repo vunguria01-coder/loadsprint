@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MapPin, ArrowRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
+import { hasActiveSub } from "@/lib/auth";
 import {
   ensureDemoLoadsFor,
   getLoadsByDispatcher,
@@ -40,7 +41,7 @@ function LoadCard({ load }: { load: Load }) {
 export default async function LoadsPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
-  if ((me.role === "dispatcher" || me.role === "broker") && me.tier === "none") {
+  if ((me.role === "dispatcher" || me.role === "broker") && !hasActiveSub(me)) {
     redirect("/pricing");
   }
 

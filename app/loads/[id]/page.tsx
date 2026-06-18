@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
+import { hasActiveSub } from "@/lib/auth";
 import { getLoadById } from "@/lib/loads";
 import { AppHeader } from "@/components/app-header";
 import { LoadWorkspace } from "@/components/load-workspace";
@@ -17,7 +18,7 @@ export default async function LoadDetailPage({
 }) {
   const me = await currentUser();
   if (!me) redirect("/login");
-  if ((me.role === "dispatcher" || me.role === "broker") && me.tier === "none") {
+  if ((me.role === "dispatcher" || me.role === "broker") && !hasActiveSub(me)) {
     redirect("/pricing");
   }
   const { id } = await params;

@@ -24,6 +24,7 @@ export type User = {
   email: string;
   role: AccountRole;
   tier: AccountTier;
+  tierExpiresAt?: string; // ISO date; undefined = no expiry
   canFreezeLocation: boolean;
   freezeActive: boolean;
   salt: string;
@@ -142,6 +143,29 @@ export function ensureSeed() {
 
 export function isAdmin(session: SessionData | null): boolean {
   return session?.role === "admin";
+}
+
+// Days left on a subscription (null when no expiry is set). Can be negative.
+export function subDaysLeft(user: {
+  tierExpiresAt?: string;
+}): number | null {
+  if (!user.tierExpiresAt) return null;
+  const ms = new Date(user.tierExpiresAt).getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+// Whether a user currently has working access. Admin and driver always do.
+// Brokers/dispatchers need a tier that isn't "none" and isn't past its expiry.
+export function hasActiveSub(user: {
+  role: AccountRole;
+  tier: AccountTier;
+  tierExpiresAt?: string;
+}): boolean {
+  if (user.role === "admin" || user.role === "driver") return true;
+  if (user.tier === "none") return false;
+  if (user.tierExpiresAt && new Date(user.tierExpiresAt).getTime() < Date.now())
+    return false;
+  return true;
 }
 
 /* ---------- password hashing (Node crypto, no extra deps) ---------- */

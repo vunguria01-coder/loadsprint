@@ -86,10 +86,21 @@ export const limitsSchema = z.object({
 });
 export type LimitsValues = z.infer<typeof limitsSchema>;
 
+export const invoiceProfileSchema = z.object({
+  companyName: z.string().max(120).optional().default(""),
+  address: z.string().max(240).optional().default(""),
+  phone: z.string().max(40).optional().default(""),
+  email: z.string().max(120).optional().default(""),
+  payTerms: z.string().max(120).optional().default(""),
+  notes: z.string().max(400).optional().default(""),
+});
+export type InvoiceProfile = z.infer<typeof invoiceProfileSchema>;
+
 /* ---------- admin account actions ---------- */
 export const adminAccountSchema = z.object({
   userId: z.string().min(1),
   tier: z.enum(ACCOUNT_TIERS).optional(),
+  days: z.coerce.number().int().min(0).optional(),
   canFreezeLocation: z.boolean().optional(),
 });
 

@@ -22,6 +22,8 @@ export const DOC_TYPES = [
   "bol",
   "pod",
   "attachment",
+  "invoice_broker",
+  "invoice_driver",
 ] as const;
 export type DocType = (typeof DOC_TYPES)[number];
 
@@ -90,7 +92,28 @@ export type Load = {
   documents: LoadDocument[];
   photos: LoadPhoto[];
   messages: ChatMessage[];
+  brokerInvoice?: InvoiceCell;
+  driverInvoice?: InvoiceCell;
   createdAt: string;
+};
+
+export type InvoiceEvent = {
+  id: string;
+  action: "created" | "updated" | "sent";
+  amount: number;
+  notes: string;
+  at: string;
+  byName: string;
+};
+
+export type InvoiceCell = {
+  amount: number;
+  currency: string;
+  notes: string;
+  status: "draft" | "sent";
+  number: string;
+  updatedAt: string;
+  history: InvoiceEvent[];
 };
 
 export type Notification = {
@@ -182,6 +205,68 @@ export function setInternalLocation(
   if (i === -1) return undefined;
   loads[i].internalPoint = point;
   loads[i].internalUpdatedAt = new Date().toISOString();
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Dispatcher sets/updates an invoice cell (broker or driver). Amount is manual
+// and persists; every change is recorded in the cell's history.
+export function setInvoice(
+  loadId: string,
+  kind: "broker" | "driver",
+  data: { amount: number; notes?: string; currency?: string },
+  actorName: string
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  const key = kind === "broker" ? "brokerInvoice" : "driverInvoice";
+  const existing = loads[i][key];
+  const now = new Date().toISOString();
+  const event: InvoiceEvent = {
+    id: crypto.randomUUID(),
+    action: existing ? "updated" : "created",
+    amount: data.amount,
+    notes: data.notes ?? "",
+    at: now,
+    byName: actorName,
+  };
+  const cell: InvoiceCell = {
+    amount: data.amount,
+    currency: data.currency ?? existing?.currency ?? "$",
+    notes: data.notes ?? existing?.notes ?? "",
+    status: "draft",
+    number: existing?.number ?? `${loads[i].ref}-${kind === "broker" ? "B" : "D"}`,
+    updatedAt: now,
+    history: [...(existing?.history ?? []), event],
+  };
+  loads[i][key] = cell;
+  writeLoads(loads);
+  return loads[i];
+}
+
+export function markInvoiceSent(
+  loadId: string,
+  kind: "broker" | "driver",
+  actorName: string
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  const key = kind === "broker" ? "brokerInvoice" : "driverInvoice";
+  const cell = loads[i][key];
+  if (!cell) return undefined;
+  cell.status = "sent";
+  cell.updatedAt = new Date().toISOString();
+  cell.history.push({
+    id: crypto.randomUUID(),
+    action: "sent",
+    amount: cell.amount,
+    notes: cell.notes,
+    at: cell.updatedAt,
+    byName: actorName,
+  });
+  loads[i][key] = cell;
   writeLoads(loads);
   return loads[i];
 }

@@ -12,9 +12,22 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
-  const { userId, tier, canFreezeLocation } = parsed.data;
+  const { userId, tier, days, canFreezeLocation } = parsed.data;
   const patch: Record<string, unknown> = {};
-  if (tier !== undefined) patch.tier = tier;
+  if (tier !== undefined) {
+    patch.tier = tier;
+    if (tier === "none") {
+      // revoking a plan clears any expiry
+      patch.tierExpiresAt = undefined;
+    }
+  }
+  // days: 0 = no expiry (open-ended); >0 = expires N days from now
+  if (days !== undefined && (tier === undefined || tier !== "none")) {
+    patch.tierExpiresAt =
+      days > 0
+        ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+        : undefined;
+  }
   if (canFreezeLocation !== undefined) patch.canFreezeLocation = canFreezeLocation;
   const updated = updateUser(userId, patch);
   if (!updated) {
