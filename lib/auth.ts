@@ -1,0 +1,176 @@
+import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import type { Role, AccountTier } from "@/lib/schemas";
+
+const DATA_DIR = path.join(process.cwd(), "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const SECRET = process.env.AUTH_SECRET || "dev-insecure-secret-change-me";
+
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@loadsprint.com")
+  .trim()
+  .toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin12345";
+const ADMIN_NAME = process.env.ADMIN_NAME || "LoadSprint Admin";
+
+export const SESSION_COOKIE = "ls_session";
+
+export type AccountRole = Role | "admin" | "driver";
+
+export type User = {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  role: AccountRole;
+  tier: AccountTier;
+  canFreezeLocation: boolean;
+  freezeActive: boolean;
+  salt: string;
+  hash: string;
+  createdAt: string;
+};
+
+export type SafeUser = Omit<User, "salt" | "hash">;
+
+export type SessionData = {
+  id: string;
+  name: string;
+  email: string;
+  role: AccountRole;
+};
+
+/* ---------- store (local JSON; swap for a DB in production) ---------- */
+function ensureStore() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]", "utf8");
+}
+
+function normalize(u: Partial<User>): User {
+  return {
+    id: u.id ?? newId(),
+    name: u.name ?? "",
+    company: u.company ?? "",
+    email: u.email ?? "",
+    role: (u.role as AccountRole) ?? "broker",
+    tier: (u.tier as AccountTier) ?? "none",
+    canFreezeLocation: u.canFreezeLocation ?? false,
+    freezeActive: u.freezeActive ?? false,
+    salt: u.salt ?? "",
+    hash: u.hash ?? "",
+    createdAt: u.createdAt ?? new Date().toISOString(),
+  };
+}
+
+export function getUsers(): User[] {
+  ensureStore();
+  try {
+    const raw = JSON.parse(fs.readFileSync(USERS_FILE, "utf8")) as Partial<User>[];
+    return raw.map(normalize);
+  } catch {
+    return [];
+  }
+}
+
+function saveUsers(users: User[]) {
+  ensureStore();
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf8");
+}
+
+export function toSafe(u: User): SafeUser {
+  const { salt: _s, hash: _h, ...safe } = u;
+  void _s;
+  void _h;
+  return safe;
+}
+
+export function findByEmail(email: string): User | undefined {
+  const e = email.trim().toLowerCase();
+  return getUsers().find((u) => u.email === e);
+}
+
+export function getUserById(id: string): User | undefined {
+  return getUsers().find((u) => u.id === id);
+}
+
+export function addUser(u: User) {
+  const users = getUsers();
+  users.push(u);
+  saveUsers(users);
+}
+
+export function updateUser(id: string, patch: Partial<User>): User | undefined {
+  const users = getUsers();
+  const i = users.findIndex((u) => u.id === id);
+  if (i === -1) return undefined;
+  users[i] = { ...users[i], ...patch, id: users[i].id };
+  saveUsers(users);
+  return users[i];
+}
+
+/* ---------- admin seeding ---------- */
+export function ensureSeed() {
+  if (!findByEmail(ADMIN_EMAIL)) {
+    const { salt, hash } = hashPassword(ADMIN_PASSWORD);
+    addUser({
+      id: newId(),
+      name: ADMIN_NAME,
+      company: "LoadSprint",
+      email: ADMIN_EMAIL,
+      role: "admin",
+      tier: "platinum",
+      canFreezeLocation: true,
+      freezeActive: false,
+      salt,
+      hash,
+      createdAt: new Date().toISOString(),
+    });
+  }
+}
+
+export function isAdmin(session: SessionData | null): boolean {
+  return session?.role === "admin";
+}
+
+/* ---------- password hashing (Node crypto, no extra deps) ---------- */
+export function hashPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return { salt, hash };
+}
+
+export function verifyPassword(password: string, salt: string, hash: string) {
+  const candidate = crypto.scryptSync(password, salt, 64);
+  const stored = Buffer.from(hash, "hex");
+  return (
+    candidate.length === stored.length &&
+    crypto.timingSafeEqual(candidate, stored)
+  );
+}
+
+/* ---------- signed session token (HMAC) ---------- */
+function sign(value: string) {
+  return crypto.createHmac("sha256", SECRET).update(value).digest("base64url");
+}
+
+export function createSession(data: SessionData): string {
+  const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
+  return `${payload}.${sign(payload)}`;
+}
+
+export function readSession(token: string | undefined): SessionData | null {
+  if (!token) return null;
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig || sign(payload) !== sig) return null;
+  try {
+    return JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8")
+    ) as SessionData;
+  } catch {
+    return null;
+  }
+}
+
+export function newId() {
+  return crypto.randomUUID();
+}
