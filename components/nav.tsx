@@ -14,7 +14,7 @@ const links = [
   { href: "/pricing", label: "Pricing" },
 ];
 
-export function Nav() {
+export function Nav({ authed = false }: { authed?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -51,15 +51,23 @@ export function Nav() {
             ))}
           </nav>
           <div className="nav-cta">
-            <a href="/login" className="btn btn-ghost btn-quote">
-              Sign in
-            </a>
-            <a href="/register" className="btn btn-ghost btn-quote">
-              Register
-            </a>
-            <a href="#quote" className="btn btn-primary btn-quote">
-              Get a Quote
-            </a>
+            {authed ? (
+              <a href="/dashboard" className="btn btn-primary btn-quote">
+                Dashboard
+              </a>
+            ) : (
+              <>
+                <a href="/login" className="btn btn-ghost btn-quote">
+                  Sign in
+                </a>
+                <a href="/register" className="btn btn-ghost btn-quote">
+                  Register
+                </a>
+                <a href="#quote" className="btn btn-primary btn-quote">
+                  Get a Quote
+                </a>
+              </>
+            )}
             <button
               className="burger"
               aria-label="Open menu"
@@ -86,27 +94,35 @@ export function Nav() {
             {l.label}
           </a>
         ))}
-        <a
-          href="/login"
-          className="btn btn-ghost"
-          onClick={() => setOpen(false)}
-        >
-          Sign in
-        </a>
-        <a
-          href="/register"
-          className="btn btn-ghost"
-          onClick={() => setOpen(false)}
-        >
-          Register
-        </a>
-        <a
-          href="#quote"
-          className="btn btn-primary"
-          onClick={() => setOpen(false)}
-        >
-          Get a Quote <ArrowRight size={17} />
-        </a>
+        {authed ? (
+          <a href="/dashboard" className="btn btn-primary" onClick={() => setOpen(false)}>
+            Dashboard
+          </a>
+        ) : (
+          <>
+            <a
+              href="/login"
+              className="btn btn-ghost"
+              onClick={() => setOpen(false)}
+            >
+              Sign in
+            </a>
+            <a
+              href="/register"
+              className="btn btn-ghost"
+              onClick={() => setOpen(false)}
+            >
+              Register
+            </a>
+            <a
+              href="#quote"
+              className="btn btn-primary"
+              onClick={() => setOpen(false)}
+            >
+              Get a Quote <ArrowRight size={17} />
+            </a>
+          </>
+        )}
       </div>
     </>
   );

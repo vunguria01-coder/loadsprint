@@ -1,4 +1,5 @@
 import { Nav } from "@/components/nav";
+import { currentUser } from "@/lib/guard";
 import { Hero } from "@/components/hero";
 import { Stats } from "@/components/stats";
 import { Services } from "@/components/services";
@@ -13,10 +14,11 @@ import { FAQ } from "@/components/faq";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 
-export default function Home() {
+export default async function Home() {
+  const me = await currentUser();
   return (
     <>
-      <Nav />
+      <Nav authed={!!me} />
       <main id="home">
         <Hero />
         <Stats />
