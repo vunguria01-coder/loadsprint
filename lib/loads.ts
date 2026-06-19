@@ -94,6 +94,7 @@ export type Load = {
   messages: ChatMessage[];
   brokerInvoice?: InvoiceCell;
   driverInvoice?: InvoiceCell;
+  loadRate?: number; // full load price from the rate confirmation
   createdAt: string;
 };
 
@@ -107,13 +108,17 @@ export type InvoiceEvent = {
 };
 
 export type InvoiceCell = {
-  amount: number;
+  amount: number; // broker: billed amount; driver: payout to driver
   currency: string;
   notes: string;
   status: "draft" | "sent";
   number: string;
   updatedAt: string;
   history: InvoiceEvent[];
+  // driver-invoice breakdown (optional)
+  gross?: number; // full load price
+  commissionType?: "pct" | "amt";
+  commissionValue?: number; // 10 (=10%) or 200 (=$200)
 };
 
 export type Notification = {
@@ -214,7 +219,14 @@ export function setInternalLocation(
 export function setInvoice(
   loadId: string,
   kind: "broker" | "driver",
-  data: { amount: number; notes?: string; currency?: string },
+  data: {
+    amount: number;
+    notes?: string;
+    currency?: string;
+    gross?: number;
+    commissionType?: "pct" | "amt";
+    commissionValue?: number;
+  },
   actorName: string
 ): Load | undefined {
   const loads = readLoads();
@@ -239,6 +251,9 @@ export function setInvoice(
     number: existing?.number ?? `${loads[i].ref}-${kind === "broker" ? "B" : "D"}`,
     updatedAt: now,
     history: [...(existing?.history ?? []), event],
+    gross: data.gross ?? existing?.gross,
+    commissionType: data.commissionType ?? existing?.commissionType,
+    commissionValue: data.commissionValue ?? existing?.commissionValue,
   };
   loads[i][key] = cell;
   writeLoads(loads);
@@ -564,6 +579,7 @@ export function createLoad(input: {
   brokerName?: string;
   brokerEmail?: string;
   brokerPhone?: string;
+  rate?: number;
 }): Load {
   const now = new Date().toISOString();
   const ref =
@@ -591,6 +607,7 @@ export function createLoad(input: {
     documents: [],
     photos: [],
     messages: [],
+    loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
     createdAt: now,
   };
   const loads = readLoads();

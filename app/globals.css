@@ -638,3 +638,16 @@ table.acc select option{background:#0b1120}
 }
 .link { color: var(--sky, #38BDF8); font-weight: 600; text-decoration: none; }
 .link:hover { text-decoration: underline; }
+
+/* --- invoice cells --- */
+.inv-cell { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+.inv-head { display: flex; justify-content: space-between; align-items: center; }
+.inv-calc {
+  margin-top: 12px; background: rgba(56,189,248,.06);
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+.inv-calc > div { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 14px; color: var(--muted); }
+.inv-calc > div b { color: var(--ink, #E8EEF8); }
+.inv-calc .inv-total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
+.inv-calc .inv-total span { color: var(--ink, #E8EEF8); font-weight: 700; }
+.inv-calc .inv-total b { color: var(--sky, #38BDF8); font-size: 18px; }

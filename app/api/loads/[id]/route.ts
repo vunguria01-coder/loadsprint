@@ -151,7 +151,17 @@ export async function POST(
       updated = setInvoice(
         id,
         kind,
-        { amount, notes: String(body.notes || ""), currency: String(body.currency || "$") },
+        {
+          amount,
+          notes: String(body.notes || ""),
+          currency: String(body.currency || "$"),
+          gross: Number(body.gross) >= 0 && body.gross !== undefined ? Number(body.gross) : undefined,
+          commissionType: body.commissionType === "amt" ? "amt" : body.commissionType === "pct" ? "pct" : undefined,
+          commissionValue:
+            body.commissionValue !== undefined && Number(body.commissionValue) >= 0
+              ? Number(body.commissionValue)
+              : undefined,
+        },
         me.name
       );
       break;

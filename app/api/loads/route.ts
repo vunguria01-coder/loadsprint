@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     brokerName: body.brokerName ? String(body.brokerName) : undefined,
     brokerEmail: body.brokerEmail ? String(body.brokerEmail) : undefined,
     brokerPhone: body.brokerPhone ? String(body.brokerPhone) : undefined,
+    rate: Number(body.rate) > 0 ? Number(body.rate) : undefined,
   });
   return NextResponse.json({ ok: true, load: { id: load.id, ref: load.ref } });
 }
