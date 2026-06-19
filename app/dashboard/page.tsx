@@ -99,6 +99,15 @@ export default async function DashboardPage() {
               </Link>
               {me.role === "dispatcher" && (
                 <Link
+                  href="/drivers"
+                  className="btn btn-ghost"
+                  style={{ padding: "9px 16px" }}
+                >
+                  Drivers
+                </Link>
+              )}
+              {me.role === "dispatcher" && (
+                <Link
                   href="/invoice-settings"
                   className="btn btn-ghost"
                   style={{ padding: "9px 16px" }}

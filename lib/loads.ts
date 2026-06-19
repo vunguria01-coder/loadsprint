@@ -509,7 +509,108 @@ const CITY: Record<string, GeoPoint> = {
   "Atlanta, GA": { lat: 33.749, lng: -84.388 },
   "Chicago, IL": { lat: 41.8781, lng: -87.6298 },
   "Denver, CO": { lat: 39.7392, lng: -104.9903 },
+  "Houston, TX": { lat: 29.7604, lng: -95.3698 },
+  "Phoenix, AZ": { lat: 33.4484, lng: -112.074 },
+  "Los Angeles, CA": { lat: 34.0522, lng: -118.2437 },
+  "Las Vegas, NV": { lat: 36.1699, lng: -115.1398 },
+  "Seattle, WA": { lat: 47.6062, lng: -122.3321 },
+  "Portland, OR": { lat: 45.5152, lng: -122.6784 },
+  "Salt Lake City, UT": { lat: 40.7608, lng: -111.891 },
+  "Kansas City, MO": { lat: 39.0997, lng: -94.5786 },
+  "St. Louis, MO": { lat: 38.627, lng: -90.1994 },
+  "Memphis, TN": { lat: 35.1495, lng: -90.049 },
+  "Nashville, TN": { lat: 36.1627, lng: -86.7816 },
+  "Indianapolis, IN": { lat: 39.7684, lng: -86.1581 },
+  "Columbus, OH": { lat: 39.9612, lng: -82.9988 },
+  "Detroit, MI": { lat: 42.3314, lng: -83.0458 },
+  "Minneapolis, MN": { lat: 44.9778, lng: -93.265 },
+  "Charlotte, NC": { lat: 35.2271, lng: -80.8431 },
+  "Miami, FL": { lat: 25.7617, lng: -80.1918 },
+  "Orlando, FL": { lat: 28.5383, lng: -81.3792 },
+  "Jacksonville, FL": { lat: 30.3322, lng: -81.6557 },
+  "New York, NY": { lat: 40.7128, lng: -74.006 },
+  "Philadelphia, PA": { lat: 39.9526, lng: -75.1652 },
+  "Newark, NJ": { lat: 40.7357, lng: -74.1724 },
+  "Boston, MA": { lat: 42.3601, lng: -71.0589 },
+  "Baltimore, MD": { lat: 39.2904, lng: -76.6122 },
+  "Oklahoma City, OK": { lat: 35.4676, lng: -97.5164 },
+  "San Antonio, TX": { lat: 29.4241, lng: -98.4936 },
+  "El Paso, TX": { lat: 31.7619, lng: -106.485 },
+  "Albuquerque, NM": { lat: 35.0844, lng: -106.6504 },
+  "Sacramento, CA": { lat: 38.5816, lng: -121.4944 },
+  "Oakland, CA": { lat: 37.8044, lng: -122.2712 },
 };
+
+const US_CENTER: GeoPoint = { lat: 39.5, lng: -98.35 };
+
+// Best-effort coordinates for a typed city. Unknown cities land at US center,
+// so the load still works and shows on the map (refine later with geocoding).
+export function geocodeCity(name: string): GeoPoint {
+  if (!name) return US_CENTER;
+  if (CITY[name]) return CITY[name];
+  const key = Object.keys(CITY).find(
+    (c) => c.toLowerCase() === name.trim().toLowerCase()
+  );
+  return key ? CITY[key] : US_CENTER;
+}
+
+export function createLoad(input: {
+  dispatcherId: string;
+  ref?: string;
+  driverName: string;
+  driverEmail: string;
+  originName: string;
+  destName: string;
+  brokerName?: string;
+  brokerEmail?: string;
+  brokerPhone?: string;
+}): Load {
+  const now = new Date().toISOString();
+  const ref =
+    input.ref?.trim() ||
+    `LS-${Math.floor(10000 + Math.random() * 89999)}`;
+  const load: Load = {
+    id: crypto.randomUUID(),
+    ref,
+    dispatcherId: input.dispatcherId,
+    driverName: input.driverName,
+    driverEmail: input.driverEmail.trim().toLowerCase(),
+    brokerName: input.brokerName || "",
+    brokerEmail: (input.brokerEmail || "").trim().toLowerCase(),
+    brokerPhone: input.brokerPhone || "",
+    hasBroker: false,
+    shareLocationWithBroker: true,
+    originName: input.originName,
+    destName: input.destName,
+    origin: geocodeCity(input.originName),
+    dest: geocodeCity(input.destName),
+    progress: 0,
+    locationUpdatedAt: now,
+    held: false,
+    status: "Assigned",
+    documents: [],
+    photos: [],
+    messages: [],
+    createdAt: now,
+  };
+  const loads = readLoads();
+  loads.push(load);
+  writeLoads(loads);
+  return load;
+}
+
+export function deleteLoad(
+  loadId: string,
+  requesterId: string,
+  isAdmin: boolean
+): boolean {
+  const loads = readLoads();
+  const load = loads.find((l) => l.id === loadId);
+  if (!load) return false;
+  if (!isAdmin && load.dispatcherId !== requesterId) return false;
+  writeLoads(loads.filter((l) => l.id !== loadId));
+  return true;
+}
 
 export function ensureDemoLoadsFor(dispatcherId: string, dispatcherName: string) {
   const existing = getLoadsByDispatcher(dispatcherId);

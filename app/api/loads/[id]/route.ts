@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
 import { findByEmail } from "@/lib/auth";
 import type { User } from "@/lib/auth";
+import { deleteLoad } from "@/lib/loads";
 import {
   getLoadById,
   advanceLocation,
@@ -249,4 +250,18 @@ export async function POST(
 
   if (!updated) return NextResponse.json({ ok: false, error: "Failed" }, { status: 400 });
   return NextResponse.json({ ok: true, load: serialize(updated, me) });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const me = await currentUser();
+  if (!me) return NextResponse.json({ ok: false }, { status: 401 });
+  if (me.role !== "dispatcher" && me.role !== "admin")
+    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  const { id } = await params;
+  const ok = deleteLoad(id, me.id, me.role === "admin");
+  if (!ok) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  return NextResponse.json({ ok: true, deleted: true });
 }

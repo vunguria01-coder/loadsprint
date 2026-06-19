@@ -5,7 +5,6 @@ import { MapPin, ArrowRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
 import {
-  ensureDemoLoadsFor,
   getLoadsByDispatcher,
   getLoadsByBrokerEmail,
   getLoadsByDriverEmail,
@@ -53,8 +52,7 @@ export default async function LoadsPage() {
   } else if (me.role === "driver") {
     loads = getLoadsByDriverEmail(me.email);
   } else {
-    // dispatcher: seed demo data on first visit
-    ensureDemoLoadsFor(me.id, me.name);
+    // dispatcher: their own created loads
     loads = getLoadsByDispatcher(me.id);
   }
 

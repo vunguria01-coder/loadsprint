@@ -10,6 +10,8 @@ import { LoadStatusPanel } from "@/components/load-status";
 import { LoadDocuments } from "@/components/load-documents";
 import { LoadPhotos } from "@/components/load-photos";
 import { LoadBroker } from "@/components/load-broker";
+import { LoadInvoices } from "@/components/load-invoices";
+import { PhotosToPdf } from "@/components/photos-to-pdf";
 
 export function LoadWorkspace({ loadId }: { loadId: string }) {
   const [load, setLoad] = useState<LoadView | null>(null);
@@ -92,8 +94,10 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           {(load.youRole === "dispatcher" || load.youRole === "admin") && (
             <LoadBroker load={load} mutate={mutate} />
           )}
+          <LoadInvoices load={load} mutate={mutate} />
           <LoadDocuments load={load} mutate={mutate} />
           <LoadPhotos load={load} mutate={mutate} />
+          <PhotosToPdf load={load} mutate={mutate} />
         </div>
       </div>
     </div>
