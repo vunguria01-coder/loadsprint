@@ -393,9 +393,11 @@ export function pushNotification(
 
 function notifyParties(load: Load, actorId: string, text: string) {
   const broker = findByEmail(load.brokerEmail);
+  const driver = findByEmail(load.driverEmail);
   const recipients = new Set<string>();
   recipients.add(load.dispatcherId);
   if (broker) recipients.add(broker.id);
+  if (driver) recipients.add(driver.id);
   recipients.delete(actorId);
   recipients.forEach((uid) => pushNotification(uid, text, load));
 }
@@ -463,7 +465,17 @@ export function addDocument(
     uploadedAt: new Date().toISOString(),
   });
   writeLoads(loads);
-  notifyParties(loads[i], actorId, `New document uploaded: ${doc.name}`);
+  const typeLabel =
+    doc.type === "bol"
+      ? "BOL (Bill of Lading)"
+      : doc.type === "pod"
+      ? "POD (proof of delivery)"
+      : doc.type === "rate_confirmation"
+      ? "rate confirmation"
+      : doc.type === "invoice_broker" || doc.type === "invoice_driver"
+      ? "invoice"
+      : "document";
+  notifyParties(loads[i], actorId, `New ${typeLabel}: ${doc.name}`);
   return loads[i];
 }
 
@@ -613,6 +625,14 @@ export function createLoad(input: {
   const loads = readLoads();
   loads.push(load);
   writeLoads(loads);
+  // Notify the assigned driver (if they have an account).
+  const driver = findByEmail(load.driverEmail);
+  if (driver)
+    pushNotification(
+      driver.id,
+      `New load assigned: ${load.ref} — ${load.originName} → ${load.destName}`,
+      load
+    );
   return load;
 }
 

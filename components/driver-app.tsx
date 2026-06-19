@@ -59,9 +59,12 @@ function openDocument(dataUrl: string, name: string) {
   }
 }
 
+type Notif = { id: string; text: string; loadRef: string; createdAt: string; read: boolean };
+
 export function DriverApp({ name }: { name: string }) {
   const [list, setList] = useState<ListItem[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
 
   const fetchList = useCallback(async () => {
     try {
@@ -73,11 +76,29 @@ export function DriverApp({ name }: { name: string }) {
     }
   }, []);
 
+  const fetchNotifs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications");
+      const data = await res.json();
+      if (data.ok) setNotifs(data.items || []);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     fetchList();
-    const t = setInterval(fetchList, 15000);
+    fetchNotifs();
+    const t = setInterval(() => { fetchList(); fetchNotifs(); }, 15000);
     return () => clearInterval(t);
-  }, [fetchList]);
+  }, [fetchList, fetchNotifs]);
+
+  async function markRead() {
+    try { await fetch("/api/notifications", { method: "POST" }); } catch {}
+    setNotifs((n) => n.map((x) => ({ ...x, read: true })));
+  }
+
+  const unread = notifs.filter((n) => !n.read);
 
   if (openId) {
     return <DriverLoad loadId={openId} onBack={() => { setOpenId(null); fetchList(); }} />;
@@ -102,6 +123,22 @@ export function DriverApp({ name }: { name: string }) {
       <div style={{ color: C.muted, fontSize: 14, marginBottom: 16 }}>
         Hi {name?.split(" ")[0] || "driver"} — your loads
       </div>
+
+      {unread.length > 0 && (
+        <div style={{ background: "rgba(56,189,248,0.08)", border: `1px solid ${C.sky}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontWeight: 700, color: C.sky }}>🔔 {unread.length} new</span>
+            <button onClick={markRead} style={{ background: "none", border: "none", color: C.muted, fontSize: 13, fontWeight: 600 }}>
+              Mark read
+            </button>
+          </div>
+          {unread.slice(0, 5).map((n) => (
+            <div key={n.id} style={{ fontSize: 14, padding: "4px 0", color: C.text }}>
+              <b style={{ color: C.sky }}>{n.loadRef}</b> — {n.text}
+            </div>
+          ))}
+        </div>
+      )}
 
       {!list ? (
         <div style={{ color: C.muted, textAlign: "center", marginTop: 40 }}>Loading…</div>

@@ -12,7 +12,6 @@ const links = [
   { href: "#faq", label: "FAQ" },
   { href: "#contact", label: "Contact" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/login", label: "Sign in" },
 ];
 
 export function Nav() {
@@ -52,6 +51,9 @@ export function Nav() {
             ))}
           </nav>
           <div className="nav-cta">
+            <a href="/login" className="btn btn-ghost btn-quote">
+              Sign in
+            </a>
             <a href="/register" className="btn btn-ghost btn-quote">
               Register
             </a>
@@ -84,6 +86,13 @@ export function Nav() {
             {l.label}
           </a>
         ))}
+        <a
+          href="/login"
+          className="btn btn-ghost"
+          onClick={() => setOpen(false)}
+        >
+          Sign in
+        </a>
         <a
           href="/register"
           className="btn btn-ghost"
