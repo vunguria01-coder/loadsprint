@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
-import { AppHeader } from "@/components/app-header";
+import { CabinetServer } from "@/components/cabinet-server";
 import {
   getLoadsByDispatcher,
   getLoadsByBrokerEmail,
@@ -31,9 +31,7 @@ export default async function HistoryPage() {
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
   return (
-    <>
-      <AppHeader back="/loads" backLabel="Loadboard" role={me.role} />
-      <main className="dash">
+    <CabinetServer active="history">
         <div className="wrap">
           <div className="shead" style={{ marginBottom: 20 }}>
             <span className="eyebrow">Completed</span>
@@ -59,7 +57,6 @@ export default async function HistoryPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </CabinetServer>
   );
 }

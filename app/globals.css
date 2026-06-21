@@ -681,3 +681,74 @@ table.acc select option{background:#0b1120}
 .drawer-logout { margin-top: auto; color: #fca5a5; border-top: 1px solid var(--line, #22304a); border-radius: 0; padding-top: 16px; }
 .drawer-logout svg { color: #fca5a5; }
 .drawer-logout:hover { background: rgba(252,165,165,.08); color: #fca5a5; }
+
+/* --- cabinet layout (persistent sidebar + topbar) --- */
+.cab { display: flex; min-height: 100vh; background: var(--bg, #0b1120); }
+.cab-side {
+  width: 248px; flex-shrink: 0; position: sticky; top: 0; align-self: flex-start;
+  height: 100vh; background: var(--card, #0f1729); border-right: 1px solid var(--line, #22304a);
+  display: flex; flex-direction: column; padding: 18px 14px;
+}
+.cab-brand { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 18px; border-bottom: 1px solid var(--line, #22304a); }
+.cab-close { display: none; background: none; border: none; color: var(--muted, #93a4be); cursor: pointer; }
+.cab-nav { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; flex: 1; }
+.cab-link {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px;
+  color: var(--text, #e8eef8); text-decoration: none; font-weight: 600; font-size: 14.5px;
+  background: none; border: none; cursor: pointer; width: 100%; text-align: left;
+}
+.cab-link svg { color: var(--muted, #93a4be); flex-shrink: 0; }
+.cab-link:hover { background: rgba(56,189,248,.08); }
+.cab-link.active { background: rgba(37,99,235,.16); color: #fff; }
+.cab-link.active svg { color: var(--sky, #38bdf8); }
+.cab-logout { margin-top: auto; color: #fca5a5; }
+.cab-logout svg { color: #fca5a5; }
+.cab-scrim { display: none; }
+.cab-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cab-top {
+  position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px; background: rgba(11,17,32,.8); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line, #22304a);
+}
+.cab-burger { display: none; background: none; border: none; color: var(--text, #e8eef8); cursor: pointer; }
+.cab-content { padding: 28px 22px 56px; }
+.cab-acc { position: relative; }
+.cab-acc-btn {
+  display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+  background: var(--card, #0f1729); border: 1px solid var(--line, #22304a); color: var(--text, #e8eef8);
+  cursor: pointer; font-weight: 600; font-size: 14px;
+}
+.cab-acc-btn svg:first-child { color: var(--sky, #38bdf8); }
+.cab-acc-scrim { position: fixed; inset: 0; z-index: 60; }
+.cab-acc-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 61; width: 250px;
+  background: var(--card, #0f1729); border: 1px solid var(--line, #22304a); border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5); padding: 8px; animation: drawer-fade .12s ease;
+}
+.cab-acc-head { padding: 10px 12px; }
+.cab-acc-full { font-weight: 700; font-size: 15px; }
+.cab-acc-mail { color: var(--muted, #93a4be); font-size: 12.5px; margin-top: 2px; word-break: break-all; }
+.cab-acc-sub {
+  margin: 4px 8px 8px; padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 700;
+  color: var(--sky, #38bdf8); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.3);
+}
+.cab-acc-sub.expired { color: #fca5a5; background: rgba(252,165,165,.08); border-color: rgba(252,165,165,.3); }
+.cab-acc-item {
+  display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+  color: var(--text, #e8eef8); text-decoration: none; font-size: 14px; font-weight: 500;
+  background: none; border: none; cursor: pointer;
+}
+.cab-acc-item:hover { background: rgba(56,189,248,.08); }
+.cab-acc-item.logout { color: #fca5a5; }
+
+@media (max-width: 860px) {
+  .cab-side {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 120; transform: translateX(-100%);
+    transition: transform .2s ease; height: 100vh;
+  }
+  .cab-side.open { transform: translateX(0); }
+  .cab-close { display: inline-flex; }
+  .cab-scrim { display: block; position: fixed; inset: 0; z-index: 110; background: rgba(5,9,18,.6); }
+  .cab-burger { display: inline-flex; }
+  .cab-acc-name { display: none; }
+}

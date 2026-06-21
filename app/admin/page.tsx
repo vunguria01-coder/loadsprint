@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ensureSeed, getUsers, toSafe } from "@/lib/auth";
 import { getPricing, getLimits } from "@/lib/settings";
 import { currentUser } from "@/lib/guard";
+import { CabinetServer } from "@/components/cabinet-server";
 import { AdminAccounts } from "@/components/admin-accounts";
 import { AdminPricing } from "@/components/admin-pricing";
 import { AdminLimits } from "@/components/admin-limits";
-import { LogoutButton } from "@/components/logout-button";
 
 export const metadata: Metadata = {
   title: "Admin — LoadSprint",
@@ -26,28 +24,8 @@ export default async function AdminPage() {
   const limits = getLimits();
 
   return (
-    <>
-      <header className="admin-top">
-        <div className="wrap">
-          <Link href="/" aria-label="LoadSprint home">
-            <Image
-              src="/loadsprint-logo.png"
-              alt="LoadSprint"
-              width={793}
-              height={200}
-              priority
-              style={{ height: 26, width: "auto" }}
-            />
-          </Link>
-          <div className="right">
-            <span className="admin-tag">Admin</span>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
-      <main className="admin-body">
-        <div className="wrap">
+    <CabinetServer active="admin">
+      <div className="wrap">
           <h1 className="admin-h">Control panel</h1>
           <p className="admin-sub">
             Manage accounts, grant subscriptions, set prices, and control
@@ -82,7 +60,6 @@ export default async function AdminPage() {
             <AdminLimits limits={limits} />
           </section>
         </div>
-      </main>
-    </>
+    </CabinetServer>
   );
 }

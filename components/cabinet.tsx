@@ -1,0 +1,141 @@
+"use client";
+
+import { useState } from "react";
+import type { ReactNode } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  LayoutGrid, Users, History, FileText, Shield, LogOut, Menu, X,
+  Building2, Truck, UserCircle, ChevronDown,
+} from "lucide-react";
+import { NotificationsBell } from "@/components/notifications-bell";
+
+type NavItem = { key: string; href: string; label: string; icon: ReactNode };
+
+function navForRole(role: string): NavItem[] {
+  if (role === "admin") {
+    return [
+      { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
+      { key: "brokers", href: "/admin/brokers", label: "Brokers", icon: <Building2 size={18} /> },
+      { key: "dispatchers", href: "/admin/dispatchers", label: "Dispatchers", icon: <Users size={18} /> },
+      { key: "drivers", href: "/admin/drivers", label: "Drivers", icon: <Truck size={18} /> },
+      { key: "admin", href: "/admin", label: "Admin", icon: <Shield size={18} /> },
+      { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
+    ];
+  }
+  if (role === "broker") {
+    return [
+      { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
+      { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
+    ];
+  }
+  return [
+    { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
+    { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
+    { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
+    { key: "invoice", href: "/invoice-settings", label: "Invoice details", icon: <FileText size={18} /> },
+  ];
+}
+
+function subLabel(tier: string, daysLeft: number | null): string {
+  if (tier === "none") return "No plan";
+  const t = tier[0].toUpperCase() + tier.slice(1);
+  if (daysLeft === null) return `${t} · no expiry`;
+  if (daysLeft < 0) return `${t} · expired`;
+  return `${t} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+}
+
+export function Cabinet({
+  role = "dispatcher",
+  name,
+  email,
+  tier,
+  daysLeft,
+  active,
+  children,
+}: {
+  role?: string;
+  name: string;
+  email: string;
+  tier: string;
+  daysLeft: number | null;
+  active?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false); // mobile sidebar
+  const [acc, setAcc] = useState(false); // account dropdown
+  const items = navForRole(role);
+  const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
+
+  async function logout() {
+    try { await fetch("/api/logout", { method: "POST" }); } catch {}
+    window.location.href = "/login";
+  }
+
+  return (
+    <div className="cab">
+      {/* Sidebar */}
+      <aside className={`cab-side${open ? " open" : ""}`}>
+        <div className="cab-brand">
+          <Link href="/loads" onClick={() => setOpen(false)}>
+            <Image src="/loadsprint-logo.png" alt="LoadSprint" width={793} height={200} style={{ height: 26, width: "auto" }} />
+          </Link>
+          <button className="cab-close" onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
+        </div>
+        <nav className="cab-nav">
+          {items.map((it) => (
+            <Link
+              key={it.key}
+              href={it.href}
+              onClick={() => setOpen(false)}
+              className={`cab-link${active === it.key ? " active" : ""}`}
+            >
+              {it.icon}<span>{it.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <button className="cab-link cab-logout" onClick={logout}>
+          <LogOut size={18} /><span>Log out</span>
+        </button>
+      </aside>
+
+      {open && <div className="cab-scrim" onClick={() => setOpen(false)} />}
+
+      {/* Main */}
+      <div className="cab-main">
+        <header className="cab-top">
+          <button className="cab-burger" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={22} /></button>
+          <div style={{ flex: 1 }} />
+          <NotificationsBell />
+          <div className="cab-acc">
+            <button className="cab-acc-btn" onClick={() => setAcc((v) => !v)}>
+              <UserCircle size={22} />
+              <span className="cab-acc-name">{name?.split(" ")[0] || "Account"}</span>
+              <ChevronDown size={15} />
+            </button>
+            {acc && (
+              <>
+                <div className="cab-acc-scrim" onClick={() => setAcc(false)} />
+                <div className="cab-acc-menu">
+                  <div className="cab-acc-head">
+                    <div className="cab-acc-full">{name}</div>
+                    <div className="cab-acc-mail">{email}</div>
+                  </div>
+                  <div className={`cab-acc-sub${expired ? " expired" : ""}`}>
+                    {subLabel(tier, daysLeft)}
+                  </div>
+                  <Link href="/pricing" className="cab-acc-item" onClick={() => setAcc(false)}>Manage plan</Link>
+                  {role === "dispatcher" && (
+                    <Link href="/invoice-settings" className="cab-acc-item" onClick={() => setAcc(false)}>Invoice details</Link>
+                  )}
+                  <button className="cab-acc-item logout" onClick={logout}>Log out</button>
+                </div>
+              </>
+            )}
+          </div>
+        </header>
+        <main className="cab-content">{children}</main>
+      </div>
+    </div>
+  );
+}

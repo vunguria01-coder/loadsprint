@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
 import { getLoadById } from "@/lib/loads";
-import { AppHeader } from "@/components/app-header";
+import { CabinetServer } from "@/components/cabinet-server";
 import { LoadWorkspace } from "@/components/load-workspace";
 
 export const metadata: Metadata = {
@@ -33,11 +33,10 @@ export default async function LoadDetailPage({
   if (!ok) redirect("/loads");
 
   return (
-    <>
-      <AppHeader back="/loads" backLabel="All loads" role={me.role} />
-      <main className="loads-body">
+    <CabinetServer active="loads">
+      <div className="wrap">
         <LoadWorkspace loadId={id} />
-      </main>
-    </>
+      </div>
+    </CabinetServer>
   );
 }

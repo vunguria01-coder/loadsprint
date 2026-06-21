@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { getUsers, toSafe, subDaysLeft } from "@/lib/auth";
 import { getAllLoads } from "@/lib/loads";
-import { AppHeader } from "@/components/app-header";
+import { CabinetServer } from "@/components/cabinet-server";
 
 export const metadata: Metadata = {
   title: "Brokers — LoadSprint",
@@ -19,9 +19,7 @@ export default async function AdminListPage() {
   const loads = getAllLoads();
 
   return (
-    <>
-      <AppHeader back="/admin" backLabel="Admin" role={me.role} />
-      <main className="dash">
+    <CabinetServer active="brokers">
         <div className="wrap">
           <div className="shead" style={{ marginBottom: 20 }}>
             <span className="eyebrow">Accounts</span>
@@ -67,7 +65,6 @@ export default async function AdminListPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </CabinetServer>
   );
 }

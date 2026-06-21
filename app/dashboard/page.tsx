@@ -1,3 +1,4 @@
+import { CabinetServer } from "@/components/cabinet-server";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -45,29 +46,8 @@ export default async function DashboardPage() {
   const expired = me.tier !== "none" && daysLeft !== null && daysLeft < 0;
 
   return (
-    <>
-      <header className="dash-top">
-        <div className="wrap">
-          <Link href="/" aria-label="LoadSprint home">
-            <Image
-              src="/loadsprint-logo.png"
-              alt="LoadSprint"
-              width={793}
-              height={200}
-              style={{ height: 28, width: "auto" }}
-            />
-          </Link>
-          <div className="dash-user">
-            <NotificationsBell />
-            <span className="badge">{roleLabels[me.role]}</span>
-            <span style={{ color: "var(--muted)", fontSize: 14 }}>{me.name}</span>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
-      <main className="dash-body">
-        <div className="wrap">
+    <CabinetServer active="dashboard">
+      <div className="wrap">
           <div className="dash-hello">
             <h1>
               Welcome, <span className="grad-text">{me.name.split(" ")[0]}</span>
@@ -144,7 +124,6 @@ export default async function DashboardPage() {
             connect here once the mobile app is live.
           </div>
         </div>
-      </main>
-    </>
+    </CabinetServer>
   );
 }

@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/guard";
 import { getUsers, toSafe, subDaysLeft, getUserById } from "@/lib/auth";
 import { getAllLoads } from "@/lib/loads";
 import { getInvites } from "@/lib/invites";
-import { AppHeader } from "@/components/app-header";
+import { CabinetServer } from "@/components/cabinet-server";
 
 export const metadata: Metadata = {
   title: "Drivers — LoadSprint",
@@ -21,9 +21,7 @@ export default async function AdminDriversPage() {
   const invites = getInvites();
 
   return (
-    <>
-      <AppHeader back="/admin" backLabel="Admin" role={me.role} />
-      <main className="dash">
+    <CabinetServer active="drivers">
         <div className="wrap">
           <div className="shead" style={{ marginBottom: 20 }}>
             <span className="eyebrow">Accounts</span>
@@ -67,7 +65,6 @@ export default async function AdminDriversPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </CabinetServer>
   );
 }

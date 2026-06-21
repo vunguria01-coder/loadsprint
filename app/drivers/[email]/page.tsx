@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { currentUser } from "@/lib/guard";
+import { CabinetServer } from "@/components/cabinet-server";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher, currentPoint } from "@/lib/loads";
@@ -54,14 +55,7 @@ export default async function DriverDetailPage({
   }));
 
   return (
-    <div className="auth">
-      <div className="auth-top">
-        <Link href="/drivers" className="back">
-          <ArrowLeft size={16} /> Drivers
-        </Link>
-        <Link href="/loads" className="back">All loads</Link>
-      </div>
-      <main className="admin-body" style={{ position: "relative", zIndex: 1 }}>
+    <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
           <div className="shead" style={{ marginBottom: 18 }}>
             <span className="eyebrow">Driver</span>
@@ -80,7 +74,6 @@ export default async function DriverDetailPage({
             <CreateLoad driverName={name} driverEmail={email} />
           </div>
         </div>
-      </main>
-    </div>
+      </CabinetServer>
   );
 }

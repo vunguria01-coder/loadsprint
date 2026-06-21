@@ -11,7 +11,7 @@ import {
   getAllLoads,
   type Load,
 } from "@/lib/loads";
-import { AppHeader } from "@/components/app-header";
+import { CabinetServer } from "@/components/cabinet-server";
 import { StatusChip } from "@/components/status-chip";
 
 export const metadata: Metadata = {
@@ -65,10 +65,8 @@ export default async function LoadsPage() {
   }
 
   return (
-    <>
-      <AppHeader back="/dashboard" backLabel="Dashboard" role={me.role} />
-      <main className="loads-body">
-        <div className="wrap">
+    <CabinetServer active="loads">
+      <div className="wrap">
           <h1 className="admin-h">Loads</h1>
           <p className="admin-sub">
             {me.role === "broker"
@@ -111,7 +109,6 @@ export default async function LoadsPage() {
               ))
             )}
         </div>
-      </main>
-    </>
+    </CabinetServer>
   );
 }
