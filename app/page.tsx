@@ -9,9 +9,6 @@ import { Audience } from "@/components/audience";
 import { QuoteForm } from "@/components/quote-form";
 import { About } from "@/components/about";
 import { Testimonials } from "@/components/testimonials";
-import { CarrierForm } from "@/components/carrier-form";
-import { FAQ } from "@/components/faq";
-import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 
 export default async function Home() {
@@ -29,9 +26,6 @@ export default async function Home() {
         <QuoteForm />
         <About />
         <Testimonials />
-        <CarrierForm />
-        <FAQ />
-        <Contact />
       </main>
       <Footer />
     </>

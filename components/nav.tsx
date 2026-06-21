@@ -8,9 +8,6 @@ const links = [
   { href: "#services", label: "Services" },
   { href: "#why", label: "Why LoadSprint" },
   { href: "#how", label: "How it works" },
-  { href: "#carriers", label: "Carriers" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#contact", label: "Contact" },
   { href: "/pricing", label: "Pricing" },
 ];
 

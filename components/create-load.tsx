@@ -51,27 +51,88 @@ async function extractText(file: File): Promise<string> {
   return text;
 }
 
-function guessFields(text: string) {
-  const out: { ref?: string; origin?: string; dest?: string; rate?: number } = {};
-  const ref = text.match(/(?:load|order|ref(?:erence)?|pro)\s*#?\s*[:.]?\s*([A-Z0-9][A-Z0-9-]{3,})/i);
-  if (ref) out.ref = ref[1];
-  const cityState = "([A-Za-z .'-]+,\\s*[A-Z]{2})";
-  const o = text.match(new RegExp(`(?:pickup|pick\\s*up|origin|shipper)[\\s\\S]{0,60}?${cityState}`, "i"));
-  if (o) out.origin = o[1].trim();
-  const d = text.match(new RegExp(`(?:deliver|delivery|destination|consignee|receiver)[\\s\\S]{0,60}?${cityState}`, "i"));
-  if (d) out.dest = d[1].trim();
+type Parsed = {
+  ref?: string;
+  rate?: number;
+  pickups: string[];
+  deliveries: string[];
+  origin?: string;
+  dest?: string;
+  brokerName?: string;
+  brokerEmail?: string;
+  brokerPhone?: string;
+  mc?: string;
+};
 
-  // Rate: prefer a $ amount labelled total/rate/amount; else the largest $ amount.
-  const money = (s: string) => Number(s.replace(/[,$\s]/g, ""));
-  const labelled = text.match(
-    /(?:total\s*(?:rate|amount|pay)?|rate\s*(?:con|amount)?|line\s*haul|agreed\s*amount|carrier\s*pay)\D{0,20}\$?\s*([0-9][0-9,]*(?:\.[0-9]{2})?)/i
-  );
-  if (labelled) {
-    out.rate = money(labelled[1]);
-  } else {
-    const all = [...text.matchAll(/\$\s*([0-9][0-9,]{2,}(?:\.[0-9]{2})?)/g)].map((m) => money(m[1]));
+function uniq(arr: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const a of arr) {
+    const k = a.toLowerCase().replace(/\s+/g, " ").trim();
+    if (k && !seen.has(k)) { seen.add(k); out.push(a.trim()); }
+  }
+  return out;
+}
+
+// Careful, multi-pass parse of a rate confirmation's text.
+function parseConfirmation(text: string): Parsed {
+  const out: Parsed = { pickups: [], deliveries: [] };
+  const cityState = /([A-Z][A-Za-z .'-]+,\s*[A-Z]{2})(?:\s+\d{5})?/g;
+
+  // Reference / load number
+  const ref = text.match(/(?:load|order|ref(?:erence)?|pro|trip)\s*#?\s*[:.]?\s*([A-Z0-9][A-Z0-9-]{3,})/i);
+  if (ref) out.ref = ref[1];
+
+  // MC number
+  const mc = text.match(/\bMC\s*#?\s*[:.]?\s*([0-9]{4,8})/i);
+  if (mc) out.mc = mc[1];
+
+  // Broker block: name, email, phone
+  const bname = text.match(/(?:broker|brokerage|customer|company)\s*(?:name)?\s*[:.]\s*([A-Za-z0-9 .,&'\-]{3,50})/i);
+  if (bname) out.brokerName = bname[1].trim().replace(/\s{2,}/g, " ");
+  const email = text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+  if (email) out.brokerEmail = email[0];
+  const phone = text.match(/(?:phone|tel|ph|contact)\s*[:.]?\s*(\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i)
+    || text.match(/(\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/);
+  if (phone) out.brokerPhone = phone[1].trim();
+
+  // Rate: prefer labelled total/rate; else largest $ amount
+  const m = (s: string) => Number(s.replace(/[,$\s]/g, ""));
+  const labelled = text.match(/(?:total\s*(?:rate|amount|pay)?|rate\s*(?:con|amount)?|line\s*haul|agreed\s*amount|carrier\s*(?:pay|rate))\D{0,20}\$?\s*([0-9][0-9,]*(?:\.[0-9]{2})?)/i);
+  if (labelled) out.rate = m(labelled[1]);
+  else {
+    const all = [...text.matchAll(/\$\s*([0-9][0-9,]{2,}(?:\.[0-9]{2})?)/g)].map((x) => m(x[1]));
     if (all.length) out.rate = Math.max(...all);
   }
+
+  // Stops: scan around pickup/delivery keywords for the nearest City, ST
+  const pickKey = /(pick\s*up|pickup|pick-up|origin|shipper|ship\s*from|p\/u)/gi;
+  const dropKey = /(deliver(?:y|ies)?|consignee|receiver|drop|ship\s*to|destination|d\/o)/gi;
+
+  function near(keyword: RegExp): string[] {
+    const found: string[] = [];
+    let km: RegExpExecArray | null;
+    const re = new RegExp(keyword.source, "gi");
+    while ((km = re.exec(text)) !== null) {
+      const window = text.slice(km.index, km.index + 120);
+      const cs = window.match(/([A-Z][A-Za-z .'-]+,\s*[A-Z]{2})/);
+      if (cs) found.push(cs[1].trim());
+    }
+    return uniq(found);
+  }
+
+  out.pickups = near(pickKey);
+  out.deliveries = near(dropKey);
+
+  // Fallback: if keyword scan missed, use the first/last City,ST in the doc
+  if (out.pickups.length === 0 || out.deliveries.length === 0) {
+    const allCs = uniq([...text.matchAll(cityState)].map((x) => x[1]));
+    if (out.pickups.length === 0 && allCs[0]) out.pickups = [allCs[0]];
+    if (out.deliveries.length === 0 && allCs.length > 1) out.deliveries = [allCs[allCs.length - 1]];
+  }
+
+  out.origin = out.pickups[0];
+  out.dest = out.deliveries[out.deliveries.length - 1];
   return out;
 }
 
@@ -91,6 +152,7 @@ export function CreateLoad({
   const [brokerEmail, setBrokerEmail] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
   const [rate, setRate] = useState("");
+  const [stops, setStops] = useState<{ pickups: string[]; deliveries: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
 
@@ -101,14 +163,20 @@ export function CreateLoad({
     setReading(true);
     try {
       const text = await extractText(file);
-      const g = guessFields(text);
-      if (g.ref) setRef(g.ref);
-      if (g.origin) setOrigin(g.origin);
-      if (g.dest) setDest(g.dest);
-      if (g.rate) setRate(String(g.rate));
-      if (g.ref || g.origin || g.dest || g.rate)
-        toast("Imported", "Check the fields and adjust if needed.");
-      else toast("Nothing found", "Couldn't read fields — enter them manually.");
+      const p = parseConfirmation(text);
+      if (p.ref) setRef(p.ref);
+      if (p.origin) setOrigin(p.origin);
+      if (p.dest) setDest(p.dest);
+      if (p.rate) setRate(String(p.rate));
+      if (p.brokerName) setBrokerName(p.brokerName);
+      if (p.brokerEmail) setBrokerEmail(p.brokerEmail);
+      if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
+      setStops({ pickups: p.pickups, deliveries: p.deliveries });
+      const np = p.pickups.length || (p.origin ? 1 : 0);
+      const nd = p.deliveries.length || (p.dest ? 1 : 0);
+      if (np || nd || p.rate || p.brokerName)
+        toast("Imported", `Found ${np} pickup(s) and ${nd} delivery(ies). Check the fields.`);
+      else toast("Nothing found", "Couldn't read it — enter the details manually.");
     } catch {
       toast("Couldn't read PDF", "Enter the details manually.");
     } finally {
@@ -155,6 +223,19 @@ export function CreateLoad({
         <FileUp size={16} /> {reading ? "Reading PDF…" : "Import from rate confirmation (PDF)"}
         <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />
       </label>
+
+      {stops && (stops.pickups.length > 0 || stops.deliveries.length > 0) && (
+        <div className="inv-calc" style={{ marginBottom: 14 }}>
+          <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
+          {stops.pickups.map((s, i) => (
+            <div key={`p${i}`} className="px" style={{ padding: "2px 0" }}>↑ {s}</div>
+          ))}
+          <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
+          {stops.deliveries.map((s, i) => (
+            <div key={`d${i}`} className="px" style={{ padding: "2px 0" }}>↓ {s}</div>
+          ))}
+        </div>
+      )}
 
       <div className="fgrid">
         <div className="field full">

@@ -54,7 +54,7 @@ export function Hero() {
             <a href="#quote" className="btn btn-primary">
               Get a Quote <ArrowRight size={17} />
             </a>
-            <a href="#carriers" className="btn btn-ghost">
+            <a href="#quote" className="btn btn-ghost">
               Become a Carrier
             </a>
           </div>

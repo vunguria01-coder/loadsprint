@@ -48,13 +48,10 @@ export function Footer() {
             <a href="#about">About Us</a>
             <a href="#why">Why LoadSprint</a>
             <a href="#testimonials">Testimonials</a>
-            <a href="#faq">FAQ</a>
           </div>
           <div className="foot-col">
             <h5>Get started</h5>
             <a href="#quote">Get a Quote</a>
-            <a href="#carrier-form">Become a Carrier</a>
-            <a href="#contact">Contact</a>
           </div>
         </div>
         <div className="foot-bottom">
