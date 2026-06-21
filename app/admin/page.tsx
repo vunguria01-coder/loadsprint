@@ -4,7 +4,7 @@ import { ensureSeed, getUsers, toSafe } from "@/lib/auth";
 import { getPricing, getLimits } from "@/lib/settings";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
-import { AdminAccounts } from "@/components/admin-accounts";
+import { AdminUserManager } from "@/components/admin-user-manager";
 import { AdminPricing } from "@/components/admin-pricing";
 import { AdminLimits } from "@/components/admin-limits";
 
@@ -39,7 +39,7 @@ export default async function AdminPage() {
               plan or grant the restricted location-freeze tool to a single
               account.
             </p>
-            <AdminAccounts users={users} />
+            <AdminUserManager users={users} showFreeze />
           </section>
 
           <section className="admin-section">

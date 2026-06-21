@@ -752,3 +752,20 @@ table.acc select option{background:#0b1120}
   .cab-burger { display: inline-flex; }
   .cab-acc-name { display: none; }
 }
+
+/* --- admin user manager cards --- */
+.am-list { display: flex; flex-direction: column; gap: 12px; }
+.am-card { background: var(--card, #0f1729); border: 1px solid var(--line, #22304a); border-radius: 14px; padding: 16px; }
+.am-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.am-name { font-weight: 700; font-size: 16px; }
+.am-mail { color: var(--muted, #93a4be); font-size: 13px; word-break: break-all; }
+.am-extra { color: var(--muted, #93a4be); font-size: 12.5px; margin-top: 3px; }
+.am-plan { text-align: right; }
+.am-tier { display: block; font-weight: 700; text-transform: capitalize; }
+.am-sub { display: block; color: var(--muted, #93a4be); font-size: 12.5px; }
+.am-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line, #22304a); }
+.am-controls select, .am-controls input { padding: 8px 10px; }
+@media (max-width: 560px) {
+  .am-plan { text-align: left; }
+  .am-controls { gap: 6px; }
+}
