@@ -51,7 +51,7 @@ export default async function AdminDriversPage() {
                       (i) => i.email.toLowerCase() === u.email.toLowerCase()
                     );
                     const disp = inv
-                      ? getUserById(inv.invitedById)?.name || inv.invitedByName || "—"
+                      ? getUserById(inv.createdBy)?.name || inv.createdByName || "—"
                       : "—";
                     return (
                       <tr key={u.id}>
