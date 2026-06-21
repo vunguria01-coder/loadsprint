@@ -43,10 +43,8 @@ export default async function AdminListPage() {
                 <tbody>
                   {users.map((u) => {
                     const left = subDaysLeft(u);
-                    const loadCount = loads.filter((l) =>
-                      "dispatcher" === "broker"
-                        ? l.brokerEmail.toLowerCase() === u.email.toLowerCase()
-                        : l.dispatcherId === u.id
+                    const loadCount = loads.filter(
+                      (l) => l.dispatcherId === u.id
                     ).length;
                     return (
                       <tr key={u.id}>
