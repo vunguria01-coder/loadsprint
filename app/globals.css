@@ -651,3 +651,33 @@ table.acc select option{background:#0b1120}
 .inv-calc .inv-total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
 .inv-calc .inv-total span { color: var(--ink, #E8EEF8); font-weight: 700; }
 .inv-calc .inv-total b { color: var(--sky, #38BDF8); font-size: 18px; }
+
+/* --- side menu drawer --- */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(5, 9, 18, 0.6); backdrop-filter: blur(2px);
+  animation: drawer-fade .15s ease;
+}
+@keyframes drawer-fade { from { opacity: 0 } to { opacity: 1 } }
+.drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 272px; max-width: 80vw;
+  background: var(--card, #0f1729); border-right: 1px solid var(--line, #22304a);
+  display: flex; flex-direction: column; padding: 16px;
+  box-shadow: 2px 0 30px rgba(0,0,0,.4);
+  animation: drawer-slide .2s ease;
+}
+@keyframes drawer-slide { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 16px; border-bottom: 1px solid var(--line, #22304a); }
+.drawer-x { background: none; border: none; color: var(--muted, #93a4be); cursor: pointer; padding: 6px; border-radius: 8px; }
+.drawer-x:hover { background: rgba(255,255,255,.05); color: #fff; }
+.drawer-links { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; flex: 1; }
+.drawer-link {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 11px;
+  color: var(--text, #e8eef8); text-decoration: none; font-weight: 600; font-size: 15px;
+  background: none; border: none; cursor: pointer; width: 100%; text-align: left;
+}
+.drawer-link:hover { background: rgba(56,189,248,.10); color: var(--sky, #38bdf8); }
+.drawer-link svg { color: var(--sky, #38bdf8); flex-shrink: 0; }
+.drawer-logout { margin-top: auto; color: #fca5a5; border-top: 1px solid var(--line, #22304a); border-radius: 0; padding-top: 16px; }
+.drawer-logout svg { color: #fca5a5; }
+.drawer-logout:hover { background: rgba(252,165,165,.08); color: #fca5a5; }

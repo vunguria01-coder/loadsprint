@@ -66,7 +66,7 @@ export default async function LoadsPage() {
 
   return (
     <>
-      <AppHeader back="/dashboard" backLabel="Dashboard" />
+      <AppHeader back="/dashboard" backLabel="Dashboard" role={me.role} />
       <main className="loads-body">
         <div className="wrap">
           <h1 className="admin-h">Loads</h1>

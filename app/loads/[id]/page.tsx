@@ -34,7 +34,7 @@ export default async function LoadDetailPage({
 
   return (
     <>
-      <AppHeader back="/loads" backLabel="All loads" />
+      <AppHeader back="/loads" backLabel="All loads" role={me.role} />
       <main className="loads-body">
         <LoadWorkspace loadId={id} />
       </main>
