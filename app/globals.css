@@ -769,3 +769,7 @@ table.acc select option{background:#0b1120}
   .am-plan { text-align: left; }
   .am-controls { gap: 6px; }
 }
+
+/* prominent driver name in dispatcher's drivers list */
+.driver-name-lg { font-size: 22px; font-weight: 800; letter-spacing: -0.2px; color: var(--ink, #e8eef8); line-height: 1.15; }
+@media (max-width: 560px) { .driver-name-lg { font-size: 19px; } }

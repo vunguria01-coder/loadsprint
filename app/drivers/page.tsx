@@ -62,7 +62,7 @@ export default async function DriversPage() {
                   style={{ textDecoration: "none" }}
                 >
                   <div className="lc-main">
-                    <div className="lc-ref">{d.name}</div>
+                    <div className="driver-name-lg">{d.name}</div>
                     <div className="lc-route">{d.email}</div>
                     <div className="px" style={{ marginTop: 4 }}>
                       {d.active} active · {d.total} total {d.joined ? "" : "· invite pending"}

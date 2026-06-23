@@ -47,9 +47,15 @@ export function DriverMap({ points }: { points: Pt[] }) {
         [center.lat, center.lng],
         points.length ? 6 : 4
       );
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        maxZoom: 19,
-      }).addTo(m);
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19 }
+      ).addTo(m);
+      // Subtle place/road labels on top of the satellite imagery.
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, opacity: 0.9 }
+      ).addTo(m);
       const icon = L.divIcon({
         className: "",
         html: '<div style="width:16px;height:16px;border-radius:50%;background:#38BDF8;border:3px solid #0B1120;box-shadow:0 0 0 2px #38BDF8"></div>',
