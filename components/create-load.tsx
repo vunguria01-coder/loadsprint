@@ -105,34 +105,56 @@ function parseConfirmation(text: string): Parsed {
     if (all.length) out.rate = Math.max(...all);
   }
 
-  // Stops: scan around pickup/delivery keywords for the nearest City, ST
+  // Stops: scan around pickup/delivery keywords and capture the fullest address
+  // (street + city + state + zip) plus the City, ST used for the map.
   const pickKey = /(pick\s*up|pickup|pick-up|origin|shipper|ship\s*from|p\/u)/gi;
   const dropKey = /(deliver(?:y|ies)?|consignee|receiver|drop|ship\s*to|destination|d\/o)/gi;
 
-  function near(keyword: RegExp): string[] {
-    const found: string[] = [];
-    let km: RegExpExecArray | null;
+  const addrRe =
+    /(\d{1,6}\s+[A-Za-z0-9 .,'#/-]{2,45}?[, ]\s*)?([A-Z][A-Za-z .'-]+,\s*[A-Z]{2})(\s*\d{5}(?:-\d{4})?)?/;
+
+  function near(keyword: RegExp): { full: string; city: string }[] {
+    const found: { full: string; city: string }[] = [];
     const re = new RegExp(keyword.source, "gi");
+    let km: RegExpExecArray | null;
     while ((km = re.exec(text)) !== null) {
-      const window = text.slice(km.index, km.index + 120);
-      const cs = window.match(/([A-Z][A-Za-z .'-]+,\s*[A-Z]{2})/);
-      if (cs) found.push(cs[1].trim());
+      const win = text.slice(km.index, km.index + 170);
+      const a = win.match(addrRe);
+      if (a) {
+        const street = (a[1] || "").trim().replace(/[,\s]+$/, "");
+        const city = a[2].trim().replace(/\s{2,}/g, " ");
+        const zip = (a[3] || "").trim();
+        const full = [street, city + (zip ? " " + zip : "")].filter(Boolean).join(", ");
+        found.push({ full, city });
+      }
     }
-    return uniq(found);
+    // de-dupe by city so the same stop isn't counted twice
+    const seen = new Set<string>();
+    return found.filter((f) => {
+      const k = f.city.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   }
 
-  out.pickups = near(pickKey);
-  out.deliveries = near(dropKey);
+  const pickArr = near(pickKey);
+  const dropArr = near(dropKey);
 
-  // Fallback: if keyword scan missed, use the first/last City,ST in the doc
-  if (out.pickups.length === 0 || out.deliveries.length === 0) {
+  // Fallback: if a side is missing, use first/last City, ST in the document
+  if (pickArr.length === 0 || dropArr.length === 0) {
     const allCs = uniq([...text.matchAll(cityState)].map((x) => x[1]));
-    if (out.pickups.length === 0 && allCs[0]) out.pickups = [allCs[0]];
-    if (out.deliveries.length === 0 && allCs.length > 1) out.deliveries = [allCs[allCs.length - 1]];
+    if (pickArr.length === 0 && allCs[0]) pickArr.push({ full: allCs[0], city: allCs[0] });
+    if (dropArr.length === 0 && allCs.length > 1) {
+      const last = allCs[allCs.length - 1];
+      dropArr.push({ full: last, city: last });
+    }
   }
 
-  out.origin = out.pickups[0];
-  out.dest = out.deliveries[out.deliveries.length - 1];
+  out.pickups = pickArr.map((a) => a.full);
+  out.deliveries = dropArr.map((a) => a.full);
+  out.origin = pickArr[0]?.city;
+  out.dest = dropArr[dropArr.length - 1]?.city;
   return out;
 }
 
@@ -165,8 +187,10 @@ export function CreateLoad({
       const text = await extractText(file);
       const p = parseConfirmation(text);
       if (p.ref) setRef(p.ref);
-      if (p.origin) setOrigin(p.origin);
-      if (p.dest) setDest(p.dest);
+      if (p.pickups[0]) setOrigin(p.pickups[0]);
+      else if (p.origin) setOrigin(p.origin);
+      if (p.deliveries[p.deliveries.length - 1]) setDest(p.deliveries[p.deliveries.length - 1]);
+      else if (p.dest) setDest(p.dest);
       if (p.rate) setRate(String(p.rate));
       if (p.brokerName) setBrokerName(p.brokerName);
       if (p.brokerEmail) setBrokerEmail(p.brokerEmail);

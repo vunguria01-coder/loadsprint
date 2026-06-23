@@ -575,10 +575,12 @@ const US_CENTER: GeoPoint = { lat: 39.5, lng: -98.35 };
 export function geocodeCity(name: string): GeoPoint {
   if (!name) return US_CENTER;
   if (CITY[name]) return CITY[name];
-  const key = Object.keys(CITY).find(
-    (c) => c.toLowerCase() === name.trim().toLowerCase()
-  );
-  return key ? CITY[key] : US_CENTER;
+  // Pull a "City, ST" out of a longer address line if present.
+  const m = name.match(/([A-Za-z .'-]+,\s*[A-Z]{2})/);
+  const key = (m ? m[1] : name).trim();
+  if (CITY[key]) return CITY[key];
+  const ci = Object.keys(CITY).find((c) => c.toLowerCase() === key.toLowerCase());
+  return ci ? CITY[ci] : US_CENTER;
 }
 
 export function createLoad(input: {

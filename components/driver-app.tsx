@@ -36,8 +36,7 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function openDocument(dataUrl: string, name: string) {
-  // Images: open directly. PDFs/others: build a blob so mobile browsers open them.
+function viewDocument(dataUrl: string) {
   if (dataUrl.startsWith("data:image")) {
     const w = window.open();
     if (w) w.document.write(`<img src="${dataUrl}" style="max-width:100%"/>`);
@@ -52,10 +51,23 @@ function openDocument(dataUrl: string, name: string) {
     const blob = new Blob([arr], { type: mime });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch {
     const w = window.open();
     if (w) w.location.href = dataUrl;
-    void name;
+  }
+}
+
+function downloadDocument(dataUrl: string, name: string) {
+  try {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = name || "file";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch {
+    viewDocument(dataUrl);
   }
 }
 
@@ -258,17 +270,32 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
         <Muted>No files yet.</Muted>
       ) : (
         load.documents.map((d) => (
-          <button
+          <div
             key={d.id}
-            onClick={() => openDocument(d.dataUrl, d.name)}
             style={{
-              display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center",
-              background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 8, color: C.text,
+              background: C.card, border: `1px solid ${C.line}`, borderRadius: 12,
+              padding: 14, marginBottom: 8,
             }}
           >
-            <span style={{ fontSize: 15, fontWeight: 500 }}>📄 {d.name}</span>
-            <span style={{ color: C.muted, fontSize: 11, textTransform: "uppercase" }}>{d.type.replace("_", " ")}</span>
-          </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: C.text, wordBreak: "break-word" }}>📄 {d.name}</span>
+              <span style={{ color: C.muted, fontSize: 10, textTransform: "uppercase", whiteSpace: "nowrap" }}>{d.type.replace("_", " ")}</span>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button
+                onClick={() => viewDocument(d.dataUrl)}
+                style={{ flex: 1, padding: "9px 12px", borderRadius: 9, border: `1px solid ${C.line}`, background: "transparent", color: C.text, fontWeight: 600, fontSize: 14 }}
+              >
+                View
+              </button>
+              <button
+                onClick={() => downloadDocument(d.dataUrl, d.name)}
+                style={{ flex: 1, padding: "9px 12px", borderRadius: 9, border: "none", background: C.blue, color: "#fff", fontWeight: 700, fontSize: 14 }}
+              >
+                ⤓ Download
+              </button>
+            </div>
+          </div>
         ))
       )}
 
@@ -283,7 +310,7 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
           {load.photos.map((p) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={p.id} src={p.dataUrl} alt="" onClick={() => openDocument(p.dataUrl, "photo")}
+            <img key={p.id} src={p.dataUrl} alt="" onClick={() => viewDocument(p.dataUrl)}
               style={{ width: 92, height: 92, objectFit: "cover", borderRadius: 10, border: `1px solid ${C.line}` }} />
           ))}
         </div>
