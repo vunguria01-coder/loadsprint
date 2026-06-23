@@ -71,6 +71,28 @@ function downloadDocument(dataUrl: string, name: string) {
   }
 }
 
+// Open the phone's navigation. Google Maps link works on Android and iOS
+// (opens the app if installed, otherwise the browser).
+function navigateTo(address: string) {
+  const q = encodeURIComponent(address);
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=driving`, "_blank");
+}
+function navigateRoute(origin: string, dest: string) {
+  const o = encodeURIComponent(origin);
+  const d = encodeURIComponent(dest);
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}&travelmode=driving`, "_blank");
+}
+// Trucker Path is the most common truck-specific nav app among US drivers.
+function navigateTruck(address: string) {
+  const q = encodeURIComponent(address);
+  // Try the truck app; fall back to Google Maps if it isn't installed.
+  const t = Date.now();
+  window.location.href = `truckerpath://search?q=${q}`;
+  setTimeout(() => {
+    if (Date.now() - t < 1600) navigateTo(address);
+  }, 1200);
+}
+
 type Notif = { id: string; text: string; loadRef: string; createdAt: string; read: boolean };
 
 export function DriverApp({ name }: { name: string }) {
@@ -254,6 +276,11 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
     border: "none", color: "#fff", marginTop: 10,
   } as const;
 
+  const navBtn = {
+    width: "100%", padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700,
+    border: "none", cursor: "pointer",
+  } as const;
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, padding: 16, paddingBottom: 40 }}>
       <button onClick={onBack} style={{ background: "none", border: "none", color: C.sky, fontSize: 16, fontWeight: 600, marginBottom: 10 }}>
@@ -263,6 +290,40 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
       <div style={{ fontSize: 22, fontWeight: 800 }}>{load.ref}</div>
       <div style={{ fontSize: 16, marginTop: 4 }}>{load.originName} → {load.destName}</div>
       <div style={{ marginTop: 8 }}><Pill status={load.status} /></div>
+
+      {/* Navigation */}
+      <Section title="Navigation" />
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          onClick={() => navigateTo(load.originName)}
+          style={{ ...navBtn, background: C.blue, color: "#fff" }}
+        >
+          🧭 Navigate to pickup
+        </button>
+        <button
+          onClick={() => navigateTo(load.destName)}
+          style={{ ...navBtn, background: C.blue, color: "#fff" }}
+        >
+          🧭 Navigate to delivery
+        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => navigateRoute(load.originName, load.destName)}
+            style={{ ...navBtn, flex: 1, background: C.card, color: C.text, border: `1px solid ${C.line}` }}
+          >
+            Full route
+          </button>
+          <button
+            onClick={() => navigateTruck(load.destName)}
+            style={{ ...navBtn, flex: 1, background: C.card, color: C.text, border: `1px solid ${C.line}` }}
+          >
+            🚛 Truck app
+          </button>
+        </div>
+        <div style={{ color: C.muted, fontSize: 12, lineHeight: 1.4 }}>
+          “Truck app” opens Trucker Path (truck‑legal routing) if installed, otherwise Google Maps.
+        </div>
+      </div>
 
       {/* Files from dispatcher */}
       <Section title="Files from dispatcher" />
