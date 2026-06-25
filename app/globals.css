@@ -507,6 +507,18 @@ table.acc select option{background:#0b1120}
 .loc-live{color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35)}
 .loc-paused{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
 .eta-row{margin-top:10px;font-family:Manrope;font-weight:700;font-size:13.5px;color:#4ade80;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:8px 12px;display:inline-block}
+.addr-edit{margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(8,14,28,.4)}
+.addr-line{display:flex;gap:10px;align-items:baseline;padding:3px 0}
+.addr-tag{font-family:Manrope;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--sky);min-width:64px}
+.addr-val{color:#fff;font-size:14px}
+.addr-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 5px}
+.addr-form input{width:100%;font-family:Inter;font-size:14px;color:#fff;background:rgba(8,14,28,.7);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.addr-form input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.addr-pick{display:flex;align-items:center;gap:10px;padding:3px 0}
+.pdf-box{margin-bottom:14px;border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(8,14,28,.4)}
+.pdf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pdf-head b{font-size:13.5px;color:#fff}
+.pdf-text{width:100%;min-height:130px;max-height:240px;font-family:Inter,sans-serif;font-size:12.5px;line-height:1.5;color:#cdd8ea;background:rgba(5,9,18,.7);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
 .copy-link{font-size:12px;color:var(--sky);cursor:pointer;background:none;border:0;font-family:Manrope;font-weight:600}
 
 /* hidden granted tool */

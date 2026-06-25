@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, Snowflake, Play } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import { timeAgo, clockTime } from "@/lib/format";
@@ -48,6 +48,21 @@ export function LoadMap({
   const internalLayerRef = useRef(false);
 
   const isInternalUser = load.youRole !== "broker";
+  const canEditAddr = load.youRole === "dispatcher" || load.youRole === "admin";
+  const [editingAddr, setEditingAddr] = useState(false);
+  const [oName, setOName] = useState(load.originName);
+  const [dName, setDName] = useState(load.destName);
+  const [savingAddr, setSavingAddr] = useState(false);
+
+  async function saveAddresses() {
+    setSavingAddr(true);
+    try {
+      await mutate({ action: "addresses", originName: oName, destName: dName });
+      setEditingAddr(false);
+    } finally {
+      setSavingAddr(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +183,60 @@ export function LoadMap({
           ? "Current trailer position for this load."
           : "Trailer position shown to the broker."}
       </p>
+
+      {canEditAddr && (
+        <div className="addr-edit">
+          {!editingAddr ? (
+            <div className="addr-view">
+              <div className="addr-line">
+                <span className="addr-tag">Pickup</span>
+                <span className="addr-val">{load.originName}</span>
+              </div>
+              <div className="addr-line">
+                <span className="addr-tag">Delivery</span>
+                <span className="addr-val">{load.destName}</span>
+              </div>
+              <button
+                className="btn btn-ghost"
+                style={{ padding: "7px 12px", marginTop: 6 }}
+                onClick={() => {
+                  setOName(load.originName);
+                  setDName(load.destName);
+                  setEditingAddr(true);
+                }}
+              >
+                Edit addresses
+              </button>
+            </div>
+          ) : (
+            <div className="addr-form">
+              <label>Pickup address</label>
+              <input
+                value={oName}
+                onChange={(e) => setOName(e.target.value)}
+                placeholder="123 Main St, Dallas, TX 75201"
+              />
+              <label>Delivery address</label>
+              <input
+                value={dName}
+                onChange={(e) => setDName(e.target.value)}
+                placeholder="456 Oak Ave, Atlanta, GA 30301"
+              />
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn btn-primary" style={{ padding: "8px 14px" }} onClick={saveAddresses} disabled={savingAddr}>
+                  {savingAddr ? "Saving…" : "Save & re-locate"}
+                </button>
+                <button className="btn btn-ghost" style={{ padding: "8px 14px" }} onClick={() => setEditingAddr(false)} disabled={savingAddr}>
+                  Cancel
+                </button>
+              </div>
+              <p className="hint" style={{ marginTop: 8 }}>
+                Saving re-geocodes the addresses, so the map, route and ETA update.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       <div className="lmap" ref={mapEl} />
       <div className="coords">
         <span className="c">

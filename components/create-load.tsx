@@ -170,13 +170,17 @@ export function CreateLoad({
   const [ref, setRef] = useState("");
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
-  const [brokerName, setBrokerName] = useState("");
-  const [brokerEmail, setBrokerEmail] = useState("");
-  const [brokerPhone, setBrokerPhone] = useState("");
   const [rate, setRate] = useState("");
   const [stops, setStops] = useState<{ pickups: string[]; deliveries: string[] } | null>(null);
+  const [pdfText, setPdfText] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
+
+  function copyText(t: string) {
+    navigator.clipboard?.writeText(t);
+    toast("Copied", "Address copied — paste it into the field.");
+  }
 
   async function onConfirmation(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -185,6 +189,11 @@ export function CreateLoad({
     setReading(true);
     try {
       const text = await extractText(file);
+      setPdfText(text);
+      // Keep the original PDF so it can be opened/viewed in the form.
+      const reader = new FileReader();
+      reader.onload = () => setPdfUrl(String(reader.result));
+      reader.readAsDataURL(file);
       const p = parseConfirmation(text);
       if (p.ref) setRef(p.ref);
       if (p.pickups[0]) setOrigin(p.pickups[0]);
@@ -192,9 +201,6 @@ export function CreateLoad({
       if (p.deliveries[p.deliveries.length - 1]) setDest(p.deliveries[p.deliveries.length - 1]);
       else if (p.dest) setDest(p.dest);
       if (p.rate) setRate(String(p.rate));
-      if (p.brokerName) setBrokerName(p.brokerName);
-      if (p.brokerEmail) setBrokerEmail(p.brokerEmail);
-      if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
       setStops({ pickups: p.pickups, deliveries: p.deliveries });
       const np = p.pickups.length || (p.origin ? 1 : 0);
       const nd = p.deliveries.length || (p.dest ? 1 : 0);
@@ -220,7 +226,7 @@ export function CreateLoad({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ref, originName: origin, destName: dest,
-          driverName, driverEmail, brokerName, brokerEmail, brokerPhone,
+          driverName, driverEmail,
           rate: Number(rate) > 0 ? Number(rate) : undefined,
         }),
       });
@@ -252,12 +258,45 @@ export function CreateLoad({
         <div className="inv-calc" style={{ marginBottom: 14 }}>
           <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
           {stops.pickups.map((s, i) => (
-            <div key={`p${i}`} className="px" style={{ padding: "2px 0" }}>↑ {s}</div>
+            <div key={`p${i}`} className="addr-pick">
+              <span className="px" style={{ flex: 1 }}>↑ {s}</span>
+              <button type="button" className="copy-link" onClick={() => { setOrigin(s); copyText(s); }}>
+                Use as origin
+              </button>
+            </div>
           ))}
           <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
           {stops.deliveries.map((s, i) => (
-            <div key={`d${i}`} className="px" style={{ padding: "2px 0" }}>↓ {s}</div>
+            <div key={`d${i}`} className="addr-pick">
+              <span className="px" style={{ flex: 1 }}>↓ {s}</span>
+              <button type="button" className="copy-link" onClick={() => { setDest(s); copyText(s); }}>
+                Use as destination
+              </button>
+            </div>
           ))}
+        </div>
+      )}
+
+      {(pdfUrl || pdfText) && (
+        <div className="pdf-box">
+          <div className="pdf-head">
+            <b>Rate confirmation</b>
+            {pdfUrl && (
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="copy-link">
+                Open PDF ↗
+              </a>
+            )}
+          </div>
+          <textarea
+            className="pdf-text"
+            readOnly
+            value={pdfText}
+            placeholder="Extracted text will appear here — select any address and copy it."
+          />
+          <p className="hint" style={{ marginTop: 6 }}>
+            Auto-detection can miss addresses. Copy the exact pickup/delivery line
+            above and paste it into Origin / Destination, then save.
+          </p>
         </div>
       )}
 
@@ -271,24 +310,12 @@ export function CreateLoad({
           <input type="number" min={0} value={rate} onChange={(e) => setRate(e.target.value)} placeholder="2000" />
         </div>
         <div className="field">
-          <label>Origin (City, ST)</label>
+          <label>Origin (City, ST or full address)</label>
           <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Dallas, TX" />
         </div>
         <div className="field">
-          <label>Destination (City, ST)</label>
+          <label>Destination (City, ST or full address)</label>
           <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Atlanta, GA" />
-        </div>
-        <div className="field full">
-          <label>Broker name (optional)</label>
-          <input value={brokerName} onChange={(e) => setBrokerName(e.target.value)} placeholder="Broker / company" />
-        </div>
-        <div className="field">
-          <label>Broker email (optional)</label>
-          <input value={brokerEmail} onChange={(e) => setBrokerEmail(e.target.value)} placeholder="broker@email.com" />
-        </div>
-        <div className="field">
-          <label>Broker phone (optional)</label>
-          <input value={brokerPhone} onChange={(e) => setBrokerPhone(e.target.value)} placeholder="(555) 000-0000" />
         </div>
       </div>
 

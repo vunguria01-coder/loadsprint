@@ -272,6 +272,24 @@ export function setDriverShareLocation(
   return loads[i];
 }
 
+// Dispatcher edits the pickup/delivery address text. Coordinates are refreshed
+// separately (via HERE geocoding) by the caller using setLoadGeo.
+export function setLoadAddresses(
+  loadId: string,
+  originName?: string,
+  destName?: string
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  if (typeof originName === "string" && originName.trim())
+    loads[i].originName = originName.trim();
+  if (typeof destName === "string" && destName.trim())
+    loads[i].destName = destName.trim();
+  writeLoads(loads);
+  return loads[i];
+}
+
 // Persist precise geocoded coordinates for pickup/delivery (from HERE), so the
 // map, ETA and routing all use real points instead of the city-list fallback.
 export function setLoadGeo(

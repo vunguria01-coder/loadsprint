@@ -20,6 +20,7 @@ import {
   setDriverShareLocation,
   setLoadEta,
   setLoadGeo,
+  setLoadAddresses,
   etaIsStale,
   setShareLocationWithBroker,
   sendDocumentToDriver,
@@ -206,6 +207,22 @@ export async function POST(
       if (me.role === "broker")
         return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
       updated = setShareLocationWithBroker(id, !!body.value);
+      break;
+    }
+    case "addresses": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const originName = body.originName !== undefined ? String(body.originName) : undefined;
+      const destName = body.destName !== undefined ? String(body.destName) : undefined;
+      updated = setLoadAddresses(id, originName, destName);
+      // Re-geocode the new addresses so the map, routing and ETA stay correct.
+      if (updated) {
+        const [go, gd] = await Promise.all([
+          originName ? geocodeHere(updated.originName) : Promise.resolve(null),
+          destName ? geocodeHere(updated.destName) : Promise.resolve(null),
+        ]);
+        if (go || gd) updated = setLoadGeo(id, go ?? undefined, gd ?? undefined) ?? updated;
+      }
       break;
     }
     case "broker_info": {

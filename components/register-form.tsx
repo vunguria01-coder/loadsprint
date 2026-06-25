@@ -24,7 +24,6 @@ const roles: {
   desc: string;
   Icon: typeof Briefcase;
 }[] = [
-  { value: "broker", name: "Broker", desc: "Book and manage freight", Icon: Briefcase },
   { value: "dispatcher", name: "Dispatcher", desc: "Coordinate loads & carriers", Icon: Headset },
 ];
 
@@ -41,7 +40,7 @@ export function RegisterForm() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: "broker", agree: false },
+    defaultValues: { role: "dispatcher", agree: false },
   });
 
   const role = watch("role");
@@ -70,7 +69,7 @@ export function RegisterForm() {
     <div className="auth-card wide">
       <h1>Create your account</h1>
       <p className="ah-sub">
-        Join LoadSprint as a broker or dispatcher. Driver accounts will arrive
+        Join LoadSprint as a dispatcher. Driver accounts will arrive
         with our mobile app.
       </p>
 
