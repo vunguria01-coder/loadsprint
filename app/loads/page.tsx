@@ -20,11 +20,25 @@ export const metadata: Metadata = {
 };
 
 function LoadCard({ load }: { load: Load }) {
+  const sharingLive = load.driverShareLocation !== false && !!load.driverPoint;
+  const sharingPaused = load.driverShareLocation === false;
   return (
     <Link href={`/loads/${load.id}`} className="load-card">
       <div className="lc-top">
         <span className="lc-ref">{load.ref}</span>
-        <StatusChip status={load.status} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {sharingLive && (
+            <span className="loc-chip loc-live" title="Driver is sharing live GPS">
+              📍 Live
+            </span>
+          )}
+          {sharingPaused && (
+            <span className="loc-chip loc-paused" title="Driver paused location sharing">
+              📍 Paused
+            </span>
+          )}
+          <StatusChip status={load.status} />
+        </div>
       </div>
       <div className="lc-route">
         <MapPin /> {load.originName} <ArrowRight size={15} /> {load.destName}

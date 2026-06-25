@@ -503,6 +503,9 @@ table.acc select option{background:#0b1120}
 .dm-actions button:hover{border-color:rgba(56,189,248,.4)}
 .dm-actions .dm-del{color:#fca5a5}
 .dm-actions .dm-del:hover{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)}
+.loc-chip{font-family:Manrope;font-weight:700;font-size:10.5px;letter-spacing:.04em;padding:4px 8px;border-radius:999px;white-space:nowrap}
+.loc-live{color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35)}
+.loc-paused{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
 .copy-link{font-size:12px;color:var(--sky);cursor:pointer;background:none;border:0;font-family:Manrope;font-weight:600}
 
 /* hidden granted tool */

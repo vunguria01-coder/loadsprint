@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "LoadSprint Driver",
+    "slug": "loadsprint-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "loadsprintdriver",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1120"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.loadsprint.driver",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "LoadSprint uses the camera so you can photograph cargo and proof-of-delivery paperwork for your loads.",
+        "NSPhotoLibraryUsageDescription": "LoadSprint needs photo access so you can attach pictures to a load.",
+        "NSLocationWhenInUseUsageDescription": "LoadSprint shares your location with your dispatcher while you have the app open and location sharing turned on, so they can see your load's position.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["comgooglemaps", "truckerpath"]
+      }
+    },
+    "android": {
+      "package": "com.loadsprint.driver",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0B1120"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "plugins": ["expo-secure-store", "expo-image-picker", "expo-location"],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_AFTER_EAS_INIT"
+      }
+    }
+  }
+}

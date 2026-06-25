@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     status: l.status,
     docCount: l.documents.length,
     photoCount: l.photos.length,
+    sharing: l.driverShareLocation !== false,
   }));
   return NextResponse.json({ ok: true, loads, name: me.name }, { headers: h });
 }
