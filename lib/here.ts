@@ -28,7 +28,7 @@ export async function truckRoute(
   const key = process.env.HERE_API_KEY;
   if (!key) return null;
 
-  const ret = opts.withSteps ? "summary,actions,instructions" : "summary";
+  const ret = opts.withSteps ? "summary,actions" : "summary";
   const url =
     `https://router.hereapi.com/v8/routes` +
     `?transportMode=truck` +

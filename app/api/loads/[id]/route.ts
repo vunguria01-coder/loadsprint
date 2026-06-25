@@ -163,11 +163,20 @@ export async function POST(
       // Driver asks for a fresh truck route to delivery (with turn-by-turn steps).
       if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
         return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-      const from = load.driverPoint ?? currentPoint(load);
+      if (!process.env.HERE_API_KEY)
+        return NextResponse.json(
+          { ok: false, error: "Routing unavailable. Set HERE_API_KEY on the server." },
+          { status: 502 }
+        );
+      // Start from live GPS if we have it, otherwise the load's pickup point.
+      const from = load.driverPoint ?? load.origin;
       const r = await truckRoute(from, load.dest, { withSteps: true });
       if (!r)
         return NextResponse.json(
-          { ok: false, error: "Routing unavailable. Check HERE_API_KEY on the server." },
+          {
+            ok: false,
+            error: "Could not build a route. Check the pickup/delivery addresses on this load.",
+          },
           { status: 502 }
         );
       setLoadEta(id, r.distanceMeters, r.durationSeconds);
