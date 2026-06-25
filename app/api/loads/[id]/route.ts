@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requestUser } from "@/lib/guard";
 import { corsHeaders } from "@/lib/mobile-auth";
+import { truckRoute } from "@/lib/here";
 import { findByEmail } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
@@ -17,6 +18,8 @@ import {
   setInternalLocation,
   setDriverLocation,
   setDriverShareLocation,
+  setLoadEta,
+  etaIsStale,
   setShareLocationWithBroker,
   sendDocumentToDriver,
   setBrokerInfo,
@@ -149,7 +152,27 @@ export async function POST(
       if (!Number.isFinite(lat) || !Number.isFinite(lng))
         return NextResponse.json({ ok: false, error: "Bad coords" }, { status: 400 });
       updated = setDriverLocation(id, { lat, lng });
+      // Throttled truck-route ETA refresh as the driver moves.
+      if (updated && updated.driverShareLocation !== false && updated.driverPoint && etaIsStale(updated)) {
+        const r = await truckRoute(updated.driverPoint, updated.dest);
+        if (r) updated = setLoadEta(id, r.distanceMeters, r.durationSeconds) ?? updated;
+      }
       break;
+    }
+    case "route": {
+      // Driver asks for a fresh truck route to delivery (with turn-by-turn steps).
+      if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const from = load.driverPoint ?? currentPoint(load);
+      const r = await truckRoute(from, load.dest, { withSteps: true });
+      if (!r)
+        return NextResponse.json(
+          { ok: false, error: "Routing unavailable. Check HERE_API_KEY on the server." },
+          { status: 502 }
+        );
+      setLoadEta(id, r.distanceMeters, r.durationSeconds);
+      const fresh = getLoadById(id);
+      return NextResponse.json({ ok: true, route: r, load: fresh ? serialize(fresh, me) : null });
     }
     case "driver_share": {
       // Only the assigned driver toggles their own location sharing.

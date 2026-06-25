@@ -182,6 +182,19 @@ export function LoadMap({
         {statusLabel}
       </span>
 
+      {typeof load.remainingMeters === "number" &&
+        typeof load.etaSeconds === "number" &&
+        load.status !== "Delivered" &&
+        load.status !== "Closed" && (
+          <div className="eta-row">
+            🚛 {(load.remainingMeters / 1609.34).toFixed(0)} mi left · ETA ~
+            {new Date(Date.now() + load.etaSeconds * 1000).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        )}
+
       {isInternalUser && load.hasBroker && (
         <label className="sw" style={{ marginTop: 14, display: "flex" }}>
           <input

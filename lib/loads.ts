@@ -94,6 +94,10 @@ export type Load = {
   driverShareLocation?: boolean; // driver's own toggle (default true)
   driverSharePausedPoint?: GeoPoint; // frozen last point when driver turns sharing off
   driverSharePausedAt?: string;
+  // Truck route info (HERE): remaining distance + ETA to delivery.
+  remainingMeters?: number;
+  etaSeconds?: number; // remaining driving time in seconds
+  etaCalcAt?: string; // when it was last computed (throttle HERE calls)
   status: LoadStatus;
   documents: LoadDocument[];
   photos: LoadPhoto[];
@@ -266,6 +270,28 @@ export function setDriverShareLocation(
   }
   writeLoads(loads);
   return loads[i];
+}
+
+// Store the latest truck-route remaining distance + ETA (computed via HERE).
+export function setLoadEta(
+  loadId: string,
+  remainingMeters: number,
+  etaSeconds: number
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  loads[i].remainingMeters = remainingMeters;
+  loads[i].etaSeconds = etaSeconds;
+  loads[i].etaCalcAt = new Date().toISOString();
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Whether the ETA is stale enough to recompute (throttle HERE usage).
+export function etaIsStale(load: Load, maxAgeSeconds = 180): boolean {
+  if (!load.etaCalcAt) return true;
+  return Date.now() - new Date(load.etaCalcAt).getTime() > maxAgeSeconds * 1000;
 }
 
 // Dispatcher sets/updates an invoice cell (broker or driver). Amount is manual

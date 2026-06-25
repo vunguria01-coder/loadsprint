@@ -506,6 +506,7 @@ table.acc select option{background:#0b1120}
 .loc-chip{font-family:Manrope;font-weight:700;font-size:10.5px;letter-spacing:.04em;padding:4px 8px;border-radius:999px;white-space:nowrap}
 .loc-live{color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35)}
 .loc-paused{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
+.eta-row{margin-top:10px;font-family:Manrope;font-weight:700;font-size:13.5px;color:#4ade80;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:8px 12px;display:inline-block}
 .copy-link{font-size:12px;color:var(--sky);cursor:pointer;background:none;border:0;font-family:Manrope;font-weight:600}
 
 /* hidden granted tool */
