@@ -12,6 +12,29 @@ const TRUCK = {
 
 export type RouteStep = { text: string; lengthMeters: number };
 
+// Convert a free-form address ("123 Main St, Dallas, TX") into coordinates via
+// HERE Geocoding. Returns null if no key, no result, or on error.
+export async function geocodeHere(address: string): Promise<GeoPoint | null> {
+  const key = process.env.HERE_API_KEY;
+  if (!key || !address.trim()) return null;
+  const url =
+    `https://geocode.search.hereapi.com/v1/geocode` +
+    `?q=${encodeURIComponent(address.trim())}` +
+    `&in=countryCode:USA,CAN` +
+    `&limit=1` +
+    `&apikey=${key}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pos = data?.items?.[0]?.position;
+    if (!pos || typeof pos.lat !== "number" || typeof pos.lng !== "number") return null;
+    return { lat: pos.lat, lng: pos.lng };
+  } catch {
+    return null;
+  }
+}
+
 export type TruckRoute = {
   distanceMeters: number;
   durationSeconds: number;

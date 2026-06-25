@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requestUser } from "@/lib/guard";
 import { corsHeaders } from "@/lib/mobile-auth";
-import { truckRoute } from "@/lib/here";
+import { truckRoute, geocodeHere } from "@/lib/here";
 import { findByEmail } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
@@ -19,6 +19,7 @@ import {
   setDriverLocation,
   setDriverShareLocation,
   setLoadEta,
+  setLoadGeo,
   etaIsStale,
   setShareLocationWithBroker,
   sendDocumentToDriver,
@@ -111,7 +112,7 @@ export async function POST(
   const me = await requestUser(req);
   if (!me) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const load = getLoadById(id);
+  let load = getLoadById(id);
   if (!load) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   if (!canAccess(load, me)) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
 
@@ -168,6 +169,17 @@ export async function POST(
           { ok: false, error: "Routing unavailable. Set HERE_API_KEY on the server." },
           { status: 502 }
         );
+      // Resolve precise coordinates from the typed addresses (HERE geocoding),
+      // persist them, and use them — so any street address works, not just the
+      // built-in city list.
+      const [geoOrigin, geoDest] = await Promise.all([
+        geocodeHere(load.originName),
+        geocodeHere(load.destName),
+      ]);
+      if (geoOrigin || geoDest) {
+        const upd = setLoadGeo(id, geoOrigin ?? undefined, geoDest ?? undefined);
+        if (upd) load = upd;
+      }
       // Start from live GPS if we have it, otherwise the load's pickup point.
       const from = load.driverPoint ?? load.origin;
       const r = await truckRoute(from, load.dest, { withSteps: true });

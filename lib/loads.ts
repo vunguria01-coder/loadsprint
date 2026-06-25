@@ -272,6 +272,22 @@ export function setDriverShareLocation(
   return loads[i];
 }
 
+// Persist precise geocoded coordinates for pickup/delivery (from HERE), so the
+// map, ETA and routing all use real points instead of the city-list fallback.
+export function setLoadGeo(
+  loadId: string,
+  origin?: GeoPoint,
+  dest?: GeoPoint
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  if (origin) loads[i].origin = origin;
+  if (dest) loads[i].dest = dest;
+  writeLoads(loads);
+  return loads[i];
+}
+
 // Store the latest truck-route remaining distance + ETA (computed via HERE).
 export function setLoadEta(
   loadId: string,
