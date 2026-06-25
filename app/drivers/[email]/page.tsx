@@ -52,6 +52,8 @@ export default async function DriverDetailPage({
     originName: l.originName,
     destName: l.destName,
     status: l.status,
+    remainingMeters: l.remainingMeters,
+    etaSeconds: l.etaSeconds,
   }));
 
   return (

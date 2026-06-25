@@ -4,9 +4,10 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutGrid, Users, History, FileText, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 
@@ -64,6 +65,7 @@ export function Cabinet({
 }) {
   const [open, setOpen] = useState(false); // mobile sidebar
   const [acc, setAcc] = useState(false); // account dropdown
+  const router = useRouter();
   const items = navForRole(role);
   const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
 
@@ -105,6 +107,9 @@ export function Cabinet({
       <div className="cab-main">
         <header className="cab-top">
           <button className="cab-burger" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={22} /></button>
+          <button className="cab-back" onClick={() => router.back()} aria-label="Go back">
+            <ArrowLeft size={18} /> <span>Back</span>
+          </button>
           <div style={{ flex: 1 }} />
           <NotificationsBell />
           <div className="cab-acc">

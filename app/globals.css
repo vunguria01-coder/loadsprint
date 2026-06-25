@@ -519,6 +519,11 @@ table.acc select option{background:#0b1120}
 .pdf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .pdf-head b{font-size:13.5px;color:#fff}
 .pdf-text{width:100%;min-height:130px;max-height:240px;font-family:Inter,sans-serif;font-size:12.5px;line-height:1.5;color:#cdd8ea;background:rgba(5,9,18,.7);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+.cab-back{display:inline-flex;align-items:center;gap:6px;background:rgba(148,170,205,.06);border:1px solid var(--line);color:#fff;font-family:Inter;font-size:13.5px;font-weight:600;padding:8px 13px;border-radius:10px;cursor:pointer;margin-left:6px}
+.cab-back:hover{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.08);color:var(--sky)}
+.load-card-click:hover{border-color:rgba(56,189,248,.4)}
+.lc-remaining{margin-top:6px;font-family:Manrope;font-weight:700;font-size:12.5px;color:#4ade80}
+.lc-remaining.muted{color:var(--muted-2);font-weight:600}
 .copy-link{font-size:12px;color:var(--sky);cursor:pointer;background:none;border:0;font-family:Manrope;font-weight:600}
 
 /* hidden granted tool */
