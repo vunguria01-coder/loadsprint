@@ -7,4 +7,5 @@ export type LoadView = Load & {
   youRole: string;
   brokerPaused?: boolean;
   brokerPausedLabel?: string;
+  driverPaused?: boolean;
 };

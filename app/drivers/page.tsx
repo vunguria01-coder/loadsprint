@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, Users, ChevronRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
-import { AddDriver } from "@/components/add-driver";
+import { DriverManager } from "@/components/driver-manager";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
@@ -39,24 +39,21 @@ export default async function DriversPage() {
   return (
     <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
-          <div className="shead" style={{ marginBottom: 20 }}>
-            <span className="eyebrow">Dispatch</span>
-            <h2 className="h2">
-              <Users size={22} style={{ verticalAlign: "-3px", marginRight: 8 }} />
-              Drivers
-            </h2>
-            <p className="lead">Tap a driver to see their loads, GPS, and create a new load.</p>
-          </div>
-
-          <AddDriver invites={invites} />
-
-          <div className="shead" style={{ margin: "28px 0 14px" }}>
-            <h2 className="h2" style={{ fontSize: 20 }}>Your drivers</h2>
+          <div className="shead" style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <span className="eyebrow">Dispatch</span>
+              <h2 className="h2">
+                <Users size={22} style={{ verticalAlign: "-3px", marginRight: 8 }} />
+                Drivers
+              </h2>
+              <p className="lead">Tap a driver to see their loads, GPS, and create a new load.</p>
+            </div>
+            <DriverManager invites={invites} />
           </div>
 
           {drivers.length === 0 ? (
             <p className="px">
-              No drivers yet. Use “Add a driver” above to invite your first one.
+              No drivers yet. Use “Add driver” to invite your first one.
             </p>
           ) : (
             <div className="load-list">

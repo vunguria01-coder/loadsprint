@@ -88,6 +88,12 @@ export type Load = {
   // Internal-only location layer for dispatcher + driver. NEVER serialized to a broker.
   internalPoint?: GeoPoint;
   internalUpdatedAt?: string;
+  // Real GPS reported by the driver's phone (foreground). Driver controls sharing.
+  driverPoint?: GeoPoint;
+  driverLocationAt?: string;
+  driverShareLocation?: boolean; // driver's own toggle (default true)
+  driverSharePausedPoint?: GeoPoint; // frozen last point when driver turns sharing off
+  driverSharePausedAt?: string;
   status: LoadStatus;
   documents: LoadDocument[];
   photos: LoadPhoto[];
@@ -171,8 +177,17 @@ function writeNotifs(n: Notification[]) {
 
 /* ---------- geo / location ---------- */
 export function currentPoint(load: Load): GeoPoint {
-  // While held, show the real parked position captured when the hold started.
+  // While held (privacy hold), show the real parked position captured at hold start.
   if (load.held && load.heldPoint) return load.heldPoint;
+  // Driver turned their own sharing OFF: freeze at the last reported point.
+  if (load.driverShareLocation === false && load.driverSharePausedPoint) {
+    return load.driverSharePausedPoint;
+  }
+  // Driver is sharing real GPS: that is the true trailer position.
+  if (load.driverShareLocation !== false && load.driverPoint) {
+    return load.driverPoint;
+  }
+  // Fallback: simulated position advancing along the route.
   return {
     lat: load.origin.lat + (load.dest.lat - load.origin.lat) * load.progress,
     lng: load.origin.lng + (load.dest.lng - load.origin.lng) * load.progress,
@@ -210,6 +225,45 @@ export function setInternalLocation(
   if (i === -1) return undefined;
   loads[i].internalPoint = point;
   loads[i].internalUpdatedAt = new Date().toISOString();
+  writeLoads(loads);
+  return loads[i];
+}
+
+// The driver's phone reports its real GPS position (foreground). Stored only when
+// the driver is currently sharing; ignored otherwise.
+export function setDriverLocation(
+  loadId: string,
+  point: GeoPoint
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  // Respect the driver's own toggle: if they've turned sharing off, don't update.
+  if (loads[i].driverShareLocation === false) return loads[i];
+  loads[i].driverPoint = point;
+  loads[i].driverLocationAt = new Date().toISOString();
+  writeLoads(loads);
+  return loads[i];
+}
+
+// The driver's own show/hide toggle. When turned OFF, we freeze the last known
+// point so the dispatcher keeps seeing where the driver was, clearly labeled.
+export function setDriverShareLocation(
+  loadId: string,
+  value: boolean
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  loads[i].driverShareLocation = value;
+  if (!value) {
+    loads[i].driverSharePausedPoint =
+      loads[i].driverPoint ?? currentPoint(loads[i]);
+    loads[i].driverSharePausedAt = new Date().toISOString();
+  } else {
+    loads[i].driverSharePausedPoint = undefined;
+    loads[i].driverSharePausedAt = undefined;
+  }
   writeLoads(loads);
   return loads[i];
 }

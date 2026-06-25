@@ -9,7 +9,7 @@ import { subDaysLeft } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { TierBadge } from "@/components/tier-badge";
 import { LogoutButton } from "@/components/logout-button";
-import { AddDriver } from "@/components/add-driver";
+import { DriverManager } from "@/components/driver-manager";
 import { NotificationsBell } from "@/components/notifications-bell";
 
 export const metadata: Metadata = {
@@ -116,7 +116,11 @@ export default async function DashboardPage() {
             })}
           </div>
 
-          {me.role === "dispatcher" && <AddDriver invites={invites} />}
+          {me.role === "dispatcher" && (
+            <div style={{ marginTop: 24 }}>
+              <DriverManager invites={invites} />
+            </div>
+          )}
 
           <div className="dash-note">
             Open <strong>Loads</strong> to track location, manage documents and

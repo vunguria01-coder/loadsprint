@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { inviteSchema } from "@/lib/schemas";
 import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
-import { createInvite, getInvitesBy } from "@/lib/invites";
+import { createInvite, getInvitesBy, deleteInvite } from "@/lib/invites";
 import { driverLimitForTier, getLimits } from "@/lib/settings";
 
 const APP_BASE = process.env.DRIVER_APP_URL || "https://loadsprint.app/driver";
@@ -49,4 +49,23 @@ export async function POST(req: Request) {
     extra,
     extraPrice,
   });
+}
+
+export async function DELETE(req: Request) {
+  const me = await currentUser();
+  if (!me) {
+    return NextResponse.json({ ok: false, error: "Please sign in first." }, { status: 401 });
+  }
+  if (me.role !== "dispatcher" && me.role !== "admin") {
+    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+  const { id } = await req.json().catch(() => ({ id: "" }));
+  if (!id) {
+    return NextResponse.json({ ok: false, error: "Missing id" }, { status: 400 });
+  }
+  const ok = deleteInvite(String(id), me.id, me.role === "admin");
+  if (!ok) {
+    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true });
 }

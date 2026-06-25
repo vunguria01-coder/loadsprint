@@ -15,6 +15,8 @@ import {
   addMessage,
   markMessagesRead,
   setInternalLocation,
+  setDriverLocation,
+  setDriverShareLocation,
   setShareLocationWithBroker,
   sendDocumentToDriver,
   setBrokerInfo,
@@ -56,6 +58,8 @@ function serialize(load: Load, user: User) {
     delete base.internalUpdatedAt;
     delete base.heldPoint;
     delete base.sharePausedPoint;
+    delete base.driverPoint;
+    delete base.driverSharePausedPoint;
     // The driver-pay invoice is internal — never shown to a broker.
     delete base.driverInvoice;
     if (load.shareLocationWithBroker === false) {
@@ -67,6 +71,12 @@ function serialize(load: Load, user: User) {
     } else if (load.held) {
       base.brokerPaused = true;
       base.brokerPausedLabel = "Parked at rest stop";
+    }
+  } else {
+    // Dispatcher / driver: surface the driver's own sharing state for the UI.
+    if (load.driverShareLocation === false) {
+      base.driverPaused = true;
+      base.driverLocationAt = load.driverSharePausedAt ?? load.driverLocationAt;
     }
   }
   // A driver doesn't need the broker-billing invoice.
@@ -128,6 +138,24 @@ export async function POST(
       if (!Number.isFinite(lat) || !Number.isFinite(lng))
         return NextResponse.json({ ok: false, error: "Bad coords" }, { status: 400 });
       updated = setInternalLocation(id, { lat, lng });
+      break;
+    }
+    case "driver_location": {
+      // Only the driver assigned to this load may report GPS.
+      if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const lat = Number(body.lat);
+      const lng = Number(body.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng))
+        return NextResponse.json({ ok: false, error: "Bad coords" }, { status: 400 });
+      updated = setDriverLocation(id, { lat, lng });
+      break;
+    }
+    case "driver_share": {
+      // Only the assigned driver toggles their own location sharing.
+      if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = setDriverShareLocation(id, !!body.value);
       break;
     }
     case "share": {

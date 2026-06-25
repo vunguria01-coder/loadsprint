@@ -89,3 +89,13 @@ export function claimInvite(code: string): DriverInvite | undefined {
   save(invites);
   return inv;
 }
+
+// Remove an invite (only the dispatcher who created it, or admin via bypass).
+export function deleteInvite(id: string, userId: string, isAdmin = false): boolean {
+  const invites = getInvites();
+  const inv = invites.find((i) => i.id === id);
+  if (!inv) return false;
+  if (!isAdmin && inv.createdBy !== userId) return false;
+  save(invites.filter((i) => i.id !== id));
+  return true;
+}

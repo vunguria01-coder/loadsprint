@@ -146,11 +146,16 @@ export function LoadMap({
   const isBroker = load.youRole === "broker";
   const brokerPaused = isBroker && load.brokerPaused;
   const internalParked = !isBroker && load.held;
-  const showPaused = brokerPaused || internalParked;
+  const driverPaused = !isBroker && load.driverPaused;
+  const showPaused = brokerPaused || internalParked || driverPaused;
   const statusLabel = brokerPaused
     ? `${load.brokerPausedLabel} · last fix ${timeAgo(load.locationUpdatedAt)}`
     : internalParked
     ? `Parked · last fix ${timeAgo(load.heldAt || load.locationUpdatedAt)}`
+    : driverPaused
+    ? `Driver paused location · last fix ${timeAgo(load.driverLocationAt || load.locationUpdatedAt)}`
+    : load.driverPoint
+    ? `Live GPS · updated ${timeAgo(load.driverLocationAt || load.locationUpdatedAt)}`
     : `Live · updated ${timeAgo(load.locationUpdatedAt)}`;
 
   return (
