@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, Users, ChevronRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
+import { AddDriver } from "@/components/add-driver";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
@@ -47,10 +48,15 @@ export default async function DriversPage() {
             <p className="lead">Tap a driver to see their loads, GPS, and create a new load.</p>
           </div>
 
+          <AddDriver invites={invites} />
+
+          <div className="shead" style={{ margin: "28px 0 14px" }}>
+            <h2 className="h2" style={{ fontSize: 20 }}>Your drivers</h2>
+          </div>
+
           {drivers.length === 0 ? (
             <p className="px">
-              No drivers yet. Go to your <Link href="/dashboard" className="link">dashboard</Link> and use
-              “Add a driver” to invite one.
+              No drivers yet. Use “Add a driver” above to invite your first one.
             </p>
           ) : (
             <div className="load-list">

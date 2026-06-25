@@ -59,6 +59,11 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
     toast("Link copied", "App invite link is on your clipboard.");
   }
 
+  function copyCode(code: string) {
+    navigator.clipboard?.writeText(code);
+    toast("Code copied", "Send this code to your driver — they enter it in the app.");
+  }
+
   return (
     <div className="add-driver">
       <h3>
@@ -66,8 +71,9 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
         Add a driver
       </h3>
       <p className="sx">
-        Enter a driver&apos;s email. They get a link to the LoadSprint driver app;
-        opening it pre-fills a join code so they can register.
+        Enter the driver&apos;s email and send the invite. You&apos;ll get a join
+        code — give it to your driver, and they enter it in the LoadSprint driver
+        app under &ldquo;Register with code.&rdquo;
       </p>
       <div className="row">
         <input
@@ -88,10 +94,17 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
             <div className="invite" key={iv.id}>
               <span className="ie">{iv.email}</span>
               <span className="ic">{iv.code}</span>
-              <button className="copy-link" onClick={() => copyLink(iv.code)}>
-                Copy app link
-              </button>
-              <span className="ist">{iv.status}</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="copy-link" onClick={() => copyCode(iv.code)}>
+                  Copy code
+                </button>
+                <button className="copy-link" onClick={() => copyLink(iv.code)}>
+                  Copy app link
+                </button>
+              </div>
+              <span className={`ist ist-${iv.status}`}>
+                {iv.status === "claimed" ? "✓ registered" : "pending"}
+              </span>
             </div>
           ))}
         </div>
