@@ -62,6 +62,8 @@ button{font-family:inherit}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 40px -10px rgba(56,189,248,.7)}
 .btn-ghost{background:rgba(148,170,205,.06);color:#fff;border:1px solid var(--line)}
 .btn-ghost:hover{background:rgba(148,170,205,.12);border-color:rgba(56,189,248,.4)}
+.btn-signin{background:rgba(56,189,248,.12);color:#fff;border:1px solid rgba(56,189,248,.55);box-shadow:0 0 18px -2px rgba(56,189,248,.5)}
+.btn-signin:hover{background:rgba(56,189,248,.22);border-color:var(--sky);box-shadow:0 0 26px 0 rgba(56,189,248,.7);transform:translateY(-2px)}
 .btn-block{width:100%;justify-content:center}
 .btn[disabled]{opacity:.6;cursor:not-allowed}
 

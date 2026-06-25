@@ -12,6 +12,43 @@ const DOC_LABELS: Record<string, string> = {
   attachment: "Attachment",
 };
 
+// Download a data-URL document to the device.
+function downloadDataUrl(dataUrl: string, name: string) {
+  try {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = name || "file";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch {
+    window.open(dataUrl, "_blank");
+  }
+}
+
+// Open a data-URL document in a real browser tab. Phones often refuse to render
+// a PDF inside an in-page <iframe>, so this gives a reliable full-screen view.
+function openInTab(dataUrl: string) {
+  if (dataUrl.startsWith("data:image")) {
+    const w = window.open();
+    if (w) w.document.write(`<img src="${dataUrl}" style="max-width:100%"/>`);
+    return;
+  }
+  try {
+    const [meta, b64] = dataUrl.split(",");
+    const mime = meta.slice(5, meta.indexOf(";")) || "application/pdf";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const blob = new Blob([arr], { type: mime });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch {
+    window.open(dataUrl, "_blank");
+  }
+}
+
 export function LoadDocuments({
   load,
   mutate,
@@ -140,7 +177,21 @@ export function LoadDocuments({
           <div className="box" onClick={(e) => e.stopPropagation()}>
             <div className="mh">
               <b>{open.name}</b>
-              <button onClick={() => setOpen(null)}>Close ✕</button>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <button
+                  onClick={() => openInTab(open.dataUrl)}
+                  style={{ color: "var(--sky)" }}
+                >
+                  Open in tab ↗
+                </button>
+                <button
+                  onClick={() => downloadDataUrl(open.dataUrl, open.name)}
+                  style={{ color: "var(--sky)" }}
+                >
+                  Download ⤓
+                </button>
+                <button onClick={() => setOpen(null)}>Close ✕</button>
+              </div>
             </div>
             {open.dataUrl.startsWith("data:image") ? (
               <img src={open.dataUrl} alt={open.name} />

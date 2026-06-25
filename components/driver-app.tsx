@@ -132,10 +132,27 @@ export function DriverApp({ name }: { name: string }) {
     setNotifs((n) => n.map((x) => ({ ...x, read: true })));
   }
 
+  // Make the phone's hardware/browser Back button close an open load and return
+  // to the list, instead of leaving the app and forcing a fresh sign-in.
+  useEffect(() => {
+    function onPop() {
+      setOpenId(null);
+      fetchList();
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [fetchList]);
+
+  function openLoad(id: string) {
+    // Add a history entry so Back pops back to the list rather than the site.
+    window.history.pushState({ load: id }, "");
+    setOpenId(id);
+  }
+
   const unread = notifs.filter((n) => !n.read);
 
   if (openId) {
-    return <DriverLoad loadId={openId} onBack={() => { setOpenId(null); fetchList(); }} />;
+    return <DriverLoad loadId={openId} onBack={() => window.history.back()} />;
   }
 
   return (
@@ -182,7 +199,7 @@ export function DriverApp({ name }: { name: string }) {
         list.map((l) => (
           <button
             key={l.id}
-            onClick={() => setOpenId(l.id)}
+            onClick={() => openLoad(l.id)}
             style={{
               display: "block", width: "100%", textAlign: "left", background: C.card,
               border: `1px solid ${C.line}`, borderRadius: 16, padding: 18, marginBottom: 12, color: C.text,

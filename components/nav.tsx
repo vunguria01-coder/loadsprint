@@ -54,7 +54,7 @@ export function Nav({ authed = false }: { authed?: boolean }) {
               </a>
             ) : (
               <>
-                <a href="/login" className="btn btn-ghost btn-quote">
+                <a href="/login" className="btn btn-signin btn-quote">
                   Sign in
                 </a>
                 <a href="/register" className="btn btn-ghost btn-quote">
@@ -99,7 +99,7 @@ export function Nav({ authed = false }: { authed?: boolean }) {
           <>
             <a
               href="/login"
-              className="btn btn-ghost"
+              className="btn btn-signin"
               onClick={() => setOpen(false)}
             >
               Sign in
