@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@/lib/guard";
+import { requestUser } from "@/lib/guard";
 import { getNotifications, markNotificationsRead } from "@/lib/loads";
+import { corsHeaders } from "@/lib/mobile-auth";
 
-export async function GET() {
-  const me = await currentUser();
-  if (!me) return NextResponse.json({ ok: false, items: [] }, { status: 401 });
-  const items = getNotifications(me.id);
-  return NextResponse.json({
-    ok: true,
-    items,
-    unread: items.filter((n) => !n.read).length,
-  });
+export async function OPTIONS() {
+  return new NextResponse(null, { headers: corsHeaders() });
 }
 
-export async function POST() {
-  const me = await currentUser();
-  if (!me) return NextResponse.json({ ok: false }, { status: 401 });
+export async function GET(req: Request) {
+  const h = corsHeaders();
+  const me = await requestUser(req);
+  if (!me) return NextResponse.json({ ok: false, items: [] }, { status: 401, headers: h });
+  const items = getNotifications(me.id);
+  return NextResponse.json(
+    { ok: true, items, unread: items.filter((n) => !n.read).length },
+    { headers: h }
+  );
+}
+
+export async function POST(req: Request) {
+  const h = corsHeaders();
+  const me = await requestUser(req);
+  if (!me) return NextResponse.json({ ok: false }, { status: 401, headers: h });
   markNotificationsRead(me.id);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true }, { headers: h });
 }

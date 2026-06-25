@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@/lib/guard";
+import { requestUser } from "@/lib/guard";
+import { corsHeaders } from "@/lib/mobile-auth";
 import { findByEmail } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
@@ -28,6 +29,10 @@ import {
   type DocType,
   type PhotoPhase,
 } from "@/lib/loads";
+
+export async function OPTIONS() {
+  return new NextResponse(null, { headers: corsHeaders() });
+}
 
 function canAccess(load: Load, user: User) {
   if (user.role === "admin") return true;
@@ -75,7 +80,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const me = await currentUser();
+  const me = await requestUser(req);
   if (!me) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const { searchParams } = new URL(req.url);
@@ -90,7 +95,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const me = await currentUser();
+  const me = await requestUser(req);
   if (!me) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const load = getLoadById(id);
@@ -263,10 +268,10 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const me = await currentUser();
+  const me = await requestUser(req);
   if (!me) return NextResponse.json({ ok: false }, { status: 401 });
   if (me.role !== "dispatcher" && me.role !== "admin")
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
