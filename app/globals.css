@@ -525,7 +525,25 @@ table.acc select option{background:#0b1120}
 .pdfp-picked{flex:1;min-width:160px;font-size:13px;color:#fff;font-weight:600;word-break:break-word}
 .pdfp-hint{color:var(--muted-2);font-weight:400}
 .pdfp-actions{display:flex;gap:6px;flex-wrap:wrap}
-.pdfp-pages{max-height:520px;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:14px;align-items:center}
+.pdfp-pages{max-height:620px;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.pdfp-zoom{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:rgba(8,14,28,.6)}
+.pdfp-zbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:rgba(148,170,205,.06);color:#fff;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pdfp-zbtn:hover{border-color:var(--sky);color:var(--sky)}
+.pdfp-zlabel{font-family:Manrope;font-weight:700;font-size:12.5px;color:#fff;min-width:42px;text-align:center}
+.pdfp-zreset{margin-left:4px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);font-size:12px;cursor:pointer}
+.pdfp-zreset:hover{color:var(--sky);border-color:var(--sky)}
+.pdfp-pcount{margin-left:auto;font-family:Manrope;font-size:12px;color:var(--muted-2)}
+.pdfp-page-outer{position:relative;flex:0 0 auto}
+.ai-card{margin-bottom:14px;border:1px solid rgba(56,189,248,.35);border-radius:12px;padding:14px;background:rgba(56,189,248,.05)}
+.ai-head{font-size:13.5px;color:#fff;margin-bottom:10px}
+.ai-badge{display:inline-block;background:var(--sky);color:#06283d;font-family:Manrope;font-weight:800;font-size:10.5px;letter-spacing:.05em;padding:2px 7px;border-radius:6px;margin-right:8px}
+.ai-stop{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid var(--line-2)}
+.ai-dot{font-weight:800;font-size:14px}
+.ai-dot.up{color:#4ade80}
+.ai-dot.down{color:#fbbf24}
+.ai-stop-body{flex:1;min-width:0}
+.ai-addr{font-size:13.5px;color:#fff}
+.ai-time{font-size:11.5px;color:var(--muted-2);margin-top:2px;font-family:Manrope}
 .pdfp-page{position:relative;flex:0 0 auto;box-shadow:0 8px 24px -10px rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
 .pdfp-page img{display:block;width:100%;height:auto}
 .pdfp-span{position:absolute;background:transparent;border:0;padding:0;margin:0;cursor:pointer;border-radius:2px}

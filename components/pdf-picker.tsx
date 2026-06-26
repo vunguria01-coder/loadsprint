@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 const PDF_VER = "3.11.174";
 
-// Lazy-load pdf.js from CDN (browser needs internet).
 function loadPdfJs(): Promise<any> {
   return new Promise((resolve, reject) => {
     const w = window as any;
@@ -38,6 +37,7 @@ export function PdfPicker({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState("");
+  const [zoom, setZoom] = useState(1);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -53,9 +53,9 @@ export function PdfPicker({
         const arr = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         const pdf = await lib.getDocument({ data: arr }).promise;
-        const scale = 1.4;
+        const scale = 1.5;
         const out: RenderedPage[] = [];
-        const maxPages = Math.min(pdf.numPages, 3);
+        const maxPages = Math.min(pdf.numPages, 6);
         for (let n = 1; n <= maxPages; n++) {
           const page = await pdf.getPage(n);
           const viewport = page.getViewport({ scale });
@@ -81,7 +81,12 @@ export function PdfPicker({
               height: h,
             });
           }
-          out.push({ width: viewport.width, height: viewport.height, dataUrl: canvas.toDataURL("image/jpeg", 0.7), spans });
+          out.push({
+            width: viewport.width,
+            height: viewport.height,
+            dataUrl: canvas.toDataURL("image/jpeg", 0.72),
+            spans,
+          });
         }
         if (mounted.current) {
           setPages(out);
@@ -113,55 +118,43 @@ export function PdfPicker({
           {picked ? picked : <span className="pdfp-hint">Click words in the PDF to build an address</span>}
         </div>
         <div className="pdfp-actions">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ padding: "6px 11px" }}
-            disabled={!picked}
-            onClick={() => onOrigin(picked)}
-          >
-            → Origin
+          <button type="button" className="btn btn-ghost" style={{ padding: "6px 11px" }} disabled={!picked} onClick={() => onOrigin(picked)}>
+            &rarr; Origin
           </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ padding: "6px 11px" }}
-            disabled={!picked}
-            onClick={() => onDestination(picked)}
-          >
-            → Destination
+          <button type="button" className="btn btn-ghost" style={{ padding: "6px 11px" }} disabled={!picked} onClick={() => onDestination(picked)}>
+            &rarr; Destination
           </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ padding: "6px 11px" }}
-            disabled={!picked}
-            onClick={() => setPicked("")}
-          >
+          <button type="button" className="btn btn-ghost" style={{ padding: "6px 11px" }} disabled={!picked} onClick={() => setPicked("")}>
             Clear
           </button>
         </div>
       </div>
 
+      <div className="pdfp-zoom">
+        <button type="button" className="pdfp-zbtn" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.2).toFixed(2)))} aria-label="Zoom out">&minus;</button>
+        <span className="pdfp-zlabel">{Math.round(zoom * 100)}%</span>
+        <button type="button" className="pdfp-zbtn" onClick={() => setZoom((z) => Math.min(2.4, +(z + 0.2).toFixed(2)))} aria-label="Zoom in">+</button>
+        <button type="button" className="pdfp-zreset" onClick={() => setZoom(1)}>Fit</button>
+        <span className="pdfp-pcount">{pages.length} page{pages.length === 1 ? "" : "s"}</span>
+      </div>
+
       <div className="pdfp-pages">
         {pages.map((pg, i) => (
-          <div
-            key={i}
-            className="pdfp-page"
-            style={{ width: pg.width, height: pg.height }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={pg.dataUrl} alt={`Page ${i + 1}`} width={pg.width} height={pg.height} />
-            {pg.spans.map((sp, j) => (
-              <button
-                key={j}
-                type="button"
-                className="pdfp-span"
-                style={{ left: sp.left, top: sp.top, width: sp.width, height: sp.height }}
-                title={sp.text}
-                onClick={() => addSpan(sp.text)}
-              />
-            ))}
+          <div key={i} className="pdfp-page-outer" style={{ width: pg.width * zoom, height: pg.height * zoom }}>
+            <div className="pdfp-page" style={{ width: pg.width, height: pg.height, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={pg.dataUrl} alt={`Page ${i + 1}`} width={pg.width} height={pg.height} />
+              {pg.spans.map((sp, j) => (
+                <button
+                  key={j}
+                  type="button"
+                  className="pdfp-span"
+                  style={{ left: sp.left, top: sp.top, width: sp.width, height: sp.height }}
+                  title={sp.text}
+                  onClick={() => addSpan(sp.text)}
+                />
+              ))}
+            </div>
           </div>
         ))}
       </div>

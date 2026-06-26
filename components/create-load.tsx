@@ -159,6 +159,9 @@ function parseConfirmation(text: string): Parsed {
   return out;
 }
 
+type AiStop = { address: string; city: string; time?: string };
+type AiExtract = { ref?: string; rate?: number; pickups: AiStop[]; dropoffs: AiStop[] };
+
 export function CreateLoad({
   driverName,
   driverEmail,
@@ -173,6 +176,7 @@ export function CreateLoad({
   const [dest, setDest] = useState("");
   const [rate, setRate] = useState("");
   const [stops, setStops] = useState<{ pickups: string[]; deliveries: string[] } | null>(null);
+  const [ai, setAi] = useState<AiExtract | null>(null);
   const [pdfUrl, setPdfUrl] = useState("");
   const [pdfName, setPdfName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -203,6 +207,34 @@ export function CreateLoad({
       else if (p.dest) setDest(p.dest);
       if (p.rate) setRate(String(p.rate));
       setStops({ pickups: p.pickups, deliveries: p.deliveries });
+
+      // Then ask the AI to read it precisely (server-side, needs ANTHROPIC_API_KEY).
+      try {
+        const aiRes = await fetch("/api/ai/rate-con", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const aiData = await aiRes.json();
+        if (aiRes.ok && aiData.ok && aiData.result) {
+          const r = aiData.result as AiExtract;
+          setAi(r);
+          if (r.ref) setRef(r.ref);
+          if (r.rate) setRate(String(r.rate));
+          const firstPick = r.pickups[0];
+          const lastDrop = r.dropoffs[r.dropoffs.length - 1];
+          if (firstPick) setOrigin(firstPick.address || firstPick.city);
+          if (lastDrop) setDest(lastDrop.address || lastDrop.city);
+          toast(
+            "AI read the rate con",
+            `Found ${r.pickups.length} pickup(s) and ${r.dropoffs.length} drop-off(s). Please verify.`
+          );
+          return;
+        }
+      } catch {
+        /* fall through to heuristic result below */
+      }
+
       const np = p.pickups.length || (p.origin ? 1 : 0);
       const nd = p.deliveries.length || (p.dest ? 1 : 0);
       if (np || nd || p.rate || p.brokerName)
@@ -273,27 +305,61 @@ export function CreateLoad({
         <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />
       </label>
 
-      {stops && (stops.pickups.length > 0 || stops.deliveries.length > 0) && (
-        <div className="inv-calc" style={{ marginBottom: 14 }}>
-          <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
-          {stops.pickups.map((s, i) => (
-            <div key={`p${i}`} className="addr-pick">
-              <span className="px" style={{ flex: 1 }}>↑ {s}</span>
-              <button type="button" className="copy-link" onClick={() => { setOrigin(s); copyText(s); }}>
+      {ai ? (
+        <div className="ai-card">
+          <div className="ai-head">
+            <span className="ai-badge">AI</span>
+            Found <b>{ai.pickups.length}</b> pickup{ai.pickups.length === 1 ? "" : "s"} ·{" "}
+            <b>{ai.dropoffs.length}</b> drop-off{ai.dropoffs.length === 1 ? "" : "s"} — verify below
+          </div>
+          {ai.pickups.map((s, i) => (
+            <div key={`ap${i}`} className="ai-stop">
+              <span className="ai-dot up">↑</span>
+              <div className="ai-stop-body">
+                <div className="ai-addr">{s.address || s.city}</div>
+                {s.time && <div className="ai-time">{s.time}</div>}
+              </div>
+              <button type="button" className="copy-link" onClick={() => { setOrigin(s.address || s.city); copyText(s.address || s.city); }}>
                 Use as origin
               </button>
             </div>
           ))}
-          <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
-          {stops.deliveries.map((s, i) => (
-            <div key={`d${i}`} className="addr-pick">
-              <span className="px" style={{ flex: 1 }}>↓ {s}</span>
-              <button type="button" className="copy-link" onClick={() => { setDest(s); copyText(s); }}>
+          {ai.dropoffs.map((s, i) => (
+            <div key={`ad${i}`} className="ai-stop">
+              <span className="ai-dot down">↓</span>
+              <div className="ai-stop-body">
+                <div className="ai-addr">{s.address || s.city}</div>
+                {s.time && <div className="ai-time">{s.time}</div>}
+              </div>
+              <button type="button" className="copy-link" onClick={() => { setDest(s.address || s.city); copyText(s.address || s.city); }}>
                 Use as destination
               </button>
             </div>
           ))}
         </div>
+      ) : (
+        stops && (stops.pickups.length > 0 || stops.deliveries.length > 0) && (
+          <div className="inv-calc" style={{ marginBottom: 14 }}>
+            <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
+            {stops.pickups.map((s, i) => (
+              <div key={`p${i}`} className="addr-pick">
+                <span className="px" style={{ flex: 1 }}>↑ {s}</span>
+                <button type="button" className="copy-link" onClick={() => { setOrigin(s); copyText(s); }}>
+                  Use as origin
+                </button>
+              </div>
+            ))}
+            <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
+            {stops.deliveries.map((s, i) => (
+              <div key={`d${i}`} className="addr-pick">
+                <span className="px" style={{ flex: 1 }}>↓ {s}</span>
+                <button type="button" className="copy-link" onClick={() => { setDest(s); copyText(s); }}>
+                  Use as destination
+                </button>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {pdfUrl && (
