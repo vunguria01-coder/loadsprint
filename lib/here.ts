@@ -10,7 +10,7 @@ const TRUCK = {
   axleCount: 5,
 };
 
-export type RouteStep = { text: string; lengthMeters: number };
+export type RouteStep = { text: string; lengthMeters: number; point?: GeoPoint };
 
 // HERE returns the route geometry as a "flexible polyline" string. Decode it
 // into lat/lng points so the mobile app can draw the route on a map.
@@ -115,13 +115,20 @@ export async function truckRoute(
     const section = data?.routes?.[0]?.sections?.[0];
     if (!section?.summary) return null;
 
+    const points: GeoPoint[] =
+      typeof section.polyline === "string" ? decodeHerePolyline(section.polyline) : [];
+
     const steps: RouteStep[] = [];
     if (opts.withSteps && Array.isArray(section.actions)) {
       for (const a of section.actions) {
         if (a?.instruction) {
+          const offset = Number(a.offset);
+          const point =
+            Number.isFinite(offset) && points[offset] ? points[offset] : undefined;
           steps.push({
             text: String(a.instruction),
             lengthMeters: Number(a.length) || 0,
+            point,
           });
         }
       }
@@ -131,7 +138,7 @@ export async function truckRoute(
       distanceMeters: Number(section.summary.length) || 0,
       durationSeconds: Number(section.summary.duration) || 0,
       steps,
-      points: typeof section.polyline === "string" ? decodeHerePolyline(section.polyline) : [],
+      points,
     };
   } catch {
     return null;
