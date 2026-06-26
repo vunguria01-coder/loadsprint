@@ -202,7 +202,7 @@ export async function POST(
           dest = st.point ?? (await geocodeHere(st.address)) ?? dest;
         }
       }
-      const r = await truckRoute(from, dest, { withSteps: true });
+      const r = await truckRoute(from, dest, { withSteps: true, truck: body.truck });
       if (!r)
         return NextResponse.json(
           {

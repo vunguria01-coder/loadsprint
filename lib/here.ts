@@ -111,15 +111,31 @@ export type TruckRoute = {
 
 // Calls HERE Routing v8 for a truck-legal route. Returns null on any failure or
 // when no API key is configured, so callers can degrade gracefully.
+export type TruckDims = {
+  height?: number; // cm
+  width?: number; // cm
+  length?: number; // cm
+  grossWeight?: number; // kg
+  axleCount?: number;
+};
+
 export async function truckRoute(
   origin: GeoPoint,
   dest: GeoPoint,
-  opts: { withSteps?: boolean } = {}
+  opts: { withSteps?: boolean; truck?: TruckDims } = {}
 ): Promise<TruckRoute | null> {
   const key = process.env.HERE_API_KEY;
   if (!key) return null;
 
   const ret = opts.withSteps ? "summary,polyline,actions" : "summary";
+  const t = opts.truck || {};
+  const rig = {
+    height: t.height && t.height > 0 ? t.height : TRUCK.height,
+    width: t.width && t.width > 0 ? t.width : TRUCK.width,
+    length: t.length && t.length > 0 ? t.length : TRUCK.length,
+    grossWeight: t.grossWeight && t.grossWeight > 0 ? t.grossWeight : TRUCK.grossWeight,
+    axleCount: t.axleCount && t.axleCount > 0 ? t.axleCount : TRUCK.axleCount,
+  };
   const url =
     `https://router.hereapi.com/v8/routes` +
     `?transportMode=truck` +
@@ -127,11 +143,11 @@ export async function truckRoute(
     `&destination=${dest.lat},${dest.lng}` +
     `&return=${ret}` +
     `&units=imperial` +
-    `&truck[height]=${TRUCK.height}` +
-    `&truck[width]=${TRUCK.width}` +
-    `&truck[length]=${TRUCK.length}` +
-    `&truck[grossWeight]=${TRUCK.grossWeight}` +
-    `&truck[axleCount]=${TRUCK.axleCount}` +
+    `&truck[height]=${rig.height}` +
+    `&truck[width]=${rig.width}` +
+    `&truck[length]=${rig.length}` +
+    `&truck[grossWeight]=${rig.grossWeight}` +
+    `&truck[axleCount]=${rig.axleCount}` +
     `&apikey=${key}`;
 
   try {
