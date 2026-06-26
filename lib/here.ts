@@ -2,11 +2,13 @@ import type { GeoPoint } from "@/lib/loads";
 
 // Default rig: a standard US 53' trailer behind a tractor.
 // HERE Routing v8 truck dimensions are in CENTIMETERS, weight in KILOGRAMS.
+// Weight defaults to a light/partial load (~35,000 lb) so HERE doesn't avoid
+// highways "just in case". Drivers set their real weight in the app settings.
 const TRUCK = {
   height: 411, // 4.11 m
   width: 260, // 2.60 m
   length: 2200, // ~22 m tractor + 53' trailer
-  grossWeight: 36287, // ~80,000 lb
+  grossWeight: 15876, // ~35,000 lb (light/partial load)
   axleCount: 5,
 };
 
@@ -139,6 +141,7 @@ export async function truckRoute(
   const url =
     `https://router.hereapi.com/v8/routes` +
     `?transportMode=truck` +
+    `&routingMode=fast` +
     `&origin=${origin.lat},${origin.lng}` +
     `&destination=${dest.lat},${dest.lng}` +
     `&return=${ret}` +
