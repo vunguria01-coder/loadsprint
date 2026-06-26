@@ -12,6 +12,47 @@ const TRUCK = {
 
 export type RouteStep = { text: string; lengthMeters: number };
 
+// HERE returns the route geometry as a "flexible polyline" string. Decode it
+// into lat/lng points so the mobile app can draw the route on a map.
+const FP_ENCODING = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+const FP_DEC: Record<string, number> = {};
+for (let i = 0; i < FP_ENCODING.length; i++) FP_DEC[FP_ENCODING[i]] = i;
+
+function decodeHerePolyline(encoded: string): GeoPoint[] {
+  let index = 0;
+  const next = (): number => {
+    let result = 0;
+    let shift = 0;
+    let b: number;
+    do {
+      b = FP_DEC[encoded[index++]];
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b & 0x20);
+    return result;
+  };
+  const toSigned = (v: number) => (v & 1 ? ~(v >> 1) : v >> 1);
+  try {
+    next(); // header version
+    const headerContent = next();
+    const precision = headerContent & 15;
+    const thirdDim = (headerContent >> 4) & 7;
+    const factor = Math.pow(10, precision);
+    const points: GeoPoint[] = [];
+    let lat = 0;
+    let lng = 0;
+    while (index < encoded.length) {
+      lat += toSigned(next());
+      lng += toSigned(next());
+      if (thirdDim) next(); // skip elevation/3rd dimension
+      points.push({ lat: lat / factor, lng: lng / factor });
+    }
+    return points;
+  } catch {
+    return [];
+  }
+}
+
 // Convert a free-form address ("123 Main St, Dallas, TX") into coordinates via
 // HERE Geocoding. Returns null if no key, no result, or on error.
 export async function geocodeHere(address: string): Promise<GeoPoint | null> {
@@ -39,6 +80,7 @@ export type TruckRoute = {
   distanceMeters: number;
   durationSeconds: number;
   steps: RouteStep[];
+  points: GeoPoint[]; // decoded route line for drawing on a map
 };
 
 // Calls HERE Routing v8 for a truck-legal route. Returns null on any failure or
@@ -51,7 +93,7 @@ export async function truckRoute(
   const key = process.env.HERE_API_KEY;
   if (!key) return null;
 
-  const ret = opts.withSteps ? "summary,actions" : "summary";
+  const ret = opts.withSteps ? "summary,polyline,actions" : "summary";
   const url =
     `https://router.hereapi.com/v8/routes` +
     `?transportMode=truck` +
@@ -89,6 +131,7 @@ export async function truckRoute(
       distanceMeters: Number(section.summary.length) || 0,
       durationSeconds: Number(section.summary.duration) || 0,
       steps,
+      points: typeof section.polyline === "string" ? decodeHerePolyline(section.polyline) : [],
     };
   } catch {
     return null;

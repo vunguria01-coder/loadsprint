@@ -162,7 +162,7 @@ export async function POST(
       break;
     }
     case "route": {
-      // Driver asks for a fresh truck route to delivery (with turn-by-turn steps).
+      // Driver asks for a fresh truck route to a target stop (with turn-by-turn).
       if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
         return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
       if (!process.env.HERE_API_KEY)
@@ -170,9 +170,9 @@ export async function POST(
           { ok: false, error: "Routing unavailable. Set HERE_API_KEY on the server." },
           { status: 502 }
         );
+      const target = body.to === "pickup" ? "pickup" : "delivery";
       // Resolve precise coordinates from the typed addresses (HERE geocoding),
-      // persist them, and use them — so any street address works, not just the
-      // built-in city list.
+      // persist them, and use them — so any street address works.
       const [geoOrigin, geoDest] = await Promise.all([
         geocodeHere(load.originName),
         geocodeHere(load.destName),
@@ -183,7 +183,8 @@ export async function POST(
       }
       // Start from live GPS if we have it, otherwise the load's pickup point.
       const from = load.driverPoint ?? load.origin;
-      const r = await truckRoute(from, load.dest, { withSteps: true });
+      const dest = target === "pickup" ? load.origin : load.dest;
+      const r = await truckRoute(from, dest, { withSteps: true });
       if (!r)
         return NextResponse.json(
           {
@@ -192,9 +193,17 @@ export async function POST(
           },
           { status: 502 }
         );
-      setLoadEta(id, r.distanceMeters, r.durationSeconds);
+      // Only the delivery ETA is stored on the load (that's what the board shows).
+      if (target === "delivery") setLoadEta(id, r.distanceMeters, r.durationSeconds);
       const fresh = getLoadById(id);
-      return NextResponse.json({ ok: true, route: r, load: fresh ? serialize(fresh, me) : null });
+      return NextResponse.json({
+        ok: true,
+        route: r,
+        target,
+        from,
+        dest,
+        load: fresh ? serialize(fresh, me) : null,
+      });
     }
     case "driver_share": {
       // Only the assigned driver toggles their own location sharing.
