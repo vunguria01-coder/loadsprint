@@ -44,6 +44,33 @@ export function LoadMap({
   const mapEl = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const mainMarker = useRef<any>(null);
+  const pointRef = useRef(load.point);
+  const routeLine = useRef<any>(null);
+  const [copiedCity, setCopiedCity] = useState("");
+
+  function recenterDriver() {
+    if (map.current) {
+      map.current.setView([pointRef.current.lat, pointRef.current.lng], 11, { animate: true });
+    }
+  }
+
+  async function copyDriverCity() {
+    try {
+      const p = pointRef.current;
+      const res = await fetch(`/api/geo/reverse?lat=${p.lat}&lng=${p.lng}`);
+      const d = await res.json();
+      if (d.ok && d.cityState) {
+        navigator.clipboard?.writeText(d.cityState);
+        setCopiedCity(d.cityState);
+        if (mainMarker.current) {
+          mainMarker.current.bindPopup(`📍 ${d.cityState}`).openPopup();
+        }
+        setTimeout(() => setCopiedCity(""), 3000);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   const internalMarker = useRef<any>(null);
   const internalLayerRef = useRef(false);
 
@@ -90,15 +117,36 @@ export function LoadMap({
       mainMarker.current = L.marker([load.point.lat, load.point.lng], {
         icon: trailerIcon,
       }).addTo(m);
+      // Click the driver marker → copy the city/state where they are now.
+      mainMarker.current.on("click", copyDriverCity);
 
-      // route line origin -> dest
+      // faint straight reference line origin -> dest
       L.polyline(
         [
           [load.origin.lat, load.origin.lng],
           [load.dest.lat, load.dest.lng],
         ],
-        { color: "#2563EB", weight: 2, opacity: 0.4, dashArray: "6 8" }
+        { color: "#2563EB", weight: 2, opacity: 0.25, dashArray: "6 8" }
       ).addTo(m);
+
+      // Real truck route line (origin -> dest), drawn as soon as it loads.
+      fetch(`/api/loads/${load.id}/route-line`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (!map.current || !d.ok || !Array.isArray(d.points) || d.points.length < 2) return;
+          const latlngs = d.points.map((p: { lat: number; lng: number }) => [p.lat, p.lng]);
+          routeLine.current = L.polyline(latlngs, {
+            color: "#38BDF8",
+            weight: 4,
+            opacity: 0.9,
+          }).addTo(map.current);
+          try {
+            map.current.fitBounds(routeLine.current.getBounds(), { padding: [40, 40] });
+          } catch {
+            /* ignore */
+          }
+        })
+        .catch(() => {});
 
       if (isInternalUser) {
         m.on("click", (e: any) => {
@@ -122,6 +170,7 @@ export function LoadMap({
 
   // move main marker when point changes
   useEffect(() => {
+    pointRef.current = load.point;
     if (mainMarker.current) {
       mainMarker.current.setLatLng([load.point.lat, load.point.lng]);
     }
@@ -237,7 +286,13 @@ export function LoadMap({
           )}
         </div>
       )}
-      <div className="lmap" ref={mapEl} />
+      <div className="lmap-wrap">
+        <div className="lmap" ref={mapEl} />
+        <button type="button" className="recenter-btn" onClick={recenterDriver} title="Center on driver">
+          🎯 Driver
+        </button>
+        {copiedCity && <div className="copied-toast">📍 {copiedCity} — copied</div>}
+      </div>
       <div className="coords">
         <span className="c">
           Lat <b>{load.point.lat.toFixed(4)}</b>

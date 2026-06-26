@@ -53,6 +53,32 @@ function decodeHerePolyline(encoded: string): GeoPoint[] {
   }
 }
 
+// Reverse geocode coordinates → city/state (for "where is the driver now").
+export async function reverseGeocodeHere(
+  lat: number,
+  lng: number
+): Promise<{ city?: string; state?: string; label?: string } | null> {
+  const key = process.env.HERE_API_KEY;
+  if (!key) return null;
+  const url =
+    `https://revgeocode.search.hereapi.com/v1/revgeocode` +
+    `?at=${lat},${lng}&lang=en-US&apikey=${key}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const a = data?.items?.[0]?.address;
+    if (!a) return null;
+    return {
+      city: a.city || a.county || undefined,
+      state: a.stateCode || a.state || undefined,
+      label: a.label || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Convert a free-form address ("123 Main St, Dallas, TX") into coordinates via
 // HERE Geocoding. Returns null if no key, no result, or on error.
 export async function geocodeHere(address: string): Promise<GeoPoint | null> {
