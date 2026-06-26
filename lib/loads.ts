@@ -533,6 +533,20 @@ export function markNotificationsRead(userId: string) {
   if (changed) writeNotifs(n);
 }
 
+// Delete a single notification (only the owner's).
+export function deleteNotification(userId: string, notifId: string) {
+  const n = readNotifs();
+  const next = n.filter((x) => !(x.id === notifId && x.userId === userId));
+  if (next.length !== n.length) writeNotifs(next);
+}
+
+// Delete all of a user's notifications.
+export function clearNotifications(userId: string) {
+  const n = readNotifs();
+  const next = n.filter((x) => x.userId !== userId);
+  if (next.length !== n.length) writeNotifs(next);
+}
+
 /* ---------- queries ---------- */
 export function getAllLoads(): Load[] {
   return readLoads();

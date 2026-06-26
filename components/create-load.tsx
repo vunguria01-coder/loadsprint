@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Plus } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { PdfPicker } from "@/components/pdf-picker";
 
 declare global {
   interface Window {
@@ -172,8 +173,8 @@ export function CreateLoad({
   const [dest, setDest] = useState("");
   const [rate, setRate] = useState("");
   const [stops, setStops] = useState<{ pickups: string[]; deliveries: string[] } | null>(null);
-  const [pdfText, setPdfText] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfName, setPdfName] = useState("");
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
 
@@ -189,7 +190,7 @@ export function CreateLoad({
     setReading(true);
     try {
       const text = await extractText(file);
-      setPdfText(text);
+      setPdfName(file.name || "Rate Confirmation.pdf");
       // Keep the original PDF so it can be opened/viewed in the form.
       const reader = new FileReader();
       reader.onload = () => setPdfUrl(String(reader.result));
@@ -233,6 +234,24 @@ export function CreateLoad({
       const data = await res.json();
       if (!res.ok || !data.ok) toast("Could not create", data.error || "Try again.");
       else {
+        // Attach the rate confirmation PDF to the load so it's saved and the
+        // driver can open/download it later — no need to upload it again.
+        if (pdfUrl) {
+          try {
+            await fetch(`/api/loads/${data.load.id}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "document",
+                docType: "rate_confirmation",
+                name: pdfName || "Rate Confirmation.pdf",
+                dataUrl: pdfUrl,
+              }),
+            });
+          } catch {
+            /* the load is already created; ignore attach failure */
+          }
+        }
         toast("Load created", `${data.load.ref} assigned to ${driverName}.`);
         router.push(`/loads/${data.load.id}`);
       }
@@ -277,25 +296,21 @@ export function CreateLoad({
         </div>
       )}
 
-      {(pdfUrl || pdfText) && (
+      {pdfUrl && (
         <div className="pdf-box">
           <div className="pdf-head">
-            <b>Rate confirmation</b>
-            {pdfUrl && (
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="copy-link">
-                Open PDF ↗
-              </a>
-            )}
+            <b>Rate confirmation — click words to fill addresses</b>
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="copy-link">
+              Open PDF ↗
+            </a>
           </div>
-          <textarea
-            className="pdf-text"
-            readOnly
-            value={pdfText}
-            placeholder="Extracted text will appear here — select any address and copy it."
+          <PdfPicker
+            dataUrl={pdfUrl}
+            onOrigin={(t) => { setOrigin(t); copyText(t); }}
+            onDestination={(t) => { setDest(t); copyText(t); }}
           />
-          <p className="hint" style={{ marginTop: 6 }}>
-            Auto-detection can miss addresses. Copy the exact pickup/delivery line
-            above and paste it into Origin / Destination, then save.
+          <p className="hint" style={{ marginTop: 2 }}>
+            This PDF is saved to the load automatically — the driver can open and download it.
           </p>
         </div>
       )}

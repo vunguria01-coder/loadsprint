@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, X, Trash2 } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 
 type Notif = {
@@ -55,6 +55,33 @@ export function NotificationsBell() {
     }
   }
 
+  async function removeOne(id: string) {
+    setItems((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function clearAll() {
+    setItems([]);
+    setUnread(0);
+    try {
+      await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
   return (
     <div className="bell" ref={ref}>
       <button className="bbtn" onClick={toggle} aria-label="Notifications">
@@ -63,16 +90,32 @@ export function NotificationsBell() {
       </button>
       {open && (
         <div className="drop">
-          <div className="dh">Notifications</div>
+          <div className="dh">
+            <span>Notifications</span>
+            {items.length > 0 && (
+              <button className="dh-clear" onClick={clearAll}>
+                <Trash2 size={13} /> Clear all
+              </button>
+            )}
+          </div>
           {items.length === 0 ? (
             <div className="nempty">No notifications yet.</div>
           ) : (
             items.slice(0, 30).map((n) => (
               <div key={n.id} className={`ni${n.read ? "" : " unread"}`}>
-                <div className="nt">{n.text}</div>
-                <div className="nm">
-                  {n.loadRef} · {timeAgo(n.createdAt)}
+                <div className="ni-body">
+                  <div className="nt">{n.text}</div>
+                  <div className="nm">
+                    {n.loadRef} · {timeAgo(n.createdAt)}
+                  </div>
                 </div>
+                <button
+                  className="ni-x"
+                  onClick={() => removeOne(n.id)}
+                  aria-label="Delete notification"
+                >
+                  <X size={15} />
+                </button>
               </div>
             ))
           )}
