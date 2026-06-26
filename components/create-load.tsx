@@ -160,7 +160,7 @@ function parseConfirmation(text: string): Parsed {
 }
 
 type AiStop = { address: string; city: string; time?: string };
-type AiExtract = { ref?: string; rate?: number; pickups: AiStop[]; dropoffs: AiStop[] };
+type AiExtract = { ref?: string; rate?: number; billTo?: string; pickups: AiStop[]; dropoffs: AiStop[] };
 
 export function CreateLoad({
   driverName,
