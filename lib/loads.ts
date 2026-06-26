@@ -110,6 +110,7 @@ export type Load = {
   etaSeconds?: number; // remaining driving time in seconds
   etaCalcAt?: string; // when it was last computed (throttle HERE calls)
   stops?: Stop[]; // multi-stop loads: every pickup and drop-off, in order
+  billTo?: string; // who the invoice is sent to (broker/customer from the rate con)
   status: LoadStatus;
   documents: LoadDocument[];
   photos: LoadPhoto[];
@@ -762,6 +763,7 @@ export function createLoad(input: {
   brokerPhone?: string;
   rate?: number;
   stops?: Stop[];
+  billTo?: string;
 }): Load {
   const now = new Date().toISOString();
   const ref =
@@ -791,6 +793,7 @@ export function createLoad(input: {
     messages: [],
     loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
     stops: input.stops && input.stops.length > 0 ? input.stops : undefined,
+    billTo: input.billTo?.trim() || undefined,
     createdAt: now,
   };
   const loads = readLoads();

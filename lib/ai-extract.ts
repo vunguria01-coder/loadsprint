@@ -11,13 +11,14 @@ export type AiStop = {
 export type AiExtract = {
   ref?: string;
   rate?: number;
+  billTo?: string; // broker/customer to invoice (the payer)
   pickups: AiStop[];
   dropoffs: AiStop[];
 };
 
 const SYSTEM = `You read US/Canada truckload "rate confirmation" documents and extract structured stop data. Reply with ONLY a JSON object, no prose, no markdown fences. Shape:
-{"ref": string optional, "rate": number optional (carrier total pay in dollars, digits only), "pickups": [{"address": string, "city": "City, ST", "time": string optional}], "dropoffs": [{"address": string, "city": "City, ST", "time": string optional}]}
-Rules: list every pickup and every delivery in order. "address" = full street line if available else same as city. "city" must be "City, ST" (2-letter state). Omit time if unknown. If you cannot find a value, omit it. Never invent stops.`;
+{"ref": string optional, "rate": number optional (carrier total pay in dollars, digits only), "billTo": string optional (the broker/brokerage or customer company that pays the carrier — name, and address/email if shown), "pickups": [{"address": string, "city": "City, ST", "time": string optional}], "dropoffs": [{"address": string, "city": "City, ST", "time": string optional}]}
+Rules: list every pickup and every delivery in order. "address" = full street line if available else same as city. "city" must be "City, ST" (2-letter state). "billTo" = the company the invoice should be sent to (usually the broker on the rate con). Omit fields you cannot find. Never invent stops or a payer.`;
 
 export async function aiExtractRateCon(text: string): Promise<AiExtract | null> {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -73,6 +74,7 @@ export async function aiExtractRateCon(text: string): Promise<AiExtract | null> 
     return {
       ref: typeof parsed.ref === "string" ? parsed.ref : undefined,
       rate: typeof parsed.rate === "number" ? parsed.rate : undefined,
+      billTo: typeof parsed.billTo === "string" ? parsed.billTo : undefined,
       pickups: norm(parsed.pickups),
       dropoffs: norm(parsed.dropoffs),
     };

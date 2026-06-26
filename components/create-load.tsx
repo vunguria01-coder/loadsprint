@@ -272,6 +272,7 @@ export function CreateLoad({
           driverName, driverEmail,
           rate: Number(rate) > 0 ? Number(rate) : undefined,
           stops,
+          billTo: ai?.billTo,
         }),
       });
       const data = await res.json();

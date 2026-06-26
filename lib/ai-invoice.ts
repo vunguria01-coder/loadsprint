@@ -6,10 +6,20 @@ export type InvoiceLine = { label: string; amount: number };
 export type AiInvoice = {
   invoiceNumber: string;
   date: string;
+  from?: string; // carrier company block (your company)
   billTo: string;
   lines: InvoiceLine[];
   subtotal: number;
   total: number;
+  notes?: string;
+};
+
+type CompanyProfile = {
+  companyName?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  payTerms?: string;
   notes?: string;
 };
 
@@ -21,11 +31,13 @@ type InvoiceInput = {
   stops?: { kind: string; address: string }[];
   driverName: string;
   dispatcherName?: string;
+  billTo?: string;
+  company?: CompanyProfile;
 };
 
 const SYSTEM = `You are an accounts-receivable assistant for a freight carrier. Build a clean, correct carrier invoice from the load data. Reply with ONLY a JSON object, no prose, no markdown. Shape:
-{"invoiceNumber": string, "date": "YYYY-MM-DD", "billTo": string, "lines": [{"label": string, "amount": number}], "subtotal": number, "total": number, "notes": string optional}
-Rules: the main line is the line haul (the agreed load rate). Add separate lines only for items clearly present in the data (extra stops as "Additional stop", etc.). Amounts are USD numbers (no symbols). subtotal = sum of lines; total = subtotal (no tax unless stated). Keep it professional and minimal. Never invent charges that aren't supported by the data.`;
+{"invoiceNumber": string, "date": "YYYY-MM-DD", "from": string (the carrier company block, multi-line, from the provided company details), "billTo": string (the payer — use the provided Bill-to exactly; do not invent), "lines": [{"label": string, "amount": number}], "subtotal": number, "total": number, "notes": string optional}
+Rules: the main line is the line haul (the agreed load rate). Add separate lines only for items clearly present in the data. Amounts are USD numbers (no symbols). subtotal = sum of lines; total = subtotal (no tax unless stated). Put the carrier's company details (name, address, phone, email, MC/DOT, remit) into "from" exactly as provided; if a company detail is missing, omit that piece. Use the provided Bill-to as "billTo" verbatim; if none was provided, set billTo to "". Never invent a payer or charges not supported by the data.`;
 
 export async function aiGenerateInvoice(input: InvoiceInput): Promise<AiInvoice | null> {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -37,12 +49,27 @@ export async function aiGenerateInvoice(input: InvoiceInput): Promise<AiInvoice 
       ? input.stops.map((s) => `${s.kind}: ${s.address}`).join("; ")
       : `pickup: ${input.originName}; dropoff: ${input.destName}`;
 
+  const c = input.company || {};
+  const companyText = [
+    c.companyName && `Name: ${c.companyName}`,
+    c.address && `Address: ${c.address}`,
+    c.phone && `Phone: ${c.phone}`,
+    c.email && `Email: ${c.email}`,
+    c.payTerms && `Payment terms: ${c.payTerms}`,
+    c.notes && `Notes: ${c.notes}`,
+  ]
+    .filter(Boolean)
+    .join("\n") || "not provided";
+
   const userMsg = `Create an invoice for this completed load.
 Load reference: ${input.ref}
 Route: ${input.originName} -> ${input.destName}
 Stops: ${stopsText}
 Agreed load rate (line haul): ${input.rate != null ? `$${input.rate}` : "not provided"}
 Carrier/driver: ${input.driverName}
+Bill to (payer from the rate confirmation): ${input.billTo || "not provided"}
+Carrier company details (for the "from" block):
+${companyText}
 Today's date: ${today}
 Use the load reference in the invoice number (e.g. INV-${input.ref}).`;
 
@@ -87,7 +114,8 @@ Use the load reference in the invoice number (e.g. INV-${input.ref}).`;
     return {
       invoiceNumber: String(p.invoiceNumber || `INV-${input.ref}`),
       date: String(p.date || today),
-      billTo: String(p.billTo || ""),
+      from: typeof p.from === "string" ? p.from : undefined,
+      billTo: String(p.billTo || input.billTo || ""),
       lines,
       subtotal: typeof p.subtotal === "number" ? p.subtotal : subtotal,
       total: typeof p.total === "number" ? p.total : subtotal,

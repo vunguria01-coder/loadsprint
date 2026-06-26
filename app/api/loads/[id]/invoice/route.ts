@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
 import { getLoadById } from "@/lib/loads";
+import { getInvoiceProfile } from "@/lib/invoice-profile";
 import { aiGenerateInvoice } from "@/lib/ai-invoice";
 
 // POST /api/loads/[id]/invoice → AI-generated invoice JSON for a finished load.
@@ -25,6 +26,7 @@ export async function POST(
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
+  const company = getInvoiceProfile(me.id);
   const invoice = await aiGenerateInvoice({
     ref: load.ref,
     originName: load.originName,
@@ -32,6 +34,8 @@ export async function POST(
     rate: load.loadRate,
     stops: load.stops?.map((s) => ({ kind: s.kind, address: s.address })),
     driverName: load.driverName,
+    billTo: load.billTo,
+    company,
   });
   if (!invoice) {
     return NextResponse.json({ ok: false, error: "Could not build the invoice." }, { status: 502 });

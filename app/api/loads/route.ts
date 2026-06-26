@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     destName,
     rate: Number(body.rate) > 0 ? Number(body.rate) : undefined,
     stops,
+    billTo: body.billTo ? String(body.billTo) : undefined,
   });
   return NextResponse.json({ ok: true, load: { id: load.id, ref: load.ref } });
 }

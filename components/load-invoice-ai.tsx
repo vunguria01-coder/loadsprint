@@ -9,6 +9,7 @@ type InvoiceLine = { label: string; amount: number };
 type AiInvoice = {
   invoiceNumber: string;
   date: string;
+  from?: string;
   billTo: string;
   lines: InvoiceLine[];
   subtotal: number;
@@ -59,7 +60,9 @@ export function LoadInvoiceAi({ load }: { load: LoadView }) {
       </style></head><body>
       <div class="head">
         <div><h1>INVOICE</h1><div class="muted">${inv.invoiceNumber}</div><div class="muted">Date: ${inv.date}</div></div>
-        <div style="text-align:right"><div style="font-weight:700">LoadSprint</div><div class="muted">Load ${load.ref}</div><div class="muted">${load.originName} → ${load.destName}</div></div>
+        <div style="text-align:right;white-space:pre-line">${
+          inv.from ? inv.from : "LoadSprint"
+        }<div class="muted">Load ${load.ref}</div></div>
       </div>
       <div class="muted"><b>Bill to:</b> ${inv.billTo || "—"}</div>
       <table><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
@@ -97,8 +100,22 @@ export function LoadInvoiceAi({ load }: { load: LoadView }) {
           <div className="inv-meta">
             <div><span>Invoice</span><b>{inv.invoiceNumber}</b></div>
             <div><span>Date</span><b>{inv.date}</b></div>
-            {inv.billTo && <div><span>Bill to</span><b>{inv.billTo}</b></div>}
           </div>
+          {inv.from && (
+            <div className="inv-from">
+              <span>From</span>
+              <div>{inv.from}</div>
+            </div>
+          )}
+          <label className="inv-billedit">
+            <span>Bill to (payer)</span>
+            <input
+              type="text"
+              value={inv.billTo}
+              placeholder="Taken from the rate con — edit if needed"
+              onChange={(e) => setInv({ ...inv, billTo: e.target.value })}
+            />
+          </label>
           <div className="inv-lines">
             {inv.lines.map((l, i) => (
               <div key={i} className="inv-line">
