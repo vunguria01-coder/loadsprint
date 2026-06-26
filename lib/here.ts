@@ -154,31 +154,47 @@ export async function truckRoute(
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    const section = data?.routes?.[0]?.sections?.[0];
-    if (!section?.summary) return null;
+    const sections = data?.routes?.[0]?.sections;
+    if (!Array.isArray(sections) || sections.length === 0) return null;
 
-    const points: GeoPoint[] =
-      typeof section.polyline === "string" ? decodeHerePolyline(section.polyline) : [];
-
+    // Concatenate ALL sections so the drawn line is one continuous route
+    // (HERE can split a route into several sections).
+    const points: GeoPoint[] = [];
     const steps: RouteStep[] = [];
-    if (opts.withSteps && Array.isArray(section.actions)) {
-      for (const a of section.actions) {
-        if (a?.instruction) {
-          const offset = Number(a.offset);
-          const point =
-            Number.isFinite(offset) && points[offset] ? points[offset] : undefined;
-          steps.push({
-            text: String(a.instruction),
-            lengthMeters: Number(a.length) || 0,
-            point,
-          });
+    let distanceMeters = 0;
+    let durationSeconds = 0;
+
+    for (const section of sections) {
+      if (!section?.summary) continue;
+      distanceMeters += Number(section.summary.length) || 0;
+      durationSeconds += Number(section.summary.duration) || 0;
+
+      const base = points.length; // offset within the combined points array
+      const segPoints =
+        typeof section.polyline === "string" ? decodeHerePolyline(section.polyline) : [];
+      for (const p of segPoints) points.push(p);
+
+      if (opts.withSteps && Array.isArray(section.actions)) {
+        for (const a of section.actions) {
+          if (a?.instruction) {
+            const offset = Number(a.offset);
+            const idx = Number.isFinite(offset) ? base + offset : -1;
+            const point = idx >= 0 && points[idx] ? points[idx] : undefined;
+            steps.push({
+              text: String(a.instruction),
+              lengthMeters: Number(a.length) || 0,
+              point,
+            });
+          }
         }
       }
     }
 
+    if (points.length === 0) return null;
+
     return {
-      distanceMeters: Number(section.summary.length) || 0,
-      durationSeconds: Number(section.summary.duration) || 0,
+      distanceMeters,
+      durationSeconds,
       steps,
       points,
     };
