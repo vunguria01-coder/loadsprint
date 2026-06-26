@@ -10,6 +10,7 @@ import { getLoadsByDispatcher, currentPoint } from "@/lib/loads";
 import { DriverLoads } from "@/components/driver-loads";
 import { DriverMap } from "@/components/driver-map";
 import { CreateLoad } from "@/components/create-load";
+import { DriverPanel } from "@/components/driver-panel";
 
 export const metadata: Metadata = {
   title: "Driver — LoadSprint",
@@ -56,13 +57,33 @@ export default async function DriverDetailPage({
     etaSeconds: l.etaSeconds,
   }));
 
+  // Stats + history for the slide-out panel.
+  const completed = loads.filter((l) => l.status === "Delivered" || l.status === "Closed");
+  const stats = {
+    total: loads.length,
+    completed: completed.length,
+    active: loads.filter((l) => l.status !== "Delivered" && l.status !== "Closed").length,
+    earnings: completed.reduce((s, l) => s + (l.loadRate || 0), 0),
+  };
+  const history = completed.map((l) => ({
+    id: l.id,
+    ref: l.ref,
+    originName: l.originName,
+    destName: l.destName,
+    status: l.status,
+    rate: l.loadRate,
+  }));
+
   return (
     <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
-          <div className="shead" style={{ marginBottom: 18 }}>
-            <span className="eyebrow">Driver</span>
-            <h2 className="h2">{name}</h2>
-            <p className="lead">{email}{user ? "" : " · invite pending"}</p>
+          <div className="shead" style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <span className="eyebrow">Driver</span>
+              <h2 className="h2">{name}</h2>
+              <p className="lead">{email}{user ? "" : " · invite pending"}</p>
+            </div>
+            <DriverPanel name={name} stats={stats} history={history} />
           </div>
 
           <DriverMap points={points} />

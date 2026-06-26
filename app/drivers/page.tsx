@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Users, ChevronRight } from "lucide-react";
+import { Users } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { DriverManager } from "@/components/driver-manager";
+import { DriversList } from "@/components/drivers-list";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
@@ -27,12 +27,24 @@ export default async function DriversPage() {
     const user = findByEmail(email);
     const loads = myLoads.filter((l) => l.driverEmail.toLowerCase() === email);
     const active = loads.filter((l) => l.status !== "Delivered" && l.status !== "Closed").length;
+    // Build a search haystack: name, email, every load ref, broker name/email.
+    const search = [
+      user?.name || email,
+      email,
+      ...loads.map((l) => l.ref),
+      ...loads.map((l) => l.brokerName),
+      ...loads.map((l) => l.brokerEmail),
+      ...loads.map((l) => l.billTo || ""),
+    ]
+      .join(" ")
+      .toLowerCase();
     return {
       email,
       name: user?.name || email,
       joined: !!user,
       total: loads.length,
       active,
+      search,
     };
   });
 
@@ -56,25 +68,7 @@ export default async function DriversPage() {
               No drivers yet. Use “Add driver” to invite your first one.
             </p>
           ) : (
-            <div className="load-list">
-              {drivers.map((d) => (
-                <Link
-                  key={d.email}
-                  href={`/drivers/${encodeURIComponent(d.email)}`}
-                  className="load-card"
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className="lc-main">
-                    <div className="driver-name-lg">{d.name}</div>
-                    <div className="lc-route">{d.email}</div>
-                    <div className="px" style={{ marginTop: 4 }}>
-                      {d.active} active · {d.total} total {d.joined ? "" : "· invite pending"}
-                    </div>
-                  </div>
-                  <ChevronRight />
-                </Link>
-              ))}
-            </div>
+            <DriversList drivers={drivers} />
           )}
         </div>
       </CabinetServer>
