@@ -47,6 +47,9 @@ function LoadCard({ load }: { load: Load }) {
         {load.documents.length} docs · {load.photos.length} photos ·{" "}
         {load.messages.length} messages
       </div>
+      {typeof load.loadRate === "number" && load.loadRate > 0 && (
+        <div className="lc-price">${load.loadRate.toLocaleString("en-US")}</div>
+      )}
     </Link>
   );
 }

@@ -10,6 +10,8 @@ import { LoadStatusPanel } from "@/components/load-status";
 import { LoadDocuments } from "@/components/load-documents";
 import { LoadPhotos } from "@/components/load-photos";
 import { PhotosToPdf } from "@/components/photos-to-pdf";
+import { LoadInvoiceAi } from "@/components/load-invoice-ai";
+import { Collapsible } from "@/components/collapsible";
 
 export function LoadWorkspace({ loadId }: { loadId: string }) {
   const [load, setLoad] = useState<LoadView | null>(null);
@@ -79,38 +81,89 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
             {load.originName} <ArrowRight size={15} /> {load.destName}
           </div>
         </div>
-        <StatusChip status={load.status} />
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {typeof load.loadRate === "number" && load.loadRate > 0 && (
+            <div className="ld-price">
+              ${load.loadRate.toLocaleString("en-US")}
+            </div>
+          )}
+          <StatusChip status={load.status} />
+        </div>
       </div>
 
       <div className="ld-grid">
-        <div>
-          <LoadMap load={load} mutate={mutate} />
-          <LoadChat load={load} mutate={mutate} />
-        </div>
-        <div>
-          <LoadStatusPanel load={load} mutate={mutate} />
-          {load.stops && load.stops.length > 0 && (
-            <div className="panel">
-              <h3>Stops ({load.stops.length})</h3>
-              <p className="px">All pickups and drop-offs on this load.</p>
-              {load.stops.map((st, i) => (
-                <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
-                  <span className={`stop-badge ${st.kind}`}>
-                    {st.kind === "pickup" ? "PICKUP" : "DROP"}
-                  </span>
-                  <div className="stop-body">
-                    <div className="stop-addr">{i + 1}. {st.address}</div>
-                    {st.time && <div className="stop-time">{st.time}</div>}
-                  </div>
-                  {st.done && <span className="stop-check">✓ done</span>}
-                </div>
-              ))}
+        {load.status === "Closed" ? (
+          <>
+            <div>
+              <Collapsible title="Map & location">
+                <LoadMap load={load} mutate={mutate} />
+              </Collapsible>
+              <Collapsible title="Load chat">
+                <LoadChat load={load} mutate={mutate} />
+              </Collapsible>
             </div>
-          )}
-          <LoadDocuments load={load} mutate={mutate} />
-          <LoadPhotos load={load} mutate={mutate} />
-          <PhotosToPdf load={load} mutate={mutate} />
-        </div>
+            <div>
+              {/* Invoice is the focus on a closed load */}
+              <LoadInvoiceAi load={load} />
+              <Collapsible title="Status">
+                <LoadStatusPanel load={load} mutate={mutate} />
+              </Collapsible>
+              {load.stops && load.stops.length > 0 && (
+                <Collapsible title={`Stops (${load.stops.length})`}>
+                  <div className="panel">
+                    {load.stops.map((st, i) => (
+                      <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
+                        <span className={`stop-badge ${st.kind}`}>
+                          {st.kind === "pickup" ? "PICKUP" : "DROP"}
+                        </span>
+                        <div className="stop-body">
+                          <div className="stop-addr">{i + 1}. {st.address}</div>
+                          {st.time && <div className="stop-time">{st.time}</div>}
+                        </div>
+                        {st.done && <span className="stop-check">✓ done</span>}
+                      </div>
+                    ))}
+                  </div>
+                </Collapsible>
+              )}
+              {/* Files and photos stay visible (expanded) */}
+              <LoadDocuments load={load} mutate={mutate} />
+              <LoadPhotos load={load} mutate={mutate} />
+              <PhotosToPdf load={load} mutate={mutate} />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <LoadMap load={load} mutate={mutate} />
+              <LoadChat load={load} mutate={mutate} />
+            </div>
+            <div>
+              <LoadStatusPanel load={load} mutate={mutate} />
+              {load.stops && load.stops.length > 0 && (
+                <div className="panel">
+                  <h3>Stops ({load.stops.length})</h3>
+                  <p className="px">All pickups and drop-offs on this load.</p>
+                  {load.stops.map((st, i) => (
+                    <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
+                      <span className={`stop-badge ${st.kind}`}>
+                        {st.kind === "pickup" ? "PICKUP" : "DROP"}
+                      </span>
+                      <div className="stop-body">
+                        <div className="stop-addr">{i + 1}. {st.address}</div>
+                        {st.time && <div className="stop-time">{st.time}</div>}
+                      </div>
+                      {st.done && <span className="stop-check">✓ done</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <LoadDocuments load={load} mutate={mutate} />
+              <LoadPhotos load={load} mutate={mutate} />
+              <PhotosToPdf load={load} mutate={mutate} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
