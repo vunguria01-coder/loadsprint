@@ -89,6 +89,24 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
         </div>
         <div>
           <LoadStatusPanel load={load} mutate={mutate} />
+          {load.stops && load.stops.length > 0 && (
+            <div className="panel">
+              <h3>Stops ({load.stops.length})</h3>
+              <p className="px">All pickups and drop-offs on this load.</p>
+              {load.stops.map((st, i) => (
+                <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
+                  <span className={`stop-badge ${st.kind}`}>
+                    {st.kind === "pickup" ? "PICKUP" : "DROP"}
+                  </span>
+                  <div className="stop-body">
+                    <div className="stop-addr">{i + 1}. {st.address}</div>
+                    {st.time && <div className="stop-time">{st.time}</div>}
+                  </div>
+                  {st.done && <span className="stop-check">✓ done</span>}
+                </div>
+              ))}
+            </div>
+          )}
           <LoadDocuments load={load} mutate={mutate} />
           <LoadPhotos load={load} mutate={mutate} />
           <PhotosToPdf load={load} mutate={mutate} />

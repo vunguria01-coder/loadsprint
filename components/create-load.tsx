@@ -257,6 +257,13 @@ export function CreateLoad({
     }
     setBusy(true);
     try {
+      // Build the multi-stop list from the AI result (if any).
+      const stops = ai
+        ? [
+            ...ai.pickups.map((p) => ({ kind: "pickup", address: p.address || p.city, time: p.time })),
+            ...ai.dropoffs.map((d) => ({ kind: "dropoff", address: d.address || d.city, time: d.time })),
+          ]
+        : undefined;
       const res = await fetch("/api/loads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -264,6 +271,7 @@ export function CreateLoad({
           ref, originName: origin, destName: dest,
           driverName, driverEmail,
           rate: Number(rate) > 0 ? Number(rate) : undefined,
+          stops,
         }),
       });
       const data = await res.json();

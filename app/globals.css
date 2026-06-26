@@ -552,6 +552,15 @@ table.acc select option{background:#0b1120}
 .wiz-bar{flex:1;height:1px;background:var(--line)}
 .wiz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
 .wiz-nav .btn{padding:11px 18px}
+.stop-row{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line-2)}
+.stop-row.done{opacity:.55}
+.stop-badge{font-family:Manrope;font-weight:800;font-size:10px;letter-spacing:.05em;padding:4px 8px;border-radius:6px;white-space:nowrap;margin-top:1px}
+.stop-badge.pickup{color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35)}
+.stop-badge.dropoff{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
+.stop-body{flex:1;min-width:0}
+.stop-addr{color:#fff;font-size:14px}
+.stop-time{color:var(--muted-2);font-size:12px;margin-top:2px;font-family:Manrope}
+.stop-check{color:#4ade80;font-size:12px;font-weight:700;white-space:nowrap}
 .pdfp-page{position:relative;flex:0 0 auto;box-shadow:0 8px 24px -10px rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
 .pdfp-page img{display:block;width:100%;height:auto}
 .pdfp-span{position:absolute;background:transparent;border:0;padding:0;margin:0;cursor:pointer;border-radius:2px}

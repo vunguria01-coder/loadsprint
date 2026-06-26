@@ -32,6 +32,17 @@ export type PhotoPhase = (typeof PHOTO_PHASES)[number];
 
 export type GeoPoint = { lat: number; lng: number };
 
+// A single pickup or drop-off within a load (loads can have many of each).
+export type Stop = {
+  id: string;
+  kind: "pickup" | "dropoff";
+  address: string;
+  time?: string;
+  point?: GeoPoint;
+  done?: boolean;
+  doneAt?: string;
+};
+
 export type LoadDocument = {
   id: string;
   type: DocType;
@@ -98,6 +109,7 @@ export type Load = {
   remainingMeters?: number;
   etaSeconds?: number; // remaining driving time in seconds
   etaCalcAt?: string; // when it was last computed (throttle HERE calls)
+  stops?: Stop[]; // multi-stop loads: every pickup and drop-off, in order
   status: LoadStatus;
   documents: LoadDocument[];
   photos: LoadPhoto[];
@@ -286,6 +298,33 @@ export function setLoadAddresses(
     loads[i].originName = originName.trim();
   if (typeof destName === "string" && destName.trim())
     loads[i].destName = destName.trim();
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Driver marks a stop done / not done.
+export function toggleStopDone(
+  loadId: string,
+  stopId: string,
+  done: boolean
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1 || !loads[i].stops) return loads[i];
+  const stop = loads[i].stops!.find((st) => st.id === stopId);
+  if (!stop) return loads[i];
+  stop.done = done;
+  stop.doneAt = done ? new Date().toISOString() : undefined;
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Replace the stops list (dispatcher edit).
+export function setStops(loadId: string, stops: Stop[]): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  loads[i].stops = stops.length > 0 ? stops : undefined;
   writeLoads(loads);
   return loads[i];
 }
@@ -722,6 +761,7 @@ export function createLoad(input: {
   brokerEmail?: string;
   brokerPhone?: string;
   rate?: number;
+  stops?: Stop[];
 }): Load {
   const now = new Date().toISOString();
   const ref =
@@ -750,6 +790,7 @@ export function createLoad(input: {
     photos: [],
     messages: [],
     loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
+    stops: input.stops && input.stops.length > 0 ? input.stops : undefined,
     createdAt: now,
   };
   const loads = readLoads();

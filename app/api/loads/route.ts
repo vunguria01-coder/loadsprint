@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
-import { createLoad } from "@/lib/loads";
+import { createLoad, type Stop } from "@/lib/loads";
+import { geocodeHere } from "@/lib/here";
 
 export async function POST(req: Request) {
   const me = await currentUser();
@@ -22,6 +23,34 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  // Optional multi-stop list (pickups + dropoffs). Geocode each address so the
+  // map and navigation work for every stop.
+  let stops: Stop[] | undefined;
+  if (Array.isArray(body.stops) && body.stops.length > 0) {
+    const raw = body.stops
+      .filter((s: unknown) => s && typeof s === "object")
+      .slice(0, 30) as Array<{ kind?: string; address?: string; time?: string }>;
+    const geocoded = await Promise.all(
+      raw.map(async (s) => {
+        const address = String(s.address || "").trim();
+        if (!address) return null;
+        const point = (await geocodeHere(address)) || undefined;
+        const stop: Stop = {
+          id: crypto.randomUUID(),
+          kind: s.kind === "dropoff" ? "dropoff" : "pickup",
+          address,
+          time: s.time ? String(s.time) : undefined,
+          point,
+          done: false,
+        };
+        return stop;
+      })
+    );
+    stops = geocoded.filter((s): s is Stop => s !== null);
+    if (stops.length === 0) stops = undefined;
+  }
+
   const load = createLoad({
     dispatcherId: me.id,
     ref: body.ref ? String(body.ref) : undefined,
@@ -29,10 +58,8 @@ export async function POST(req: Request) {
     driverEmail,
     originName,
     destName,
-    brokerName: body.brokerName ? String(body.brokerName) : undefined,
-    brokerEmail: body.brokerEmail ? String(body.brokerEmail) : undefined,
-    brokerPhone: body.brokerPhone ? String(body.brokerPhone) : undefined,
     rate: Number(body.rate) > 0 ? Number(body.rate) : undefined,
+    stops,
   });
   return NextResponse.json({ ok: true, load: { id: load.id, ref: load.ref } });
 }

@@ -21,6 +21,7 @@ import {
   setLoadEta,
   setLoadGeo,
   setLoadAddresses,
+  toggleStopDone,
   etaIsStale,
   setShareLocationWithBroker,
   sendDocumentToDriver,
@@ -161,6 +162,15 @@ export async function POST(
       }
       break;
     }
+    case "stop_done": {
+      // Driver checks a stop off (or un-checks it).
+      if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const stopId = String(body.stopId || "");
+      const done = body.done !== false;
+      updated = toggleStopDone(id, stopId, done);
+      break;
+    }
     case "route": {
       // Driver asks for a fresh truck route to a target stop (with turn-by-turn).
       if (load.driverEmail.toLowerCase() !== me.email.toLowerCase())
@@ -183,7 +193,15 @@ export async function POST(
       }
       // Start from live GPS if we have it, otherwise the load's pickup point.
       const from = load.driverPoint ?? load.origin;
-      const dest = target === "pickup" ? load.origin : load.dest;
+      // If a specific stop is requested, route to that stop's coordinate.
+      let dest = target === "pickup" ? load.origin : load.dest;
+      const stopId = body.stopId ? String(body.stopId) : "";
+      if (stopId && load.stops) {
+        const st = load.stops.find((x) => x.id === stopId);
+        if (st) {
+          dest = st.point ?? (await geocodeHere(st.address)) ?? dest;
+        }
+      }
       const r = await truckRoute(from, dest, { withSteps: true });
       if (!r)
         return NextResponse.json(
