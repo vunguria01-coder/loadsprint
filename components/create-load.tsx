@@ -181,6 +181,7 @@ export function CreateLoad({
   const [pdfName, setPdfName] = useState("");
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
+  const [step, setStep] = useState(1);
 
   function copyText(t: string) {
     navigator.clipboard?.writeText(t);
@@ -229,6 +230,7 @@ export function CreateLoad({
             "AI read the rate con",
             `Found ${r.pickups.length} pickup(s) and ${r.dropoffs.length} drop-off(s). Please verify.`
           );
+          setStep(2);
           return;
         }
       } catch {
@@ -240,6 +242,7 @@ export function CreateLoad({
       if (np || nd || p.rate || p.brokerName)
         toast("Imported", `Found ${np} pickup(s) and ${nd} delivery(ies). Check the fields.`);
       else toast("Nothing found", "Couldn't read it — enter the details manually.");
+      setStep(2);
     } catch {
       toast("Couldn't read PDF", "Enter the details manually.");
     } finally {
@@ -300,109 +303,147 @@ export function CreateLoad({
         <Plus /> New load for {driverName}
       </h3>
 
-      <label className="btn btn-ghost btn-block" style={{ marginBottom: 14, cursor: "pointer" }}>
-        <FileUp size={16} /> {reading ? "Reading PDF…" : "Import from rate confirmation (PDF)"}
-        <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />
-      </label>
-
-      {ai ? (
-        <div className="ai-card">
-          <div className="ai-head">
-            <span className="ai-badge">AI</span>
-            Found <b>{ai.pickups.length}</b> pickup{ai.pickups.length === 1 ? "" : "s"} ·{" "}
-            <b>{ai.dropoffs.length}</b> drop-off{ai.dropoffs.length === 1 ? "" : "s"} — verify below
-          </div>
-          {ai.pickups.map((s, i) => (
-            <div key={`ap${i}`} className="ai-stop">
-              <span className="ai-dot up">↑</span>
-              <div className="ai-stop-body">
-                <div className="ai-addr">{s.address || s.city}</div>
-                {s.time && <div className="ai-time">{s.time}</div>}
-              </div>
-              <button type="button" className="copy-link" onClick={() => { setOrigin(s.address || s.city); copyText(s.address || s.city); }}>
-                Use as origin
-              </button>
-            </div>
-          ))}
-          {ai.dropoffs.map((s, i) => (
-            <div key={`ad${i}`} className="ai-stop">
-              <span className="ai-dot down">↓</span>
-              <div className="ai-stop-body">
-                <div className="ai-addr">{s.address || s.city}</div>
-                {s.time && <div className="ai-time">{s.time}</div>}
-              </div>
-              <button type="button" className="copy-link" onClick={() => { setDest(s.address || s.city); copyText(s.address || s.city); }}>
-                Use as destination
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        stops && (stops.pickups.length > 0 || stops.deliveries.length > 0) && (
-          <div className="inv-calc" style={{ marginBottom: 14 }}>
-            <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
-            {stops.pickups.map((s, i) => (
-              <div key={`p${i}`} className="addr-pick">
-                <span className="px" style={{ flex: 1 }}>↑ {s}</span>
-                <button type="button" className="copy-link" onClick={() => { setOrigin(s); copyText(s); }}>
-                  Use as origin
-                </button>
-              </div>
-            ))}
-            <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
-            {stops.deliveries.map((s, i) => (
-              <div key={`d${i}`} className="addr-pick">
-                <span className="px" style={{ flex: 1 }}>↓ {s}</span>
-                <button type="button" className="copy-link" onClick={() => { setDest(s); copyText(s); }}>
-                  Use as destination
-                </button>
-              </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {pdfUrl && (
-        <div className="pdf-box">
-          <div className="pdf-head">
-            <b>Rate confirmation — click words to fill addresses</b>
-            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="copy-link">
-              Open PDF ↗
-            </a>
-          </div>
-          <PdfPicker
-            dataUrl={pdfUrl}
-            onOrigin={(t) => { setOrigin(t); copyText(t); }}
-            onDestination={(t) => { setDest(t); copyText(t); }}
-          />
-          <p className="hint" style={{ marginTop: 2 }}>
-            This PDF is saved to the load automatically — the driver can open and download it.
-          </p>
-        </div>
-      )}
-
-      <div className="fgrid">
-        <div className="field full">
-          <label>Reference # (optional — auto if blank)</label>
-          <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="LS-48217" />
-        </div>
-        <div className="field">
-          <label>Load price ($) — from confirmation</label>
-          <input type="number" min={0} value={rate} onChange={(e) => setRate(e.target.value)} placeholder="2000" />
-        </div>
-        <div className="field">
-          <label>Origin (City, ST or full address)</label>
-          <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Dallas, TX" />
-        </div>
-        <div className="field">
-          <label>Destination (City, ST or full address)</label>
-          <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Atlanta, GA" />
-        </div>
+      <div className="wiz-steps">
+        <div className={`wiz-step${step >= 1 ? " on" : ""}`}><span>1</span> Upload PDF</div>
+        <div className="wiz-bar" />
+        <div className={`wiz-step${step >= 2 ? " on" : ""}`}><span>2</span> Verify</div>
+        <div className="wiz-bar" />
+        <div className={`wiz-step${step >= 3 ? " on" : ""}`}><span>3</span> Confirm</div>
       </div>
 
-      <button className="btn btn-primary btn-block" style={{ marginTop: 16 }} onClick={create} disabled={busy}>
-        {busy ? "Creating…" : "Create load"}
-      </button>
+      {/* STEP 1 — upload */}
+      {step === 1 && (
+        <div>
+          <label className="btn btn-ghost btn-block" style={{ marginBottom: 14, cursor: "pointer" }}>
+            <FileUp size={16} /> {reading ? "Reading PDF…" : "Import from rate confirmation (PDF)"}
+            <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />
+          </label>
+          <p className="px">
+            Upload the broker’s rate confirmation. The AI reads it and detects every
+            pickup and drop-off, so you just check the result on the next step.
+          </p>
+          <button className="btn btn-ghost btn-block" style={{ marginTop: 4 }} onClick={() => setStep(3)} disabled={reading}>
+            Skip — enter details manually
+          </button>
+        </div>
+      )}
+
+      {/* STEP 2 — verify */}
+      {step === 2 && (
+        <div>
+          {ai ? (
+            <div className="ai-card">
+              <div className="ai-head">
+                <span className="ai-badge">AI</span>
+                Found <b>{ai.pickups.length}</b> pickup{ai.pickups.length === 1 ? "" : "s"} ·{" "}
+                <b>{ai.dropoffs.length}</b> drop-off{ai.dropoffs.length === 1 ? "" : "s"} — verify below
+              </div>
+              {ai.pickups.map((s, i) => (
+                <div key={`ap${i}`} className="ai-stop">
+                  <span className="ai-dot up">↑</span>
+                  <div className="ai-stop-body">
+                    <div className="ai-addr">{s.address || s.city}</div>
+                    {s.time && <div className="ai-time">{s.time}</div>}
+                  </div>
+                  <button type="button" className="copy-link" onClick={() => { setOrigin(s.address || s.city); copyText(s.address || s.city); }}>
+                    Use as origin
+                  </button>
+                </div>
+              ))}
+              {ai.dropoffs.map((s, i) => (
+                <div key={`ad${i}`} className="ai-stop">
+                  <span className="ai-dot down">↓</span>
+                  <div className="ai-stop-body">
+                    <div className="ai-addr">{s.address || s.city}</div>
+                    {s.time && <div className="ai-time">{s.time}</div>}
+                  </div>
+                  <button type="button" className="copy-link" onClick={() => { setDest(s.address || s.city); copyText(s.address || s.city); }}>
+                    Use as destination
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            stops && (stops.pickups.length > 0 || stops.deliveries.length > 0) && (
+              <div className="inv-calc" style={{ marginBottom: 14 }}>
+                <div><span>Pickups</span><b>{stops.pickups.length}</b></div>
+                {stops.pickups.map((s, i) => (
+                  <div key={`p${i}`} className="addr-pick">
+                    <span className="px" style={{ flex: 1 }}>↑ {s}</span>
+                    <button type="button" className="copy-link" onClick={() => { setOrigin(s); copyText(s); }}>
+                      Use as origin
+                    </button>
+                  </div>
+                ))}
+                <div className="inv-total"><span>Deliveries</span><b>{stops.deliveries.length}</b></div>
+                {stops.deliveries.map((s, i) => (
+                  <div key={`d${i}`} className="addr-pick">
+                    <span className="px" style={{ flex: 1 }}>↓ {s}</span>
+                    <button type="button" className="copy-link" onClick={() => { setDest(s); copyText(s); }}>
+                      Use as destination
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {pdfUrl && (
+            <div className="pdf-box">
+              <div className="pdf-head">
+                <b>Rate confirmation — click words to fill addresses</b>
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="copy-link">
+                  Open PDF ↗
+                </a>
+              </div>
+              <PdfPicker
+                dataUrl={pdfUrl}
+                onOrigin={(t) => { setOrigin(t); copyText(t); }}
+                onDestination={(t) => { setDest(t); copyText(t); }}
+              />
+              <p className="hint" style={{ marginTop: 2 }}>
+                This PDF is saved to the load automatically — the driver can open and download it.
+              </p>
+            </div>
+          )}
+
+          <div className="wiz-nav">
+            <button className="btn btn-ghost" onClick={() => setStep(1)}>← Back</button>
+            <button className="btn btn-primary" onClick={() => setStep(3)}>Next: confirm →</button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3 — confirm */}
+      {step === 3 && (
+        <div>
+          <div className="fgrid">
+            <div className="field full">
+              <label>Reference # (optional — auto if blank)</label>
+              <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="LS-48217" />
+            </div>
+            <div className="field">
+              <label>Load price ($) — from confirmation</label>
+              <input type="number" min={0} value={rate} onChange={(e) => setRate(e.target.value)} placeholder="2000" />
+            </div>
+            <div className="field">
+              <label>Origin (City, ST or full address)</label>
+              <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Dallas, TX" />
+            </div>
+            <div className="field">
+              <label>Destination (City, ST or full address)</label>
+              <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Atlanta, GA" />
+            </div>
+          </div>
+
+          <div className="wiz-nav">
+            <button className="btn btn-ghost" onClick={() => setStep(pdfUrl ? 2 : 1)}>← Back</button>
+            <button className="btn btn-primary" onClick={create} disabled={busy}>
+              {busy ? "Creating…" : "Create load"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
