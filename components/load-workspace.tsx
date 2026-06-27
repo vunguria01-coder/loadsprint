@@ -72,6 +72,11 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
     );
   }
 
+  // Current stop = the first stop the driver hasn't completed yet.
+  const stopsArr = load.stops || [];
+  const currentStopId = stopsArr.find((st) => !st.done)?.id ?? null;
+  const doneCount = stopsArr.filter((st) => st.done).length;
+
   return (
     <div className="wrap">
       <div className="ld-head">
@@ -111,8 +116,9 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
               {load.stops && load.stops.length > 0 && (
                 <Collapsible title={`Stops (${load.stops.length})`}>
                   <div className="panel">
+                    <div className="stop-progress">Driver progress: {doneCount} / {load.stops.length} stops done</div>
                     {load.stops.map((st, i) => (
-                      <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
+                      <div key={st.id} className={`stop-row${st.done ? " done" : ""}${st.id === currentStopId ? " current" : ""}`}>
                         <span className={`stop-badge ${st.kind}`}>
                           {st.kind === "pickup" ? "PICKUP" : "DROP"}
                         </span>
@@ -120,6 +126,7 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
                           <div className="stop-addr">{i + 1}. {st.address}</div>
                           {st.time && <div className="stop-time">{st.time}</div>}
                         </div>
+                        {st.id === currentStopId && <span className="stop-current">● Driver here</span>}
                         {st.done && <span className="stop-check">✓ done</span>}
                       </div>
                     ))}
@@ -144,8 +151,9 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
                 <div className="panel">
                   <h3>Stops ({load.stops.length})</h3>
                   <p className="px">All pickups and drop-offs on this load.</p>
+                  <div className="stop-progress">Driver progress: {doneCount} / {load.stops.length} stops done</div>
                   {load.stops.map((st, i) => (
-                    <div key={st.id} className={`stop-row${st.done ? " done" : ""}`}>
+                    <div key={st.id} className={`stop-row${st.done ? " done" : ""}${st.id === currentStopId ? " current" : ""}`}>
                       <span className={`stop-badge ${st.kind}`}>
                         {st.kind === "pickup" ? "PICKUP" : "DROP"}
                       </span>
@@ -153,6 +161,7 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
                         <div className="stop-addr">{i + 1}. {st.address}</div>
                         {st.time && <div className="stop-time">{st.time}</div>}
                       </div>
+                      {st.id === currentStopId && <span className="stop-current">● Driver here</span>}
                       {st.done && <span className="stop-check">✓ done</span>}
                     </div>
                   ))}
