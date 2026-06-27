@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
-  const { userId, tier, days, canFreezeLocation } = parsed.data;
+  const { userId, tier, days, planId, canFreezeLocation } = parsed.data;
   const patch: Record<string, unknown> = {};
   if (tier !== undefined) {
     patch.tier = tier;
@@ -20,6 +20,10 @@ export async function POST(req: Request) {
       // revoking a plan clears any expiry
       patch.tierExpiresAt = undefined;
     }
+  }
+  // planId: "" clears it (back to a normal tier); "super_year" marks Super.
+  if (planId !== undefined) {
+    patch.planId = planId || undefined;
   }
   // days: 0 = no expiry (open-ended); >0 = expires N days from now
   if (days !== undefined && (tier === undefined || tier !== "none")) {

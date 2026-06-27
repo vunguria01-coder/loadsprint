@@ -101,6 +101,7 @@ export const adminAccountSchema = z.object({
   userId: z.string().min(1),
   tier: z.enum(ACCOUNT_TIERS).optional(),
   days: z.coerce.number().int().min(0).optional(),
+  planId: z.string().max(40).optional(),
   canFreezeLocation: z.boolean().optional(),
 });
 

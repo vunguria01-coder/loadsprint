@@ -970,6 +970,7 @@ table.acc select option{background:#0b1120}
 .am-extra { color: var(--muted, #93a4be); font-size: 12.5px; margin-top: 3px; }
 .am-plan { text-align: right; }
 .am-tier { display: block; font-weight: 700; text-transform: capitalize; }
+.am-tier-super { background: linear-gradient(135deg,#fcd34d,#38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
 .am-sub { display: block; color: var(--muted, #93a4be); font-size: 12.5px; }
 .am-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line, #22304a); }
 .am-controls select, .am-controls input { padding: 8px 10px; }
