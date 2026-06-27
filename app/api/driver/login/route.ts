@@ -25,8 +25,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Trusted device → sign in immediately and refresh the 30-day trust window.
-    if (verifyTrust(trust, user.email)) {
+    // 2FA is gated by an env flag (off while the email domain warms up).
+    const twoFaOn = process.env.TWOFA_ENABLED === "true";
+
+    // Trusted device, or 2FA disabled → sign in immediately and refresh trust.
+    if (!twoFaOn || verifyTrust(trust, user.email)) {
       const token = createSession({ id: user.id, name: user.name, email: user.email, role: "driver" });
       return NextResponse.json(
         { ok: true, token, driver: { id: user.id, name: user.name, email: user.email }, trust: makeTrust(user.email, 30) },

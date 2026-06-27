@@ -31,10 +31,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Trusted device? Skip the email code and sign in straight away.
+    // 2FA is gated by an env flag so it can be turned on/off without a code change.
+    // While the sending domain warms up, leave TWOFA_ENABLED unset to skip codes.
+    const twoFaOn = process.env.TWOFA_ENABLED === "true";
+
+    // Trusted device, or 2FA disabled → sign in straight away.
     const jar = await cookies();
     const trust = jar.get(TRUST_COOKIE)?.value;
-    if (verifyTrust(trust, user.email)) {
+    if (!twoFaOn || verifyTrust(trust, user.email)) {
       const token = createSession({ id: user.id, name: user.name, email: user.email, role: user.role });
       const res = NextResponse.json({ ok: true, role: user.role });
       res.cookies.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
