@@ -22,6 +22,7 @@ export async function GET(req: Request) {
     docCount: l.documents.length,
     photoCount: l.photos.length,
     sharing: l.driverShareLocation !== false,
+    loadRate: l.loadRate ?? null,
   }));
   return NextResponse.json({ ok: true, loads, name: me.name }, { headers: h });
 }
