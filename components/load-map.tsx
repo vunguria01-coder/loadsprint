@@ -47,6 +47,58 @@ export function LoadMap({
   const pointRef = useRef(load.point);
   const routeLine = useRef<any>(null);
   const [copiedCity, setCopiedCity] = useState("");
+  const [routeMiles, setRouteMiles] = useState<number | null>(null);
+  const [driverEta, setDriverEta] = useState<{
+    hasGps: boolean;
+    toPickup?: { miles: number; etaSeconds: number } | null;
+    toDelivery?: { miles: number; etaSeconds: number } | null;
+  } | null>(null);
+  const [addr, setAddr] = useState("");
+  const [addrBusy, setAddrBusy] = useState(false);
+  const [addrResult, setAddrResult] = useState<{ label: string; miles: number; etaSeconds: number } | null>(null);
+  const [addrError, setAddrError] = useState("");
+
+  // Distance/ETA from the driver's live GPS to pickup and delivery.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/loads/${load.id}/driver-eta`);
+        const d = await res.json();
+        if (!cancelled && d.ok) setDriverEta(d);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [load.id, load.point.lat, load.point.lng]);
+
+  async function checkAddress() {
+    if (!addr.trim()) return;
+    setAddrBusy(true);
+    setAddrError("");
+    setAddrResult(null);
+    try {
+      const res = await fetch(`/api/loads/${load.id}/driver-eta`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: addr.trim() }),
+      });
+      const d = await res.json();
+      if (d.ok && d.hasGps === false) setAddrError("No live GPS from the driver yet.");
+      else if (d.ok) setAddrResult({ label: d.label, miles: d.miles, etaSeconds: d.etaSeconds });
+      else setAddrError(d.error || "Could not calculate.");
+    } catch {
+      setAddrError("Network error.");
+    } finally {
+      setAddrBusy(false);
+    }
+  }
+
+  const fmtEta = (sec: number) =>
+    new Date(Date.now() + sec * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   function recenterDriver() {
     if (map.current) {
@@ -134,6 +186,7 @@ export function LoadMap({
         .then((r) => r.json())
         .then((d) => {
           if (!map.current || !d.ok || !Array.isArray(d.points) || d.points.length < 2) return;
+          if (typeof d.distanceMeters === "number") setRouteMiles(d.distanceMeters / 1609.34);
           const latlngs = d.points.map((p: { lat: number; lng: number }) => [p.lat, p.lng]);
           routeLine.current = L.polyline(latlngs, {
             color: "#38BDF8",
@@ -318,6 +371,66 @@ export function LoadMap({
             })}
           </div>
         )}
+
+      {/* Live tracking summary: Origin · Distance · Destination */}
+      <div className="track-block">
+        <div className="track-cell">
+          <span className="track-label">Origin</span>
+          <b className="track-val">{load.originName}</b>
+        </div>
+        <div className="track-cell track-mid">
+          <span className="track-label">Distance</span>
+          <b className="track-val track-dist">
+            {routeMiles != null ? `${routeMiles.toFixed(0)} mi` : "…"}
+          </b>
+        </div>
+        <div className="track-cell">
+          <span className="track-label">Destination</span>
+          <b className="track-val">{load.destName}</b>
+        </div>
+      </div>
+
+      {/* Distance from driver's GPS to pickup and delivery */}
+      {driverEta?.hasGps && (
+        <div className="dist-chips">
+          {driverEta.toPickup && (
+            <div className="dist-chip">
+              <span>To pickup</span>
+              <b>{driverEta.toPickup.miles.toFixed(0)} mi · ETA {fmtEta(driverEta.toPickup.etaSeconds)}</b>
+            </div>
+          )}
+          {driverEta.toDelivery && (
+            <div className="dist-chip">
+              <span>To delivery</span>
+              <b>{driverEta.toDelivery.miles.toFixed(0)} mi · ETA {fmtEta(driverEta.toDelivery.etaSeconds)}</b>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Ask: how far is the driver from any address */}
+      <div className="addr-check">
+        <div className="addr-check-label">Distance from driver to an address</div>
+        <div className="addr-check-row">
+          <input
+            type="text"
+            value={addr}
+            onChange={(e) => setAddr(e.target.value)}
+            placeholder="Type an address or city…"
+            onKeyDown={(e) => e.key === "Enter" && checkAddress()}
+          />
+          <button type="button" onClick={checkAddress} disabled={addrBusy || !addr.trim()}>
+            {addrBusy ? "…" : "Check"}
+          </button>
+        </div>
+        {addrError && <div className="addr-err">{addrError}</div>}
+        {addrResult && (
+          <div className="addr-res">
+            🚛 <b>{addrResult.miles.toFixed(0)} mi</b> · ETA {fmtEta(addrResult.etaSeconds)} →{" "}
+            {addrResult.label}
+          </div>
+        )}
+      </div>
 
       {isInternalUser && load.hasBroker && (
         <label className="sw" style={{ marginTop: 14, display: "flex" }}>

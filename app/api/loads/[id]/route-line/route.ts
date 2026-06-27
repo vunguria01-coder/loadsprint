@@ -23,5 +23,5 @@ export async function GET(
 
   const r = await truckRoute(load.origin, load.dest, { withSteps: true });
   if (!r) return NextResponse.json({ ok: false, error: "No route" }, { status: 502 });
-  return NextResponse.json({ ok: true, points: r.points });
+  return NextResponse.json({ ok: true, points: r.points, distanceMeters: r.distanceMeters });
 }

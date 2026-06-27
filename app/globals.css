@@ -622,6 +622,26 @@ table.acc select option{background:#0b1120}
 .dp-del{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:9px;padding:9px;cursor:pointer;flex:0 0 auto}
 .dp-del:hover{background:#ef4444;color:#fff}
 .dp-del:disabled{opacity:.5}
+.track-block{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;margin-top:14px;background:linear-gradient(135deg,rgba(56,189,248,.06),rgba(37,99,235,.04));border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.track-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
+.track-mid{align-items:center;padding:0 14px;border-left:1px solid var(--line-2);border-right:1px solid var(--line-2)}
+.track-label{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-family:Manrope;font-weight:700}
+.track-val{font-size:14px;color:#fff;font-family:Poppins;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track-dist{color:var(--sky);font-size:18px;white-space:nowrap}
+.dist-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.dist-chip{flex:1;min-width:150px;background:var(--navy-800);border:1px solid var(--line);border-radius:11px;padding:10px 13px}
+.dist-chip span{display:block;font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.04em;font-family:Manrope;font-weight:700;margin-bottom:3px}
+.dist-chip b{color:#4ade80;font-size:13.5px;font-family:Poppins}
+.addr-check{margin-top:14px;background:var(--navy-800);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.addr-check-label{font-size:12px;color:var(--muted);font-family:Manrope;font-weight:700;margin-bottom:9px}
+.addr-check-row{display:flex;gap:8px}
+.addr-check-row input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;color:#fff;font-size:14px}
+.addr-check-row input:focus{outline:none;border-color:var(--sky)}
+.addr-check-row button{background:var(--sky);color:#06283d;border:0;border-radius:9px;padding:0 18px;font-weight:800;font-size:14px;cursor:pointer}
+.addr-check-row button:disabled{opacity:.5;cursor:default}
+.addr-err{color:#fca5a5;font-size:12.5px;margin-top:8px}
+.addr-res{color:#fff;font-size:13.5px;margin-top:10px;line-height:1.5}
+.addr-res b{color:var(--sky)}
 .pdfp-page{position:relative;flex:0 0 auto;box-shadow:0 8px 24px -10px rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
 .pdfp-page img{display:block;width:100%;height:auto}
 .pdfp-span{position:absolute;background:transparent;border:0;padding:0;margin:0;cursor:pointer;border-radius:2px}
