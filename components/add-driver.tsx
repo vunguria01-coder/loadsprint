@@ -37,7 +37,11 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
         } else {
           toast(
             "Driver invited",
-            `Join code generated (${data.used}/${data.limit} drivers used).`
+            data.emailed
+              ? `Invite emailed to ${value}. (${data.used}/${data.limit} drivers used)`
+              : data.emailSkipped
+              ? `Join code generated — email not set up yet (${data.used}/${data.limit} drivers used).`
+              : `Join code generated, but the email didn't send. Share the code/link manually.`
           );
         }
         setEmail("");

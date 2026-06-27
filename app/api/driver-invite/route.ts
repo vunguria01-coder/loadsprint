@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
 import { createInvite, getInvitesBy, deleteInvite } from "@/lib/invites";
 import { driverLimitForTier, getLimits } from "@/lib/settings";
+import { sendEmail, driverInviteEmail } from "@/lib/email";
 
 const APP_BASE = process.env.DRIVER_APP_URL || "https://loadsprint.app/driver";
 
@@ -40,6 +41,11 @@ export async function POST(req: Request) {
 
   const invite = createInvite(email, me.id, me.name);
   const appLink = `${APP_BASE}?code=${invite.code}`;
+
+  // Email the join code to the driver (skipped silently if email isn't configured).
+  const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appLink });
+  const sent = await sendEmail({ to: email, subject: mail.subject, html: mail.html });
+
   return NextResponse.json({
     ok: true,
     invite,
@@ -48,6 +54,8 @@ export async function POST(req: Request) {
     used: position,
     extra,
     extraPrice,
+    emailed: sent.ok,
+    emailSkipped: sent.skipped || false,
   });
 }
 
