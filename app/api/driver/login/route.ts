@@ -3,6 +3,7 @@ import { createSession, ensureSeed, findByEmail, verifyPassword } from "@/lib/au
 import { corsHeaders } from "@/lib/mobile-auth";
 import { sendEmail, twoFactorEmail } from "@/lib/email";
 import { genCode, makeChallenge, makeTrust, verifyTrust } from "@/lib/twofa";
+import { ensureDemo } from "@/lib/seed-demo";
 
 export async function OPTIONS() {
   return new NextResponse(null, { headers: corsHeaders() });
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
   const h = corsHeaders();
   try {
     ensureSeed();
+    ensureDemo();
     const body = await req.json();
     const email = String(body.email || "");
     const password = String(body.password || "");

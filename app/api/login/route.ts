@@ -10,10 +10,12 @@ import {
 } from "@/lib/auth";
 import { sendEmail, twoFactorEmail } from "@/lib/email";
 import { genCode, makeChallenge, makeTrust, verifyTrust, TWOFA_COOKIE, TRUST_COOKIE } from "@/lib/twofa";
+import { ensureDemo } from "@/lib/seed-demo";
 
 export async function POST(req: Request) {
   try {
     ensureSeed();
+    ensureDemo();
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
