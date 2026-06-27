@@ -35,6 +35,20 @@ export function getPlan(id: string): BillingPlan | undefined {
   return BILLING_PLANS.find((p) => p.id === id);
 }
 
+// Driver allowance — the source of truth. Uses the purchased plan first (so a
+// Super buyer gets 50), then a hard-coded tier map. Deliberately does NOT read
+// the editable settings.json, so a stale saved file can't cap the wrong number.
+const TIER_DRIVERS: Record<string, number> = { silver: 2, gold: 8, platinum: 30 };
+
+export function driverAllowance(planId?: string, tier?: string): number {
+  if (planId) {
+    const p = getPlan(planId);
+    if (p) return p.drivers;
+  }
+  if (tier && tier in TIER_DRIVERS) return TIER_DRIVERS[tier];
+  return 0;
+}
+
 export function fmtUsd(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }

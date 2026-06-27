@@ -3,7 +3,8 @@ import { inviteSchema } from "@/lib/schemas";
 import { currentUser } from "@/lib/guard";
 import { hasActiveSub } from "@/lib/auth";
 import { createInvite, getInvitesBy, deleteInvite } from "@/lib/invites";
-import { driverLimitForTier, getLimits } from "@/lib/settings";
+import { getLimits } from "@/lib/settings";
+import { driverAllowance } from "@/lib/billing-plans";
 import { sendEmail, driverInviteEmail } from "@/lib/email";
 
 const APP_BASE = process.env.DRIVER_APP_URL || "https://loadsprint.app/driver";
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     getInvitesBy(me.id).map((i) => i.email.toLowerCase())
   );
   const isNewDriver = !existingEmails.has(email);
-  const limit = me.role === "admin" ? Number.MAX_SAFE_INTEGER : driverLimitForTier(me.tier);
+  const limit = me.role === "admin" ? Number.MAX_SAFE_INTEGER : driverAllowance(me.planId, me.tier);
   // position this driver would occupy among distinct drivers
   const position = isNewDriver ? existingEmails.size + 1 : existingEmails.size;
   const extra = isNewDriver && position > limit;

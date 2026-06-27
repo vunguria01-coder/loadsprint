@@ -8,7 +8,7 @@ import { DriversList } from "@/components/drivers-list";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
-import { driverLimitForTier } from "@/lib/settings";
+import { driverAllowance } from "@/lib/billing-plans";
 
 export const metadata: Metadata = {
   title: "Drivers — LoadSprint",
@@ -52,11 +52,7 @@ export default async function DriversPage() {
   // Driver allowance: how many the plan includes vs how many are used.
   const usedDrivers = emails.length;
   const planLimit =
-    me.role === "admin"
-      ? Infinity
-      : me.planId === "super_year"
-      ? 50
-      : driverLimitForTier(me.tier);
+    me.role === "admin" ? Infinity : driverAllowance(me.planId, me.tier);
   const canAddMore = planLimit === Infinity || usedDrivers < planLimit;
 
   return (
