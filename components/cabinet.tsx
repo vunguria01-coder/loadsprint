@@ -31,7 +31,8 @@ function navForRole(role: string): NavItem[] {
     ];
   }
   return [
-    { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
+    // Loadboard temporarily hidden — restore this line to bring it back:
+    // { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
     { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     { key: "invoice", href: "/invoice-settings", label: "Invoice details", icon: <FileText size={18} /> },
