@@ -74,15 +74,15 @@ function escapeHtml(s: string) {
 
 // Two-factor verification code email.
 export function twoFactorEmail(code: string): { subject: string; html: string; text: string } {
-  const subject = `LoadSprint sign-in code: ${code}`;
+  const subject = "Confirm your LoadSprint sign-in";
   const text =
-    `Hi,\n\n` +
-    `Here is your LoadSprint sign-in verification code: ${code}\n\n` +
-    `Enter this code in the app or on the website to finish signing in. ` +
-    `It will expire in 10 minutes.\n\n` +
-    `If you did not try to sign in, you can ignore this message and your ` +
-    `account will stay secure.\n\n` +
-    `Thanks,\nThe LoadSprint team`;
+    `Hello,\n\n` +
+    `You're confirming a sign-in to your LoadSprint account. ` +
+    `Please type the following confirmation number on the sign-in screen:\n\n` +
+    `${code}\n\n` +
+    `This number is valid for 10 minutes. If this wasn't you, no action is needed — ` +
+    `you can ignore this message and your account stays as it is.\n\n` +
+    `LoadSprint dispatch software`;
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
   <body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:24px 0">
@@ -92,27 +92,24 @@ export function twoFactorEmail(code: string): { subject: string; html: string; t
             <div style="font-size:18px;font-weight:bold;color:#111827">LoadSprint</div>
           </td></tr>
           <tr><td style="padding:0 28px">
-            <p style="font-size:15px;line-height:1.6;color:#374151;margin:8px 0 0">Hi,</p>
+            <p style="font-size:15px;line-height:1.6;color:#374151;margin:8px 0 0">Hello,</p>
             <p style="font-size:15px;line-height:1.6;color:#374151;margin:12px 0 0">
-              Here is your verification code to finish signing in to your LoadSprint account.
-              Enter it in the app or on the website. The code expires in 10 minutes.
+              You're confirming a sign-in to your LoadSprint account. Please type the
+              confirmation number below on the sign-in screen. It stays valid for 10 minutes.
             </p>
           </td></tr>
           <tr><td style="padding:18px 28px">
-            <div style="background:#f3f6fc;border:1px solid #dde4f1;border-radius:8px;padding:16px;text-align:center;font-size:26px;font-weight:bold;color:#1f2937;letter-spacing:4px">${escapeHtml(code)}</div>
+            <div style="background:#f3f6fc;border:1px solid #dde4f1;border-radius:8px;padding:16px;text-align:center;font-size:24px;font-weight:bold;color:#1f2937;letter-spacing:3px">${escapeHtml(code)}</div>
           </td></tr>
           <tr><td style="padding:0 28px 8px">
             <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">
-              If you did not try to sign in, you can ignore this email and your account stays secure.
+              If this wasn't you, no action is needed — you can ignore this message and your account stays as it is.
             </p>
           </td></tr>
           <tr><td style="padding:14px 28px 26px">
-            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">Thanks,<br>The LoadSprint team</p>
+            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">LoadSprint dispatch software</p>
           </td></tr>
         </table>
-        <p style="max-width:480px;font-size:11px;color:#9aa3b2;margin:14px auto 0;padding:0 28px;text-align:center">
-          LoadSprint dispatch software &middot; This message was sent to you because a sign-in was requested.
-        </p>
       </td></tr>
     </table>
   </body></html>`;
