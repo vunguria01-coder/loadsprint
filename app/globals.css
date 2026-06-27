@@ -406,6 +406,7 @@ footer{border-top:1px solid var(--line-2);padding:60px 0 36px;background:var(--n
 .tier-silver{color:#cbd5e1;border-color:rgba(203,213,225,.4);background:rgba(203,213,225,.08)}
 .tier-gold{color:#fcd34d;border-color:rgba(252,211,77,.45);background:rgba(252,211,77,.1)}
 .tier-platinum{color:#c4b5fd;border-color:rgba(196,181,253,.45);background:rgba(196,181,253,.12)}
+.tier-super{color:#06283d;border:0;background:linear-gradient(135deg,#fcd34d,#38bdf8);font-weight:800}
 
 /* ---------- admin ---------- */
 .admin-top{border-bottom:1px solid var(--line-2);background:rgba(11,17,32,.7);backdrop-filter:blur(12px)}
