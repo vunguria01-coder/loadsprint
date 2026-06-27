@@ -7,14 +7,12 @@ import type { AccountTier } from "@/lib/schemas";
 import { driverAllowance } from "@/lib/billing-plans";
 import { useToast } from "@/components/toast";
 
-// Admin grant options. "super" is a virtual choice that maps to tier=platinum
-// plus planId=super_year (50 drivers). Everything else is a normal tier.
+// Admin grant options — each maps directly to a tier.
 const planOptions = [
   { value: "none", label: "Free" },
   { value: "silver", label: "Silver (2 drivers)" },
   { value: "gold", label: "Gold (8 drivers)" },
   { value: "platinum", label: "Platinum (30 drivers)" },
-  { value: "super", label: "Super (50 drivers)" },
 ];
 
 function daysLeft(expiresAt?: string): number | null {
@@ -22,7 +20,6 @@ function daysLeft(expiresAt?: string): number | null {
   return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000);
 }
 function planName(u: SafeUser): string {
-  if (u.planId === "super_year") return "Super";
   if (u.tier === "none") return "Free";
   return u.tier[0].toUpperCase() + u.tier.slice(1);
 }
@@ -35,7 +32,6 @@ function subLabel(u: SafeUser): string {
 }
 // Which dropdown value reflects the user's current plan.
 function currentValue(u: SafeUser): string {
-  if (u.planId === "super_year") return "super";
   return u.tier;
 }
 
@@ -80,9 +76,7 @@ export function AdminUserManager({
   }
 
   function applyPlan(u: SafeUser, sel: string, days: number) {
-    if (sel === "super") {
-      patch(u.id, { tier: "platinum", planId: "super_year", days }, `${u.name}: Super granted.`);
-    } else if (sel === "none") {
+    if (sel === "none") {
       patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name}'s plan removed.`);
     } else {
       patch(u.id, { tier: sel as AccountTier, planId: "", days }, `${u.name}: ${sel} granted.`);
@@ -98,7 +92,7 @@ export function AdminUserManager({
         const daysVal = draftDays[u.id] ?? "30";
         const left = daysLeft(u.tierExpiresAt);
         const expired = u.tier !== "none" && left !== null && left < 0;
-        const allowance = u.planId === "super_year" ? 50 : driverAllowance(undefined, u.tier);
+        const allowance = driverAllowance(undefined, u.tier);
         return (
           <div key={u.id} className="am-card" style={{ opacity: busy === u.id ? 0.55 : 1 }}>
             <div className="am-top">
@@ -109,7 +103,7 @@ export function AdminUserManager({
               </div>
               <div className="am-plan">
                 <span
-                  className={`am-tier${u.planId === "super_year" ? " am-tier-super" : ""}`}
+                  className="am-tier"
                   style={{ color: expired ? "#fca5a5" : undefined }}
                 >
                   {planName(u)}

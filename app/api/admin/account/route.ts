@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       patch.tierExpiresAt = undefined;
     }
   }
-  // planId: "" clears it (back to a normal tier); "super_year" marks Super.
+  // planId: "" clears it back to a plain tier.
   if (planId !== undefined) {
     patch.planId = planId || undefined;
   }

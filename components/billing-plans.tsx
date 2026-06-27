@@ -7,17 +7,17 @@ import { BILLING_PLANS, fmtUsd, type BillingPlan } from "@/lib/billing-plans";
 function PlanCard({ plan, busy, onBuy }: { plan: BillingPlan; busy: string | null; onBuy: (id: string) => void }) {
   const isBusy = busy === plan.id;
   return (
-    <div className={`plan-card${plan.id.startsWith("super") ? " plan-super" : ""}`}>
+    <div className="plan-card">
       <div className="plan-name">{plan.label}</div>
       <div className="plan-price">
         {fmtUsd(plan.amountCents)}
         <span>
-          {plan.mode === "subscription" ? "/mo" : plan.durationDays === 365 ? " /year" : " once"}
+          {plan.mode === "subscription" ? "/mo" : " once"}
         </span>
       </div>
       <ul className="plan-feats">
         <li><Check size={15} /> {plan.drivers} drivers</li>
-        <li><Check size={15} /> {plan.mode === "subscription" ? "Auto-renews monthly" : plan.durationDays === 365 ? "One payment, full year" : "One month, no auto-renew"}</li>
+        <li><Check size={15} /> {plan.mode === "subscription" ? "Auto-renews monthly" : "One month, no auto-renew"}</li>
         <li><Check size={15} /> All dispatcher features</li>
       </ul>
       <button type="button" className="plan-btn" disabled={!!busy} onClick={() => onBuy(plan.id)}>
@@ -55,7 +55,6 @@ export function BillingPlansView({ status }: { status?: string }) {
 
   const monthly = BILLING_PLANS.filter((p) => p.mode === "subscription");
   const once = BILLING_PLANS.filter((p) => p.mode === "one_time" && p.durationDays === 30);
-  const supers = BILLING_PLANS.filter((p) => p.durationDays === 365);
 
   return (
     <div className="billing-wrap">
@@ -77,12 +76,6 @@ export function BillingPlansView({ status }: { status?: string }) {
       <p className="billing-sub">A single payment for one month. No auto-renew.</p>
       <div className="plan-grid">
         {once.map((p) => <PlanCard key={p.id} plan={p} busy={busy} onBuy={buy} />)}
-      </div>
-
-      <h3 className="billing-h">Super</h3>
-      <p className="billing-sub">One payment, a full year, the highest driver allowance.</p>
-      <div className="plan-grid">
-        {supers.map((p) => <PlanCard key={p.id} plan={p} busy={busy} onBuy={buy} />)}
       </div>
 
       <p className="billing-note">

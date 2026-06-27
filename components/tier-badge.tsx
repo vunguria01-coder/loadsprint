@@ -7,9 +7,6 @@ const labels: Record<AccountTier, string> = {
   platinum: "Platinum",
 };
 
-export function TierBadge({ tier, planId }: { tier: AccountTier; planId?: string }) {
-  if (planId === "super_year") {
-    return <span className="tier tier-super">Super</span>;
-  }
+export function TierBadge({ tier }: { tier: AccountTier }) {
   return <span className={`tier tier-${tier}`}>{labels[tier]}</span>;
 }

@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             </p>
             <div className="plan-row">
               <span className="pl">Current plan:</span>
-              <TierBadge tier={me.tier} planId={me.planId} />
+              <TierBadge tier={me.tier} />
               {me.tier !== "none" && (
                 <span
                   style={{

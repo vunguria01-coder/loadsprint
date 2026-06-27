@@ -25,7 +25,7 @@ export type User = {
   role: AccountRole;
   tier: AccountTier;
   tierExpiresAt?: string; // ISO date; undefined = no expiry
-  planId?: string; // last purchased billing plan id (e.g. "super_year")
+  planId?: string; // last purchased billing plan id
   canFreezeLocation: boolean;
   freezeActive: boolean;
   salt: string;
@@ -133,7 +133,7 @@ export function ensureSeed() {
     });
   } else {
     // Keep credentials/role in sync, but do NOT overwrite tier/planId — otherwise
-    // a purchased plan (e.g. Super) would be reset to platinum on every restart.
+    // a purchased plan would otherwise be reset to platinum on every restart.
     updateUser(existing.id, {
       role: "admin",
       canFreezeLocation: true,

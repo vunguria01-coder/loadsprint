@@ -26,18 +26,15 @@ export const BILLING_PLANS: BillingPlan[] = [
   { id: "silver_once", label: "Silver — 1 month", tier: "silver", mode: "one_time", amountCents: 2500, drivers: 2, durationDays: 30, blurb: "2 drivers, one month, no auto-renew" },
   { id: "gold_once", label: "Gold — 1 month", tier: "gold", mode: "one_time", amountCents: 9000, drivers: 8, durationDays: 30, blurb: "8 drivers, one month, no auto-renew" },
   { id: "platinum_once", label: "Platinum — 1 month", tier: "platinum", mode: "one_time", amountCents: 30000, drivers: 30, durationDays: 30, blurb: "30 drivers, one month, no auto-renew" },
-
-  // Super: one-time, full year
-  { id: "super_year", label: "Super", tier: "platinum", mode: "one_time", amountCents: 200000, drivers: 50, durationDays: 365, blurb: "50 drivers, full year, one payment" },
 ];
 
 export function getPlan(id: string): BillingPlan | undefined {
   return BILLING_PLANS.find((p) => p.id === id);
 }
 
-// Driver allowance — the source of truth. Uses the purchased plan first (so a
-// Super buyer gets 50), then a hard-coded tier map. Deliberately does NOT read
-// the editable settings.json, so a stale saved file can't cap the wrong number.
+// Driver allowance — the source of truth. Uses the purchased plan first, then a
+// hard-coded tier map. Deliberately does NOT read the editable settings.json, so
+// a stale saved file can't cap the wrong number.
 const TIER_DRIVERS: Record<string, number> = { silver: 2, gold: 8, platinum: 30 };
 
 export function driverAllowance(planId?: string, tier?: string): number {
