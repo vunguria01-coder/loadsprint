@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PackageCheck, Image as ImageIcon, FileText, ChevronRight } from "lucide-react";
+import { PackageCheck, Image as ImageIcon, FileText } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { getLoadsByDispatcher, getAllLoads, type Load } from "@/lib/loads";
+import { BrokerPackage } from "@/components/broker-package";
 
 export const metadata: Metadata = {
   title: "Completed loads — LoadSprint",
@@ -53,20 +54,23 @@ export default async function ReviewPage() {
               </div>
               <div className="load-list">
                 {g.loads.map((l) => (
-                  <Link key={l.id} href={`/loads/${l.id}`} className="rev-card" style={{ textDecoration: "none" }}>
-                    <div className="rev-main">
+                  <div key={l.id} className="rev-card">
+                    <Link href={`/loads/${l.id}`} className="rev-main" style={{ textDecoration: "none" }}>
                       <div className="lc-top">
                         <span className="lc-ref">{l.ref}</span>
                         <span className="status-chip">{l.status}</span>
+                        {typeof l.loadRate === "number" && (
+                          <span className="rev-price">${l.loadRate.toLocaleString("en-US")}</span>
+                        )}
                       </div>
                       <div className="lc-route">{l.originName} → {l.destName}</div>
                       <div className="rev-meta">
                         <span><ImageIcon size={14} /> {l.photos?.length || 0} photos</span>
                         <span><FileText size={14} /> {l.documents?.length || 0} docs</span>
                       </div>
-                    </div>
-                    <ChevronRight size={20} className="rev-arrow" />
-                  </Link>
+                    </Link>
+                    <BrokerPackage loadId={l.id} loadRef={l.ref} compact />
+                  </div>
                 ))}
               </div>
             </div>
