@@ -20,6 +20,7 @@ export async function CabinetServer({
       email={me.email}
       tier={me.tier}
       daysLeft={subDaysLeft(me)}
+      planId={me.planId}
       active={active}
     >
       {children}

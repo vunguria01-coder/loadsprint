@@ -662,6 +662,15 @@ table.acc select option{background:#0b1120}
 .plan-btn:disabled{opacity:.6;cursor:default}
 .plan-super .plan-btn{background:linear-gradient(135deg,#38bdf8,#2563eb);color:#fff}
 .billing-note{color:var(--muted-2);font-size:12.5px;margin-top:24px;line-height:1.6}
+.seat-meter{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(56,189,248,.07),rgba(37,99,235,.04));border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:18px}
+.seat-info{display:flex;align-items:baseline;gap:10px}
+.seat-count{font-family:Poppins;font-weight:800;font-size:26px;color:#fff}
+.seat-count i{font-style:normal;color:var(--muted);font-size:18px;font-weight:600}
+.seat-label{font-size:12px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.04em;font-family:Manrope;font-weight:700}
+.seat-ok{color:#4ade80;font-size:13.5px;font-weight:700;font-family:Manrope}
+.seat-full{color:#fbbf24;font-size:13px;font-weight:700;font-family:Manrope}
+.cas-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:7px;vertical-align:middle}
+.cab-acc-sub.expired .cas-dot{background:#ef4444}
 .pdfp-page{position:relative;flex:0 0 auto;box-shadow:0 8px 24px -10px rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
 .pdfp-page img{display:block;width:100%;height:auto}
 .pdfp-span{position:absolute;background:transparent;border:0;padding:0;margin:0;cursor:pointer;border-radius:2px}

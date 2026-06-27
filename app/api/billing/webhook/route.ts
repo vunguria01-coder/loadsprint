@@ -7,12 +7,12 @@ import { getUserById, updateUser } from "@/lib/auth";
 // a Stripe webhook to /api/billing/webhook for these events:
 //   checkout.session.completed, invoice.paid, customer.subscription.deleted
 
-function grant(userId: string, tier: string, durationDays: number) {
+function grant(userId: string, tier: string, durationDays: number, planId?: string) {
   const user = getUserById(userId);
   if (!user) return;
   const base = Date.now();
   const expires = new Date(base + durationDays * 24 * 60 * 60 * 1000).toISOString();
-  updateUser(userId, { tier: tier as never, tierExpiresAt: expires });
+  updateUser(userId, { tier: tier as never, tierExpiresAt: expires, planId });
 }
 
 function extendOneMonth(userId: string, tier: string) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       const userId = meta.userId || String(obj.client_reference_id || "");
       const tier = meta.tier;
       const durationDays = Number(meta.durationDays) || 30;
-      if (userId && tier) grant(userId, tier, durationDays);
+      if (userId && tier) grant(userId, tier, durationDays, meta.planId);
     } else if (type === "invoice.paid") {
       // Monthly subscription renewal — extend access another month.
       const sub = (obj.subscription_details as { metadata?: Record<string, string> })?.metadata || {};

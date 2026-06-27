@@ -25,6 +25,7 @@ export type User = {
   role: AccountRole;
   tier: AccountTier;
   tierExpiresAt?: string; // ISO date; undefined = no expiry
+  planId?: string; // last purchased billing plan id (e.g. "super_year")
   canFreezeLocation: boolean;
   freezeActive: boolean;
   salt: string;

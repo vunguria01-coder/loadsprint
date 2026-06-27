@@ -8,6 +8,7 @@ import { DriversList } from "@/components/drivers-list";
 import { hasActiveSub, findByEmail } from "@/lib/auth";
 import { getInvitesBy } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
+import { driverLimitForTier } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Drivers — LoadSprint",
@@ -48,6 +49,16 @@ export default async function DriversPage() {
     };
   });
 
+  // Driver allowance: how many the plan includes vs how many are used.
+  const usedDrivers = emails.length;
+  const planLimit =
+    me.role === "admin"
+      ? Infinity
+      : me.planId === "super_year"
+      ? 50
+      : driverLimitForTier(me.tier);
+  const canAddMore = planLimit === Infinity || usedDrivers < planLimit;
+
   return (
     <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
@@ -61,6 +72,29 @@ export default async function DriversPage() {
               <p className="lead">Tap a driver to see their loads, GPS, and create a new load.</p>
             </div>
             <DriverManager invites={invites} />
+          </div>
+
+          <div className="seat-meter">
+            <div className="seat-info">
+              <span className="seat-count">
+                {usedDrivers}
+                <i> / {planLimit === Infinity ? "∞" : planLimit}</i>
+              </span>
+              <span className="seat-label">drivers used</span>
+            </div>
+            <div className="seat-right">
+              {planLimit === Infinity ? (
+                <span className="seat-ok">Unlimited on your plan</span>
+              ) : canAddMore ? (
+                <span className="seat-ok">
+                  You can add {planLimit - usedDrivers} more
+                </span>
+              ) : (
+                <span className="seat-full">
+                  Limit reached — extra drivers are $10/mo each
+                </span>
+              )}
+            </div>
           </div>
 
           {drivers.length === 0 ? (

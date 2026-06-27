@@ -39,9 +39,9 @@ function navForRole(role: string): NavItem[] {
   ];
 }
 
-function subLabel(tier: string, daysLeft: number | null): string {
+function subLabel(tier: string, daysLeft: number | null, planId?: string): string {
   if (tier === "none") return "No plan";
-  const t = tier[0].toUpperCase() + tier.slice(1);
+  const t = planId === "super_year" ? "Super" : tier[0].toUpperCase() + tier.slice(1);
   if (daysLeft === null) return `${t} · no expiry`;
   if (daysLeft < 0) return `${t} · expired`;
   return `${t} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
@@ -53,6 +53,7 @@ export function Cabinet({
   email,
   tier,
   daysLeft,
+  planId,
   active,
   children,
 }: {
@@ -61,6 +62,7 @@ export function Cabinet({
   email: string;
   tier: string;
   daysLeft: number | null;
+  planId?: string;
   active?: string;
   children: ReactNode;
 }) {
@@ -128,9 +130,12 @@ export function Cabinet({
                     <div className="cab-acc-mail">{email}</div>
                   </div>
                   <div className={`cab-acc-sub${expired ? " expired" : ""}`}>
-                    {subLabel(tier, daysLeft)}
+                    <span className="cas-dot" />
+                    {subLabel(tier, daysLeft, planId)}
                   </div>
-                  <Link href="/pricing" className="cab-acc-item" onClick={() => setAcc(false)}>Manage plan</Link>
+                  {(role === "dispatcher" || role === "admin") && (
+                    <Link href="/billing" className="cab-acc-item" onClick={() => setAcc(false)}>Plans &amp; billing</Link>
+                  )}
                   {role === "dispatcher" && (
                     <Link href="/invoice-settings" className="cab-acc-item" onClick={() => setAcc(false)}>Invoice details</Link>
                   )}
