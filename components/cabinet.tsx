@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, Users, History, FileText, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 
@@ -34,6 +34,7 @@ function navForRole(role: string): NavItem[] {
     // Loadboard temporarily hidden — restore this line to bring it back:
     // { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
+    { key: "review", href: "/review", label: "Completed loads", icon: <PackageCheck size={18} /> },
     { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     { key: "invoice", href: "/invoice-settings", label: "Invoice details", icon: <FileText size={18} /> },
     { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
