@@ -37,36 +37,37 @@ export function Hero() {
       <div className="wrap hero-grid">
         <div className="hero-copy">
           <span className="pill">
-            <span className="dot" /> Moving Freight Faster — nationwide coverage
+            <span className="dot" /> Dispatch software for carriers &amp; brokers
           </span>
           <h1>
-            <span>Reliable freight</span>
+            <span>Run your whole</span>
             <span>
-              solutions across <span className="grad-text">America</span>
+              dispatch from <span className="grad-text">one place</span>
             </span>
           </h1>
           <p className="sub">
-            LoadSprint connects shippers and carriers with fast, efficient, and
-            cost-effective transportation services — backed by real-time tracking
-            and a 24/7 dispatch team.
+            LoadSprint turns a rate confirmation into a ready-to-run load in seconds.
+            AI pulls every stop, address and rate; your drivers get a clean mobile
+            app; and you track them live — then send the broker a finished invoice
+            packet in one click.
           </p>
           <div className="hero-cta">
-            <a href="#quote" className="btn btn-primary">
-              Get a Quote <ArrowRight size={17} />
+            <a href="/register" className="btn btn-primary">
+              Get started <ArrowRight size={17} />
             </a>
-            <a href="#quote" className="btn btn-ghost">
-              Become a Carrier
+            <a href="#how" className="btn btn-ghost">
+              See how it works
             </a>
           </div>
           <div className="hero-trust">
             <span className="i">
-              <CheckCircle2 size={16} /> <b>98%</b> on-time delivery
+              <CheckCircle2 size={16} /> <b>AI</b> rate-con import
             </span>
             <span className="i">
-              <Clock size={16} /> <b>24/7</b> live dispatch
+              <Clock size={16} /> <b>Live</b> GPS tracking
             </span>
             <span className="i">
-              <Boxes size={16} /> <b>500+</b> trusted carriers
+              <Boxes size={16} /> <b>1-click</b> broker packets
             </span>
           </div>
         </div>

@@ -1,43 +1,43 @@
 import { Reveal } from "@/components/reveal";
 import {
-  Truck,
-  PackageOpen,
-  Zap,
-  Container,
-  Snowflake,
-  Layers,
+  Sparkles,
+  MapPin,
+  Smartphone,
+  Route,
+  FileText,
+  ShieldCheck,
 } from "lucide-react";
 
 const services = [
   {
-    icon: Truck,
-    title: "Full Truckload (FTL)",
-    desc: "Dedicated truck capacity for large shipments — your freight, your trailer, direct to destination.",
+    icon: Sparkles,
+    title: "AI rate-con import",
+    desc: "Drop in a rate confirmation and AI pulls the reference, rate, payer, and every stop — full street addresses with ZIP — in seconds.",
   },
   {
-    icon: PackageOpen,
-    title: "Less Than Truckload (LTL)",
-    desc: "Affordable shipping for smaller freight — pay only for the space you use, share the rest.",
+    icon: Route,
+    title: "Multi-stop loads",
+    desc: "Handle up to 10 pickups and 10 drop-offs on one load, each with its address, date and appointment time, kept in order.",
   },
   {
-    icon: Zap,
-    title: "Expedited Freight",
-    desc: "Time-sensitive deliveries handled with priority dispatch and the fastest available routing.",
+    icon: MapPin,
+    title: "Live GPS tracking",
+    desc: "See each driver's real position on the map, plus live distance to the next pickup and to delivery — and which stop they're on right now.",
   },
   {
-    icon: Container,
-    title: "Dry Van Shipping",
-    desc: "Reliable general freight transportation in enclosed trailers for non-perishable goods.",
+    icon: Smartphone,
+    title: "Driver mobile app",
+    desc: "Drivers get their stops, one-tap address copy, the rate confirmation, and cargo & paperwork photos — all on iOS.",
   },
   {
-    icon: Snowflake,
-    title: "Reefer Freight",
-    desc: "Temperature-controlled transportation that keeps perishables at the perfect temp end to end.",
+    icon: FileText,
+    title: "AI invoices & broker packets",
+    desc: "Generate the carrier invoice automatically and download a tidy ZIP — confirmation, photos, a photos PDF, and the invoice — ready to send.",
   },
   {
-    icon: Layers,
-    title: "Flatbed Freight",
-    desc: "Oversized and specialized cargo loaded with the equipment, permits, and securement it needs.",
+    icon: ShieldCheck,
+    title: "Secure team access",
+    desc: "Email + password with a 2FA email code, trusted devices, and roles for dispatchers, drivers and brokers — everyone sees just what they need.",
   },
 ];
 
@@ -46,14 +46,15 @@ export function Services() {
     <section className="section" id="services">
       <div className="wrap">
         <Reveal className="shead">
-          <span className="eyebrow">What we move</span>
+          <span className="eyebrow">What it does</span>
           <h2 className="h2">
-            Freight services for every{" "}
-            <span className="grad-text">load type</span>
+            Everything a dispatcher needs,{" "}
+            <span className="grad-text">in one app</span>
           </h2>
           <p className="lead">
-            From a single pallet to oversized cargo, LoadSprint matches your
-            shipment with the right equipment and the right carrier — every time.
+            From the moment a rate con lands to the invoice you send the broker,
+            LoadSprint runs the whole load — so you spend less time on paperwork
+            and more time moving freight.
           </p>
         </Reveal>
         <div className="cards">

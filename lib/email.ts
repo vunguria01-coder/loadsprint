@@ -69,6 +69,26 @@ function escapeHtml(s: string) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string)
   );
 }
+
+// Two-factor verification code email.
+export function twoFactorEmail(code: string): { subject: string; html: string } {
+  const subject = "Your LoadSprint verification code";
+  const html = `<!doctype html><html><body style="margin:0;background:#0b1120;font-family:Arial,Helvetica,sans-serif">
+    <div style="max-width:480px;margin:0 auto;padding:32px 24px;color:#e7eefc">
+      <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:6px">LoadSprint</div>
+      <p style="color:#93a4be;font-size:14px;line-height:1.6;margin:0 0 18px">
+        Use this code to finish signing in. It expires in 10 minutes.
+      </p>
+      <div style="background:#111a2e;border:1px solid #22304a;border-radius:12px;padding:18px;text-align:center;margin-bottom:18px">
+        <div style="font-size:34px;font-weight:800;letter-spacing:8px;color:#38bdf8">${escapeHtml(code)}</div>
+      </div>
+      <p style="color:#6b7a93;font-size:12px;line-height:1.6;margin:0">
+        If you didn't try to sign in, you can safely ignore this email and your account stays secure.
+      </p>
+    </div>
+  </body></html>`;
+  return { subject, html };
+}
 function escapeAttr(s: string) {
   return s.replace(/"/g, "%22");
 }

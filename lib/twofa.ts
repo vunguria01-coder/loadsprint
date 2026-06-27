@@ -1,0 +1,70 @@
+import crypto from "crypto";
+
+// Stateless 2FA: codes and trusted-device tokens are signed with AUTH_SECRET, so
+// nothing is stored on disk (survives Railway redeploys). The actual code is only
+// ever sent to the user's email; the challenge cookie holds only a keyed hash.
+
+const SECRET = process.env.AUTH_SECRET || "dev-insecure-secret-change-me";
+
+function hmac(value: string): string {
+  return crypto.createHmac("sha256", SECRET).update(value).digest("base64url");
+}
+
+function pack(payload: Record<string, unknown>): string {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${body}.${hmac(body)}`;
+}
+function unpack(token: string | undefined): Record<string, unknown> | null {
+  if (!token) return null;
+  const [body, sig] = token.split(".");
+  if (!body || !sig || hmac(body) !== sig) return null;
+  try {
+    return JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+export const TWOFA_COOKIE = "ls_2fa";
+export const TRUST_COOKIE = "ls_trust";
+
+// Generate a 6-digit numeric code.
+export function genCode(): string {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+}
+
+// Build the challenge token to store in a short-lived cookie (default 10 min).
+export function makeChallenge(email: string, code: string, minutes = 10): string {
+  const e = email.trim().toLowerCase();
+  return pack({
+    e,
+    exp: Date.now() + minutes * 60 * 1000,
+    h: hmac(`${e}:${code}`),
+  });
+}
+
+// Verify a submitted code against the challenge cookie.
+export function verifyChallenge(token: string | undefined, email: string, code: string): boolean {
+  const data = unpack(token);
+  if (!data) return false;
+  const e = email.trim().toLowerCase();
+  if (data.e !== e) return false;
+  if (typeof data.exp !== "number" || Date.now() > data.exp) return false;
+  const expected = hmac(`${e}:${String(code).trim()}`);
+  try {
+    return crypto.timingSafeEqual(Buffer.from(String(data.h)), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
+// Long-lived "this device is trusted" token for a given email.
+export function makeTrust(email: string): string {
+  return pack({ e: email.trim().toLowerCase(), kind: "trust" });
+}
+
+export function verifyTrust(token: string | undefined, email: string): boolean {
+  const data = unpack(token);
+  if (!data || data.kind !== "trust") return false;
+  return data.e === email.trim().toLowerCase();
+}

@@ -4,11 +4,11 @@ import { useRef } from "react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 
 const steps = [
-  { title: "Request a Quote", desc: "Tell us your lane, freight type, and date — get pricing fast." },
-  { title: "We Find the Carrier", desc: "LoadSprint matches your load to the best vetted carrier." },
-  { title: "Shipment Pickup", desc: "Your freight is collected on schedule, hassle-free." },
-  { title: "Real-Time Tracking", desc: "Follow every mile with live updates from the road." },
-  { title: "Successful Delivery", desc: "On-time, in full — with proof of delivery confirmed." },
+  { title: "Import the rate con", desc: "Upload the rate confirmation — AI reads the stops, addresses, rate and payer automatically." },
+  { title: "Assign a driver", desc: "Invite a driver by email and assign the load. They get it instantly in the mobile app." },
+  { title: "Track live", desc: "Watch the driver's GPS on the map, with live distance to each pickup and to delivery." },
+  { title: "Drivers run the stops", desc: "Drivers copy addresses one-tap, work each pickup and drop, and snap cargo & paperwork photos." },
+  { title: "Send the broker packet", desc: "Generate the AI invoice and download one ZIP — confirmation, photos and invoice, ready to send." },
 ];
 
 function Step({
@@ -44,9 +44,9 @@ export function HowItWorks() {
     <section className="section" id="how">
       <div className="wrap">
         <div className="shead center">
-          <span className="eyebrow">The process</span>
+          <span className="eyebrow">The workflow</span>
           <h2 className="h2">
-            From quote to delivery in{" "}
+            From rate con to invoice in{" "}
             <span className="grad-text">five steps</span>
           </h2>
         </div>

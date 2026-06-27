@@ -2,10 +2,10 @@ import { Reveal } from "@/components/reveal";
 import { Counter } from "@/components/counter";
 
 const stats = [
-  { to: 10000, suffix: "+", label: "Loads Delivered" },
-  { to: 500, suffix: "+", label: "Trusted Carriers" },
-  { to: 98, suffix: "%", label: "On-Time Delivery" },
-  { text: "24/7", label: "Dispatch Support" },
+  { text: "10+10", label: "Pickups & drop-offs per load" },
+  { text: "AI", label: "Reads every rate con" },
+  { text: "Live", label: "GPS driver tracking" },
+  { text: "1-click", label: "Broker invoice packet" },
 ];
 
 export function Stats() {
