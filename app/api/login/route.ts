@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const code = genCode();
     const challenge = makeChallenge(user.email, code);
     const mail = twoFactorEmail(code);
-    const sent = await sendEmail({ to: user.email, subject: mail.subject, html: mail.html });
+    const sent = await sendEmail({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text });
 
     const res = NextResponse.json({
       ok: true,

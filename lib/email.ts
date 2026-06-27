@@ -9,6 +9,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 }): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, skipped: true };
@@ -24,6 +25,7 @@ export async function sendEmail(opts: {
         to: opts.to,
         subject: opts.subject,
         html: opts.html,
+        ...(opts.text ? { text: opts.text } : {}),
       }),
     });
     if (!res.ok) {
@@ -71,23 +73,50 @@ function escapeHtml(s: string) {
 }
 
 // Two-factor verification code email.
-export function twoFactorEmail(code: string): { subject: string; html: string } {
-  const subject = "Your LoadSprint verification code";
-  const html = `<!doctype html><html><body style="margin:0;background:#0b1120;font-family:Arial,Helvetica,sans-serif">
-    <div style="max-width:480px;margin:0 auto;padding:32px 24px;color:#e7eefc">
-      <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:6px">LoadSprint</div>
-      <p style="color:#93a4be;font-size:14px;line-height:1.6;margin:0 0 18px">
-        Use this code to finish signing in. It expires in 10 minutes.
-      </p>
-      <div style="background:#111a2e;border:1px solid #22304a;border-radius:12px;padding:18px;text-align:center;margin-bottom:18px">
-        <div style="font-size:34px;font-weight:800;letter-spacing:8px;color:#38bdf8">${escapeHtml(code)}</div>
-      </div>
-      <p style="color:#6b7a93;font-size:12px;line-height:1.6;margin:0">
-        If you didn't try to sign in, you can safely ignore this email and your account stays secure.
-      </p>
-    </div>
+export function twoFactorEmail(code: string): { subject: string; html: string; text: string } {
+  const subject = `LoadSprint sign-in code: ${code}`;
+  const text =
+    `Hi,\n\n` +
+    `Here is your LoadSprint sign-in verification code: ${code}\n\n` +
+    `Enter this code in the app or on the website to finish signing in. ` +
+    `It will expire in 10 minutes.\n\n` +
+    `If you did not try to sign in, you can ignore this message and your ` +
+    `account will stay secure.\n\n` +
+    `Thanks,\nThe LoadSprint team`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+  <body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:24px 0">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e5e9f2;border-radius:12px">
+          <tr><td style="padding:28px 28px 8px">
+            <div style="font-size:18px;font-weight:bold;color:#111827">LoadSprint</div>
+          </td></tr>
+          <tr><td style="padding:0 28px">
+            <p style="font-size:15px;line-height:1.6;color:#374151;margin:8px 0 0">Hi,</p>
+            <p style="font-size:15px;line-height:1.6;color:#374151;margin:12px 0 0">
+              Here is your verification code to finish signing in to your LoadSprint account.
+              Enter it in the app or on the website. The code expires in 10 minutes.
+            </p>
+          </td></tr>
+          <tr><td style="padding:18px 28px">
+            <div style="background:#f3f6fc;border:1px solid #dde4f1;border-radius:8px;padding:16px;text-align:center;font-size:26px;font-weight:bold;color:#1f2937;letter-spacing:4px">${escapeHtml(code)}</div>
+          </td></tr>
+          <tr><td style="padding:0 28px 8px">
+            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">
+              If you did not try to sign in, you can ignore this email and your account stays secure.
+            </p>
+          </td></tr>
+          <tr><td style="padding:14px 28px 26px">
+            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">Thanks,<br>The LoadSprint team</p>
+          </td></tr>
+        </table>
+        <p style="max-width:480px;font-size:11px;color:#9aa3b2;margin:14px auto 0;padding:0 28px;text-align:center">
+          LoadSprint dispatch software &middot; This message was sent to you because a sign-in was requested.
+        </p>
+      </td></tr>
+    </table>
   </body></html>`;
-  return { subject, html };
+  return { subject, html, text };
 }
 function escapeAttr(s: string) {
   return s.replace(/"/g, "%22");
