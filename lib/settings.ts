@@ -6,8 +6,8 @@ const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 const DEFAULT_PRICING: PricingValues = {
-  silver: 49,
-  gold: 99,
+  silver: 19,
+  gold: 59,
   platinum: 199,
   currency: "$",
   period: "mo",
@@ -17,8 +17,8 @@ const DEFAULT_PRICING: PricingValues = {
 const DEFAULT_LIMITS: LimitsValues = {
   silver: 2,
   gold: 8,
-  platinum: 20,
-  extraDriverPrice: 5,
+  platinum: 30,
+  extraDriverPrice: 10,
 };
 
 function ensure() {

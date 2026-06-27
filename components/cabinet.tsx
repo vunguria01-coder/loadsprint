@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, Users, History, FileText, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 
@@ -35,6 +35,7 @@ function navForRole(role: string): NavItem[] {
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
     { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     { key: "invoice", href: "/invoice-settings", label: "Invoice details", icon: <FileText size={18} /> },
+    { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
   ];
 }
 
