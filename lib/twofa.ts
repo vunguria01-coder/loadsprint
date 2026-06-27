@@ -59,12 +59,17 @@ export function verifyChallenge(token: string | undefined, email: string, code: 
 }
 
 // Long-lived "this device is trusted" token for a given email.
-export function makeTrust(email: string): string {
-  return pack({ e: email.trim().toLowerCase(), kind: "trust" });
+// Pass `days` to embed an expiry (used by the mobile app, which has no cookie
+// maxAge to rely on). Without `days` the token never expires on its own.
+export function makeTrust(email: string, days?: number): string {
+  const payload: Record<string, unknown> = { e: email.trim().toLowerCase(), kind: "trust" };
+  if (typeof days === "number") payload.exp = Date.now() + days * 24 * 60 * 60 * 1000;
+  return pack(payload);
 }
 
 export function verifyTrust(token: string | undefined, email: string): boolean {
   const data = unpack(token);
   if (!data || data.kind !== "trust") return false;
+  if (typeof data.exp === "number" && Date.now() > data.exp) return false;
   return data.e === email.trim().toLowerCase();
 }
