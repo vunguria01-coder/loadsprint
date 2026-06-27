@@ -132,9 +132,10 @@ export function ensureSeed() {
       createdAt: new Date().toISOString(),
     });
   } else {
+    // Keep credentials/role in sync, but do NOT overwrite tier/planId — otherwise
+    // a purchased plan (e.g. Super) would be reset to platinum on every restart.
     updateUser(existing.id, {
       role: "admin",
-      tier: "platinum",
       canFreezeLocation: true,
       salt,
       hash,
