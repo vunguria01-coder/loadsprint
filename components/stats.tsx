@@ -15,7 +15,7 @@ export function Stats() {
         {stats.map((s, i) => (
           <Reveal key={i} className="stat" delay={i * 0.05}>
             <div className="num">
-              <Counter to={s.to} suffix={s.suffix} text={s.text} />
+              <Counter text={s.text} />
             </div>
             <div className="lbl">{s.label}</div>
           </Reveal>
