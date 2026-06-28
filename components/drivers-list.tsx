@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/toast";
 
 type DriverRow = {
   email: string;
@@ -15,10 +17,38 @@ type DriverRow = {
 
 export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   const [q, setQ] = useState("");
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
+
   const query = q.trim().toLowerCase();
   const shown = query
     ? drivers.filter((d) => d.search.includes(query))
     : drivers;
+
+  async function remove(email: string) {
+    setBusy(email);
+    try {
+      const res = await fetch("/api/driver-remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast("Could not remove", data.error || "Try again.");
+      } else {
+        toast("Driver removed", `${email} was removed from your roster.`);
+        router.refresh();
+      }
+    } catch {
+      toast("Network error", "Please try again.");
+    } finally {
+      setBusy(null);
+      setConfirm(null);
+    }
+  }
 
   return (
     <>
@@ -42,21 +72,46 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
       ) : (
         <div className="load-list">
           {shown.map((d) => (
-            <Link
-              key={d.email}
-              href={`/drivers/${encodeURIComponent(d.email)}`}
-              className="load-card"
-              style={{ textDecoration: "none" }}
-            >
-              <div className="lc-main">
-                <div className="driver-name-lg">{d.name}</div>
-                <div className="lc-route">{d.email}</div>
-                <div className="px" style={{ marginTop: 4 }}>
-                  {d.active} active · {d.total} total {d.joined ? "" : "· invite pending"}
+            <div key={d.email} className="load-card driver-row-wrap">
+              <Link
+                href={`/drivers/${encodeURIComponent(d.email)}`}
+                className="driver-row-link"
+                style={{ textDecoration: "none" }}
+              >
+                <div className="lc-main">
+                  <div className="driver-name-lg">{d.name}</div>
+                  <div className="lc-route">{d.email}</div>
+                  <div className="px" style={{ marginTop: 4 }}>
+                    {d.active} active · {d.total} total {d.joined ? "" : "· invite pending"}
+                  </div>
                 </div>
-              </div>
-              <ChevronRight />
-            </Link>
+                <ChevronRight />
+              </Link>
+
+              {confirm === d.email ? (
+                <div className="driver-row-confirm">
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => remove(d.email)}
+                    disabled={busy === d.email}
+                  >
+                    {busy === d.email ? "…" : "Confirm"}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setConfirm(null)}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="row-del"
+                  onClick={() => setConfirm(d.email)}
+                  title="Remove driver"
+                  aria-label="Remove driver"
+                >
+                  <Trash2 size={17} />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

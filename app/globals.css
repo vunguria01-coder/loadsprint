@@ -999,3 +999,14 @@ table.acc select option{background:#0b1120}
 /* prominent driver name in dispatcher's drivers list */
 .driver-name-lg { font-size: 22px; font-weight: 800; letter-spacing: -0.2px; color: var(--ink, #e8eef8); line-height: 1.15; }
 @media (max-width: 560px) { .driver-name-lg { font-size: 19px; } }
+
+/* ---- Row delete (drivers / dispatchers lists) ---- */
+.driver-row-wrap{display:flex;align-items:stretch;gap:8px;padding-right:10px}
+.driver-row-link{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:1;min-width:0;color:inherit}
+.driver-row-confirm{display:flex;align-items:center;gap:8px}
+.row-del{flex:0 0 auto;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(239,68,68,.08);color:#ef4444;cursor:pointer;transition:.15s}
+.row-del:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5)}
+.btn-sm{padding:8px 12px;font-size:13px;border-radius:9px}
+.btn-danger{background:#ef4444;color:#fff;border:1px solid #ef4444}
+.btn-danger:hover{background:#dc2626;border-color:#dc2626}
+.btn-danger:disabled{opacity:.6;cursor:default}

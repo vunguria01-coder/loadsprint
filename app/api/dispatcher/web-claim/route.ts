@@ -3,6 +3,7 @@ import {
   addUser,
   createSession,
   findByEmail,
+  getUserById,
   hashPassword,
   newId,
   SESSION_COOKIE,
@@ -19,9 +20,10 @@ export async function POST(req: Request) {
       );
     }
     const invite = verifyCode(String(code));
-    if (!invite || invite.role === "dispatcher") {
+    // Must be a dispatcher-seat invite specifically.
+    if (!invite || invite.role !== "dispatcher") {
       return NextResponse.json(
-        { ok: false, error: "Invalid or already-used invite code." },
+        { ok: false, error: "Invalid or already-used dispatcher invite code." },
         { status: 400 }
       );
     }
@@ -31,15 +33,23 @@ export async function POST(req: Request) {
         { status: 409 }
       );
     }
+    const owner = getUserById(invite.createdBy);
+    if (!owner) {
+      return NextResponse.json(
+        { ok: false, error: "The inviting account no longer exists." },
+        { status: 400 }
+      );
+    }
     const { salt, hash } = hashPassword(String(password));
     const id = newId();
     addUser({
       id,
       name: String(name),
-      company: "",
+      company: owner.company || "",
       email: invite.email,
-      role: "driver",
-      tier: "none",
+      role: "dispatcher",
+      tier: "none", // access is inherited from the owner via ownerId
+      ownerId: owner.id,
       canFreezeLocation: false,
       freezeActive: false,
       salt,
@@ -47,7 +57,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     });
     claimInvite(String(code));
-    const token = createSession({ id, name: String(name), email: invite.email, role: "driver" });
+    const token = createSession({ id, name: String(name), email: invite.email, role: "dispatcher" });
     const res = NextResponse.json({ ok: true });
     res.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,

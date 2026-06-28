@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
-import { hasActiveSub } from "@/lib/auth";
+import { hasAccess } from "@/lib/auth";
 import { InvoiceProfileForm } from "@/components/invoice-profile-form";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export default async function InvoiceSettingsPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role !== "dispatcher" && me.role !== "admin") redirect("/dashboard");
-  if (me.role === "dispatcher" && !hasActiveSub(me)) redirect("/pricing");
+  if (me.role === "dispatcher" && !hasAccess(me)) redirect("/pricing");
 
   return (
     <CabinetServer active="invoice">

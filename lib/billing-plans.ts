@@ -46,6 +46,19 @@ export function driverAllowance(planId?: string, tier?: string): number {
   return 0;
 }
 
+// Extra dispatcher seats an owner can invite (beyond themselves), by tier.
+// Tweak these numbers to change how many sub-dispatchers each plan allows.
+const TIER_SEATS: Record<string, number> = { silver: 1, gold: 3, platinum: 10 };
+
+export function seatAllowance(planId?: string, tier?: string): number {
+  if (planId) {
+    const p = getPlan(planId);
+    if (p && p.tier in TIER_SEATS) return TIER_SEATS[p.tier];
+  }
+  if (tier && tier in TIER_SEATS) return TIER_SEATS[tier];
+  return 0;
+}
+
 export function fmtUsd(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }

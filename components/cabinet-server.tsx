@@ -13,6 +13,7 @@ export async function CabinetServer({
 }) {
   const me = await currentUser();
   if (!me) redirect("/login");
+  const isOwner = me.role === "dispatcher" && !me.ownerId;
   return (
     <Cabinet
       role={me.role}
@@ -20,6 +21,7 @@ export async function CabinetServer({
       email={me.email}
       tier={me.tier}
       daysLeft={subDaysLeft(me)}
+      isOwner={isOwner}
       active={active}
     >
       {children}

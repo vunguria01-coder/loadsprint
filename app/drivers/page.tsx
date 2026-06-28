@@ -5,8 +5,8 @@ import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { DriverManager } from "@/components/driver-manager";
 import { DriversList } from "@/components/drivers-list";
-import { hasActiveSub, findByEmail } from "@/lib/auth";
-import { getInvitesBy } from "@/lib/invites";
+import { hasAccess, billingUser, findByEmail } from "@/lib/auth";
+import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
 import { driverAllowance } from "@/lib/billing-plans";
 
@@ -19,9 +19,9 @@ export default async function DriversPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role !== "dispatcher" && me.role !== "admin") redirect("/dashboard");
-  if (me.role === "dispatcher" && !hasActiveSub(me)) redirect("/pricing");
+  if (me.role === "dispatcher" && !hasAccess(me)) redirect("/pricing");
 
-  const invites = getInvitesBy(me.id);
+  const invites = getInvitesByRole(me.id, "driver");
   const myLoads = getLoadsByDispatcher(me.id);
   const emails = Array.from(new Set(invites.map((i) => i.email.toLowerCase())));
   const drivers = emails.map((email) => {
@@ -51,8 +51,9 @@ export default async function DriversPage() {
 
   // Driver allowance: how many the plan includes vs how many are used.
   const usedDrivers = emails.length;
+  const bu = billingUser(me);
   const planLimit =
-    me.role === "admin" ? Infinity : driverAllowance(me.planId, me.tier);
+    me.role === "admin" ? Infinity : driverAllowance(bu.planId, bu.tier);
   const canAddMore = planLimit === Infinity || usedDrivers < planLimit;
 
   return (

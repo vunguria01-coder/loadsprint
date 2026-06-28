@@ -13,7 +13,7 @@ import { NotificationsBell } from "@/components/notifications-bell";
 
 type NavItem = { key: string; href: string; label: string; icon: ReactNode };
 
-function navForRole(role: string): NavItem[] {
+function navForRole(role: string, isOwner: boolean): NavItem[] {
   if (role === "admin") {
     return [
       { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
@@ -37,6 +37,8 @@ function navForRole(role: string): NavItem[] {
     { key: "review", href: "/review", label: "Completed loads", icon: <PackageCheck size={18} /> },
     { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     { key: "invoice", href: "/invoice-settings", label: "Invoice details", icon: <FileText size={18} /> },
+    // Team (additional dispatcher seats) — owners only.
+    ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} /> }] : []),
     { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
   ];
 }
@@ -55,6 +57,7 @@ export function Cabinet({
   email,
   tier,
   daysLeft,
+  isOwner = false,
   active,
   children,
 }: {
@@ -63,13 +66,14 @@ export function Cabinet({
   email: string;
   tier: string;
   daysLeft: number | null;
+  isOwner?: boolean;
   active?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false); // mobile sidebar
   const [acc, setAcc] = useState(false); // account dropdown
   const router = useRouter();
-  const items = navForRole(role);
+  const items = navForRole(role, isOwner);
   const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
 
   async function logout() {

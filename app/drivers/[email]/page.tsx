@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
-import { hasActiveSub, findByEmail } from "@/lib/auth";
-import { getInvitesBy } from "@/lib/invites";
+import { hasAccess, findByEmail } from "@/lib/auth";
+import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher, currentPoint } from "@/lib/loads";
 import { DriverLoads } from "@/components/driver-loads";
 import { DriverMap } from "@/components/driver-map";
@@ -25,13 +25,13 @@ export default async function DriverDetailPage({
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role !== "dispatcher" && me.role !== "admin") redirect("/dashboard");
-  if (me.role === "dispatcher" && !hasActiveSub(me)) redirect("/pricing");
+  if (me.role === "dispatcher" && !hasAccess(me)) redirect("/pricing");
 
   const { email: raw } = await params;
   const email = decodeURIComponent(raw).toLowerCase();
 
   // ownership: this dispatcher must have invited the driver (admin exempt)
-  const invited = getInvitesBy(me.id).some((i) => i.email.toLowerCase() === email);
+  const invited = getInvitesByRole(me.id, "driver").some((i) => i.email.toLowerCase() === email);
   if (!invited && me.role !== "admin") redirect("/drivers");
 
   const user = findByEmail(email);

@@ -26,6 +26,7 @@ export type User = {
   tier: AccountTier;
   tierExpiresAt?: string; // ISO date; undefined = no expiry
   planId?: string; // last purchased billing plan id
+  ownerId?: string; // for a sub-dispatcher: the id of the owner who invited them
   canFreezeLocation: boolean;
   freezeActive: boolean;
   salt: string;
@@ -56,6 +57,9 @@ function normalize(u: Partial<User>): User {
     email: u.email ?? "",
     role: (u.role as AccountRole) ?? "broker",
     tier: (u.tier as AccountTier) ?? "none",
+    tierExpiresAt: u.tierExpiresAt,
+    planId: u.planId,
+    ownerId: u.ownerId,
     canFreezeLocation: u.canFreezeLocation ?? false,
     freezeActive: u.freezeActive ?? false,
     salt: u.salt ?? "",
@@ -108,6 +112,32 @@ export function updateUser(id: string, patch: Partial<User>): User | undefined {
   users[i] = { ...users[i], ...patch, id: users[i].id };
   saveUsers(users);
   return users[i];
+}
+
+// Permanently remove a user account (used when a dispatcher removes a driver or
+// an owner removes a sub-dispatcher). Returns true if a row was deleted.
+export function deleteUser(id: string): boolean {
+  const users = getUsers();
+  const next = users.filter((u) => u.id !== id);
+  if (next.length === users.length) return false;
+  saveUsers(next);
+  return true;
+}
+
+// The account whose subscription governs access/limits. A sub-dispatcher
+// (ownerId set) is governed by the owner who pays; everyone else by themselves.
+export function billingUser(user: User): User {
+  if (user.role === "dispatcher" && user.ownerId) {
+    return getUserById(user.ownerId) ?? user;
+  }
+  return user;
+}
+
+// Whether a user currently has working access, resolving owner inheritance for
+// sub-dispatchers. Use this for page/route gates instead of hasActiveSub alone.
+export function hasAccess(user: User): boolean {
+  if (user.role === "admin" || user.role === "driver") return true;
+  return hasActiveSub(billingUser(user));
 }
 
 /* ---------- admin seeding ---------- */

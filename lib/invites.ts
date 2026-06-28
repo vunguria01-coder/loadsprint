@@ -11,6 +11,7 @@ export type DriverInvite = {
   code: string;
   createdBy: string; // user id
   createdByName: string;
+  role: "driver" | "dispatcher"; // what the invitee becomes when they register
   status: "pending" | "claimed";
   createdAt: string;
 };
@@ -48,7 +49,8 @@ function genCode() {
 export function createInvite(
   email: string,
   createdBy: string,
-  createdByName: string
+  createdByName: string,
+  role: "driver" | "dispatcher" = "driver"
 ): DriverInvite {
   const invites = getInvites();
   const invite: DriverInvite = {
@@ -57,12 +59,24 @@ export function createInvite(
     code: genCode(),
     createdBy,
     createdByName,
+    role,
     status: "pending",
     createdAt: new Date().toISOString(),
   };
   invites.push(invite);
   save(invites);
   return invite;
+}
+
+// Invites of a given role created by a user. Defaults to driver invites so the
+// existing drivers screen keeps showing only drivers.
+export function getInvitesByRole(
+  userId: string,
+  role: "driver" | "dispatcher"
+): DriverInvite[] {
+  return getInvites()
+    .filter((i) => i.createdBy === userId && (i.role ?? "driver") === role)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 export function getInvitesBy(userId: string): DriverInvite[] {

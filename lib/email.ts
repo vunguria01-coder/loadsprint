@@ -66,6 +66,37 @@ export function driverInviteEmail(opts: {
   return { subject, html };
 }
 
+// Invite email for an additional dispatcher seat (registers on the website).
+export function dispatcherInviteEmail(opts: {
+  ownerName: string;
+  code: string;
+  joinLink: string;
+}): { subject: string; html: string; text: string } {
+  const subject = `You're invited to dispatch on LoadSprint — code ${opts.code}`;
+  const html = `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif">
+    <div style="max-width:520px;margin:0 auto;padding:32px 24px;color:#0b1120">
+      <h1 style="font-size:22px;margin:0 0 6px;color:#0b1120">You've been added as a dispatcher</h1>
+      <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 22px">
+        ${escapeHtml(opts.ownerName)} invited you to help dispatch on their LoadSprint
+        account. Use the code below to create your dispatcher login on the website.
+      </p>
+      <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:14px;padding:20px;text-align:center;margin-bottom:22px">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your invite code</div>
+        <div style="font-size:30px;font-weight:800;letter-spacing:4px;color:#2563eb">${escapeHtml(opts.code)}</div>
+      </div>
+      <a href="${escapeAttr(opts.joinLink)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px;font-size:15px">Create my dispatcher account</a>
+      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:24px 0 0">
+        If the button doesn't work, go to ${escapeHtml(opts.joinLink)} and enter the code above.
+        Didn't expect this email? You can safely ignore it.
+      </p>
+    </div>
+  </body></html>`;
+  const text = `You've been added as a dispatcher on LoadSprint by ${opts.ownerName}.
+Your invite code: ${opts.code}
+Create your dispatcher account: ${opts.joinLink}`;
+  return { subject, html, text };
+}
+
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string)

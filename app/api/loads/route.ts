@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
-import { hasActiveSub } from "@/lib/auth";
+import { hasAccess } from "@/lib/auth";
 import { createLoad, type Stop } from "@/lib/loads";
 import { geocodeHere } from "@/lib/here";
 
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   if (!me) return NextResponse.json({ ok: false, error: "Sign in" }, { status: 401 });
   if (me.role !== "dispatcher" && me.role !== "admin")
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-  if (me.role === "dispatcher" && !hasActiveSub(me))
+  if (me.role === "dispatcher" && !hasAccess(me))
     return NextResponse.json({ ok: false, error: "Activate a plan first." }, { status: 402 });
 
   const body = await req.json().catch(() => ({}));

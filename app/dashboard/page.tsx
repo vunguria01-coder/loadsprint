@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { Package, Users, BarChart3 } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { subDaysLeft } from "@/lib/auth";
-import { getInvitesBy } from "@/lib/invites";
+import { getInvitesByRole } from "@/lib/invites";
 import { TierBadge } from "@/components/tier-badge";
 import { LogoutButton } from "@/components/logout-button";
 import { DriverManager } from "@/components/driver-manager";
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   if (me.role === "admin") redirect("/admin");
 
   const cards = me.role === "dispatcher" ? dispatcherCards : brokerCards;
-  const invites = me.role === "dispatcher" ? getInvitesBy(me.id) : [];
+  const invites = me.role === "dispatcher" ? getInvitesByRole(me.id, "driver") : [];
   const daysLeft = subDaysLeft(me);
   const expired = me.tier !== "none" && daysLeft !== null && daysLeft < 0;
 
