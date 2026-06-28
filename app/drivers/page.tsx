@@ -56,6 +56,14 @@ export default async function DriversPage() {
     me.role === "admin" ? Infinity : driverAllowance(bu.planId, bu.tier);
   const canAddMore = planLimit === Infinity || usedDrivers < planLimit;
 
+  // This dispatcher's own earnings: their commission of their delivered loads.
+  const myPct = me.commissionPct || 0;
+  const myDeliveredTotal = myLoads
+    .filter((l) => l.status === "Delivered" || l.status === "Closed")
+    .reduce((sum, l) => sum + (l.loadRate || 0), 0);
+  const myEarned = Math.round((myDeliveredTotal * myPct) / 100);
+  const showEarnings = me.role === "dispatcher" && myPct > 0;
+
   return (
     <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
@@ -70,6 +78,14 @@ export default async function DriversPage() {
             </div>
             <DriverManager invites={invites} />
           </div>
+
+          {showEarnings && (
+            <div className="earn-card">
+              <div className="earn-label">Your earnings</div>
+              <div className="earn-amount">${myEarned.toLocaleString("en-US")}</div>
+              <div className="earn-sub">from delivered loads</div>
+            </div>
+          )}
 
           <div className="seat-meter">
             <div className="seat-info">

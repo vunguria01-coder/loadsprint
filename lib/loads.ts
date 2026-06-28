@@ -598,6 +598,16 @@ export function getLoadById(id: string): Load | undefined {
 export function getLoadsByDispatcher(dispatcherId: string): Load[] {
   return readLoads().filter((l) => l.dispatcherId === dispatcherId);
 }
+
+// Total value of completed (Delivered/Closed) loads for a dispatcher — the base
+// used to compute their commission earnings.
+export function completedRevenue(dispatcherId: string): { count: number; total: number } {
+  const loads = getLoadsByDispatcher(dispatcherId).filter(
+    (l) => l.status === "Delivered" || l.status === "Closed"
+  );
+  const total = loads.reduce((s, l) => s + (l.loadRate || 0), 0);
+  return { count: loads.length, total };
+}
 export function getLoadsByBrokerEmail(email: string): Load[] {
   const e = email.trim().toLowerCase();
   return readLoads().filter((l) => l.brokerEmail.toLowerCase() === e);

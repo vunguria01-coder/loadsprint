@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { TeamManager } from "@/components/team-manager";
 import { DispatchersList } from "@/components/dispatchers-list";
+import { TeamStats } from "@/components/team-stats";
 import { hasAccess, findByEmail, getSubDispatchers } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
@@ -34,21 +35,28 @@ export default async function TeamPage() {
   const limit = me.role === "admin" ? Infinity : seatAllowance(me.planId, me.tier);
   const canAddMore = limit === Infinity || used < limit;
 
-  // Per-dispatcher stats: the owner + every sub-dispatcher, with loads & total $.
+  // Per-dispatcher stats: the owner + every sub-dispatcher. "total" is the value
+  // of all loads; "deliveredTotal" only of Delivered/Closed loads; "earned" is
+  // their commission of the delivered total.
   const orgDispatchers = [me, ...getSubDispatchers(me.id)];
   const stats = orgDispatchers.map((d) => {
     const loads = getLoadsByDispatcher(d.id);
     const total = loads.reduce((sum, l) => sum + (l.loadRate || 0), 0);
+    const deliveredTotal = loads
+      .filter((l) => l.status === "Delivered" || l.status === "Closed")
+      .reduce((sum, l) => sum + (l.loadRate || 0), 0);
+    const pct = d.commissionPct || 0;
     return {
       id: d.id,
       name: d.name + (d.id === me.id ? " (owner)" : ""),
       email: d.email,
       count: loads.length,
       total,
+      deliveredTotal,
+      pct,
+      earned: Math.round((deliveredTotal * pct) / 100),
     };
   });
-  const grandCount = stats.reduce((s, x) => s + x.count, 0);
-  const grandTotal = stats.reduce((s, x) => s + x.total, 0);
 
   return (
     <CabinetServer active="team">
@@ -91,32 +99,12 @@ export default async function TeamPage() {
         )}
 
         <div style={{ marginTop: 34 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Loads by dispatcher</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Loads & commissions</h3>
           <p className="px" style={{ marginBottom: 14 }}>
-            Each dispatcher’s loads and total value. Updated as loads are created.
+            Set each dispatcher’s commission %. Earnings are their share of
+            delivered loads. Only you (the owner) see these percentages.
           </p>
-          <div className="stat-table">
-            <div className="stat-row stat-head">
-              <span>Dispatcher</span>
-              <span className="stat-num">Loads</span>
-              <span className="stat-num">Total value</span>
-            </div>
-            {stats.map((s) => (
-              <div className="stat-row" key={s.id}>
-                <span>
-                  <b>{s.name}</b>
-                  <i className="stat-mail">{s.email}</i>
-                </span>
-                <span className="stat-num">{s.count}</span>
-                <span className="stat-num">${s.total.toLocaleString("en-US")}</span>
-              </div>
-            ))}
-            <div className="stat-row stat-total">
-              <span>All dispatchers</span>
-              <span className="stat-num">{grandCount}</span>
-              <span className="stat-num">${grandTotal.toLocaleString("en-US")}</span>
-            </div>
-          </div>
+          <TeamStats rows={stats} />
         </div>
       </div>
     </CabinetServer>

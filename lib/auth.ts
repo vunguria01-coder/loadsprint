@@ -27,6 +27,7 @@ export type User = {
   tierExpiresAt?: string; // ISO date; undefined = no expiry
   planId?: string; // last purchased billing plan id
   ownerId?: string; // for a sub-dispatcher: the id of the owner who invited them
+  commissionPct?: number; // dispatcher's commission %, set by the owner (0..100)
   canFreezeLocation: boolean;
   freezeActive: boolean;
   salt: string;
@@ -60,6 +61,7 @@ function normalize(u: Partial<User>): User {
     tierExpiresAt: u.tierExpiresAt,
     planId: u.planId,
     ownerId: u.ownerId,
+    commissionPct: u.commissionPct,
     canFreezeLocation: u.canFreezeLocation ?? false,
     freezeActive: u.freezeActive ?? false,
     salt: u.salt ?? "",
