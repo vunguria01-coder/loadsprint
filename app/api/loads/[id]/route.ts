@@ -28,6 +28,9 @@ import {
   setBrokerInfo,
   setInvoice,
   markInvoiceSent,
+  ensureBrokerShare,
+  setPhotoBrokerVisible,
+  publishToBroker,
   pushNotification,
   LOAD_STATUSES,
   DOC_TYPES,
@@ -294,6 +297,24 @@ export async function POST(
         email: body.email !== undefined ? String(body.email) : undefined,
         phone: body.phone !== undefined ? String(body.phone) : undefined,
       });
+      break;
+    }
+    case "broker_share": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = ensureBrokerShare(id);
+      break;
+    }
+    case "broker_photo": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = setPhotoBrokerVisible(id, String(body.photoId || ""), !!body.visible);
+      break;
+    }
+    case "broker_publish": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = publishToBroker(id);
       break;
     }
     case "invoice_set": {

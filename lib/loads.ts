@@ -58,6 +58,7 @@ export type LoadPhoto = {
   phase: PhotoPhase;
   dataUrl: string;
   caption: string;
+  brokerVisible?: boolean; // dispatcher chose to show this photo to the broker
   uploadedAt: string;
 };
 
@@ -119,6 +120,10 @@ export type Load = {
   brokerInvoice?: InvoiceCell;
   driverInvoice?: InvoiceCell;
   loadRate?: number; // full load price from the rate confirmation
+  shareToken?: string; // public broker link token
+  shareCode?: string; // access code the broker types to open the link
+  brokerPublished?: boolean; // dispatcher released final docs to the broker
+  brokerPublishedAt?: string;
   createdAt: string;
 };
 
@@ -627,6 +632,62 @@ export function setStatus(loadId: string, status: LoadStatus, actorId: string) {
   if (status === "Delivered" || status === "Closed") loads[i].progress = 1;
   writeLoads(loads);
   notifyParties(loads[i], actorId, `Status updated to "${status}"`);
+  return loads[i];
+}
+
+/* ---------- broker share link ---------- */
+
+function genShareToken(): string {
+  return crypto.randomBytes(16).toString("hex"); // 32-char URL token
+}
+function genShareCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 6; i++) out += alphabet[crypto.randomInt(alphabet.length)];
+  return out;
+}
+
+// Create the share token + code once; returns the load (existing values kept).
+export function ensureBrokerShare(loadId: string): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  if (!loads[i].shareToken) loads[i].shareToken = genShareToken();
+  if (!loads[i].shareCode) loads[i].shareCode = genShareCode();
+  writeLoads(loads);
+  return loads[i];
+}
+
+export function getLoadByToken(token: string): Load | undefined {
+  if (!token) return undefined;
+  return readLoads().find((l) => l.shareToken === token);
+}
+
+export function setPhotoBrokerVisible(
+  loadId: string,
+  photoId: string,
+  visible: boolean
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  const ph = (loads[i].photos || []).find((p) => p.id === photoId);
+  if (!ph) return loads[i];
+  ph.brokerVisible = visible;
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Release the final documents (invoice, papers) to the broker link.
+export function publishToBroker(loadId: string): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  if (!loads[i].shareToken) loads[i].shareToken = genShareToken();
+  if (!loads[i].shareCode) loads[i].shareCode = genShareCode();
+  loads[i].brokerPublished = true;
+  loads[i].brokerPublishedAt = new Date().toISOString();
+  writeLoads(loads);
   return loads[i];
 }
 

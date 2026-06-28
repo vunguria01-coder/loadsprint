@@ -11,6 +11,7 @@ import { LoadDocuments } from "@/components/load-documents";
 import { LoadPhotos } from "@/components/load-photos";
 import { PhotosToPdf } from "@/components/photos-to-pdf";
 import { LoadInvoiceAi } from "@/components/load-invoice-ai";
+import { LoadBrokerShare } from "@/components/load-broker-share";
 import { Collapsible } from "@/components/collapsible";
 
 export function LoadWorkspace({ loadId }: { loadId: string }) {
@@ -142,6 +143,9 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
               <LoadDocuments load={load} mutate={mutate} />
               <LoadPhotos load={load} mutate={mutate} />
               <PhotosToPdf load={load} mutate={mutate} />
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <LoadBrokerShare load={load} mutate={mutate} />
+              )}
             </div>
           </>
         ) : (
@@ -175,6 +179,9 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
               <LoadDocuments load={load} mutate={mutate} />
               <LoadPhotos load={load} mutate={mutate} />
               <PhotosToPdf load={load} mutate={mutate} />
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <LoadBrokerShare load={load} mutate={mutate} />
+              )}
             </div>
           </>
         )}
