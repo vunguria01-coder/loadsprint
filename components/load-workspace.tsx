@@ -85,6 +85,11 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           <div className="route">
             {load.originName} <ArrowRight size={15} /> {load.destName}
           </div>
+          {load.dispatcherName && (
+            <div className="px" style={{ marginTop: 4 }}>
+              Added by {load.dispatcherName}
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {typeof load.loadRate === "number" && load.loadRate > 0 && (

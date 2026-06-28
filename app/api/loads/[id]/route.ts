@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requestUser } from "@/lib/guard";
 import { corsHeaders } from "@/lib/mobile-auth";
 import { truckRoute, geocodeHere } from "@/lib/here";
-import { findByEmail } from "@/lib/auth";
+import { findByEmail, getUserById } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
 import {
@@ -53,6 +53,7 @@ function canAccess(load: Load, user: User) {
 function serialize(load: Load, user: User) {
   const base: Record<string, unknown> = {
     ...load,
+    dispatcherName: load.dispatcherName || getUserById(load.dispatcherId)?.name || "",
     point: currentPoint(load),
     canHold: user.canFreezeLocation === true,
     youId: user.id,

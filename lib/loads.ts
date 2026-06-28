@@ -78,6 +78,7 @@ export type Load = {
   id: string;
   ref: string;
   dispatcherId: string;
+  dispatcherName?: string; // denormalized name of the dispatcher who created it
   driverName: string;
   driverEmail: string;
   brokerName: string;
@@ -773,6 +774,7 @@ export function createLoad(input: {
     id: crypto.randomUUID(),
     ref,
     dispatcherId: input.dispatcherId,
+    dispatcherName: getUserById(input.dispatcherId)?.name || "",
     driverName: input.driverName,
     driverEmail: input.driverEmail.trim().toLowerCase(),
     brokerName: input.brokerName || "",

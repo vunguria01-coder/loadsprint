@@ -124,6 +124,11 @@ export function deleteUser(id: string): boolean {
   return true;
 }
 
+// All sub-dispatchers that belong to an owner.
+export function getSubDispatchers(ownerId: string): User[] {
+  return getUsers().filter((u) => u.role === "dispatcher" && u.ownerId === ownerId);
+}
+
 // The account whose subscription governs access/limits. A sub-dispatcher
 // (ownerId set) is governed by the owner who pays; everyone else by themselves.
 export function billingUser(user: User): User {
