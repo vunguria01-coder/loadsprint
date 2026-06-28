@@ -128,6 +128,39 @@ export async function POST(
       const status = body.status as LoadStatus;
       if (!LOAD_STATUSES.includes(status))
         return NextResponse.json({ ok: false, error: "Bad status" }, { status: 400 });
+
+      // Anti-fake guard (admins exempt): a load may only become "Delivered" via
+      // the assigned driver, and only with proof of delivery (a POD document or
+      // an at-delivery photo). "Closed" must come from a delivered load. This
+      // stops a dispatcher from pushing a fabricated load into completed/history.
+      if (me.role !== "admin") {
+        if (status === "Delivered") {
+          const isAssignedDriver =
+            load.driverEmail.toLowerCase() === me.email.toLowerCase();
+          if (!isAssignedDriver) {
+            return NextResponse.json(
+              { ok: false, error: "Only the assigned driver can mark a load delivered." },
+              { status: 403 }
+            );
+          }
+          const hasPod =
+            (load.documents || []).some((d) => d.type === "pod") ||
+            (load.photos || []).some((p) => p.phase === "at_delivery");
+          if (!hasPod) {
+            return NextResponse.json(
+              { ok: false, error: "Add a proof-of-delivery photo before marking delivered." },
+              { status: 400 }
+            );
+          }
+        }
+        if (status === "Closed" && load.status !== "Delivered") {
+          return NextResponse.json(
+            { ok: false, error: "A load must be delivered before it can be closed." },
+            { status: 400 }
+          );
+        }
+      }
+
       updated = setStatus(id, status, me.id);
       break;
     }

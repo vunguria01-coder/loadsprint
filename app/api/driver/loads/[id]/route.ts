@@ -52,6 +52,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const status = body.status as LoadStatus;
     if (!LOAD_STATUSES.includes(status))
       return NextResponse.json({ ok: false }, { status: 400, headers: h });
+    // Require proof of delivery before a load can be marked delivered.
+    if (status === "Delivered") {
+      const hasPod =
+        (load.documents || []).some((d) => d.type === "pod") ||
+        (load.photos || []).some((p) => p.phase === "at_delivery");
+      if (!hasPod) {
+        return NextResponse.json(
+          { ok: false, error: "Add a proof-of-delivery photo before marking delivered." },
+          { status: 400, headers: h }
+        );
+      }
+    }
+    if (status === "Closed" && load.status !== "Delivered") {
+      return NextResponse.json(
+        { ok: false, error: "A load must be delivered before it can be closed." },
+        { status: 400, headers: h }
+      );
+    }
     updated = setStatus(id, status, me.id);
   } else if (action === "photo") {
     const phase = body.phase as PhotoPhase;

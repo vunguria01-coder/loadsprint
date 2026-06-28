@@ -20,7 +20,20 @@ export function LoadStatusPanel({
   mutate: (body: Record<string, unknown>) => Promise<void>;
 }) {
   const canEdit = load.youRole !== "broker";
+  const isDispatcher = load.youRole === "dispatcher";
   const currentIndex = STATUSES.indexOf(load.status as (typeof STATUSES)[number]);
+
+  // A dispatcher can't mark a load "Delivered" (only the assigned driver can),
+  // and can only "Close" a load that's already delivered. This keeps fabricated
+  // loads out of completed/history.
+  function canSet(s: (typeof STATUSES)[number]): boolean {
+    if (!canEdit) return false;
+    if (isDispatcher) {
+      if (s === "Delivered") return false;
+      if (s === "Closed") return load.status === "Delivered";
+    }
+    return true;
+  }
 
   return (
     <div className="panel">
@@ -28,21 +41,24 @@ export function LoadStatusPanel({
         <ListChecks /> Status
       </h3>
       <p className="px">
-        {canEdit
-          ? "Tap a stage to update. Changes appear instantly for the broker."
-          : "Live delivery progress for this load."}
+        {!canEdit
+          ? "Live delivery progress for this load."
+          : isDispatcher
+          ? "Tap a stage to update. Only the assigned driver can mark a load Delivered."
+          : "Tap a stage to update. Changes appear instantly for the broker."}
       </p>
       <div className="steps-v">
         {STATUSES.map((s, i) => {
           const done = i <= currentIndex;
           const active = i === currentIndex;
+          const allowed = canSet(s);
           return (
             <button
               key={s}
               className={`sv${done ? " done" : ""}${active ? " active" : ""}`}
-              disabled={!canEdit}
-              style={{ cursor: canEdit ? "pointer" : "default" }}
-              onClick={() => canEdit && mutate({ action: "status", status: s })}
+              disabled={!allowed}
+              style={{ cursor: allowed ? "pointer" : "default", opacity: allowed || done ? 1 : 0.5 }}
+              onClick={() => allowed && mutate({ action: "status", status: s })}
             >
               <span className="dot">{done && <Check strokeWidth={3} />}</span>
               <span className="sl">{s}</span>
