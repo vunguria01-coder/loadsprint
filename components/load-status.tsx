@@ -23,15 +23,12 @@ export function LoadStatusPanel({
   const isDispatcher = load.youRole === "dispatcher";
   const currentIndex = STATUSES.indexOf(load.status as (typeof STATUSES)[number]);
 
-  // A dispatcher can't mark a load "Delivered" (only the assigned driver can),
-  // and can only "Close" a load that's already delivered. This keeps fabricated
-  // loads out of completed/history.
+  // A dispatcher (owner or team) can't mark a load "Delivered" — only the
+  // assigned driver can, and with a proof-of-delivery photo. But the owner,
+  // dispatcher and driver can all "Close" a load directly at any stage.
   function canSet(s: (typeof STATUSES)[number]): boolean {
     if (!canEdit) return false;
-    if (isDispatcher) {
-      if (s === "Delivered") return false;
-      if (s === "Closed") return load.status === "Delivered";
-    }
+    if (isDispatcher && s === "Delivered") return false;
     return true;
   }
 

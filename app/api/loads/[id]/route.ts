@@ -133,10 +133,14 @@ export async function POST(
       if (!LOAD_STATUSES.includes(status))
         return NextResponse.json({ ok: false, error: "Bad status" }, { status: 400 });
 
-      // Anti-fake guard (admins exempt): a load may only become "Delivered" via
-      // the assigned driver, and only with proof of delivery (a POD document or
-      // an at-delivery photo). "Closed" must come from a delivered load. This
-      // stops a dispatcher from pushing a fabricated load into completed/history.
+      // Broker is read-only for status — they can watch progress but not change it.
+      if (me.role === "broker")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+
+      // A load may only become "Delivered" via the assigned driver, and only with
+      // proof of delivery (a POD document or an at-delivery photo). This keeps the
+      // delivery record honest. Closing, however, can be done directly by the
+      // owner/dispatcher or the driver from any stage (e.g. to finalize the load).
       if (me.role !== "admin") {
         if (status === "Delivered") {
           const isAssignedDriver =
@@ -156,12 +160,6 @@ export async function POST(
               { status: 400 }
             );
           }
-        }
-        if (status === "Closed" && load.status !== "Delivered") {
-          return NextResponse.json(
-            { ok: false, error: "A load must be delivered before it can be closed." },
-            { status: 400 }
-          );
         }
       }
 
