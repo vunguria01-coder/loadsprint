@@ -1111,7 +1111,7 @@ table.acc select option{background:#0b1120}
 
 /* ============================================================
    Cabinet visual polish — dispatcher app screens only.
-   Scoped under .cab*/.cab-content so the public landing is untouched.
+   Scoped under .cab and .cab-content so the public landing stays untouched.
    ============================================================ */
 
 /* Headings: the marketing-size 50px reads heavy in-app — tighten to an
