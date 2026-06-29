@@ -418,7 +418,12 @@ export function CreateLoad({
 
           <div className="wiz-nav">
             <button className="btn btn-ghost" onClick={() => setStep(1)}>← Back</button>
-            <button className="btn btn-primary" onClick={() => setStep(3)}>Next: confirm →</button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn btn-ghost" onClick={() => setStep(3)}>Edit details</button>
+              <button className="btn btn-primary" onClick={create} disabled={busy}>
+                {busy ? "Creating…" : "Create load now"}
+              </button>
+            </div>
           </div>
         </div>
       )}

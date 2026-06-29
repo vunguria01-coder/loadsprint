@@ -36,6 +36,14 @@ export function LoadBrokerShare({
     );
   }
 
+  function copyForBroker() {
+    const msg =
+      `Track load ${load.ref}: ${load.originName} -> ${load.destName}\n` +
+      `Link: ${link}\n` +
+      `Access code: ${load.shareCode || ""}`;
+    copy(msg, "Broker message");
+  }
+
   async function togglePhoto(photoId: string, visible: boolean) {
     await mutate({ action: "broker_photo", photoId, visible });
   }
@@ -69,6 +77,14 @@ export function LoadBrokerShare({
       ) : (
         <>
           <p className="px">Send both the link and the code to your broker.</p>
+
+          <button
+            className="btn btn-primary btn-block"
+            style={{ margin: "10px 0 14px" }}
+            onClick={copyForBroker}
+          >
+            <Copy size={16} /> Copy link + code for broker
+          </button>
 
           <div className="bshare-row">
             <span className="bshare-label">Link</span>
