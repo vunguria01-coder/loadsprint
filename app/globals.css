@@ -1530,3 +1530,7 @@ table.acc select option{background:#0b1120}
   .lmap{height:340px}
   .bmap{height:320px}
 }
+
+/* Trip summary strip (total route + driver's current city) */
+.trip-strip{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-top:14px;background:linear-gradient(135deg,rgba(56,189,248,.06),rgba(37,99,235,.04));border:1px solid var(--line);border-radius:14px;padding:14px 16px;align-items:center}
+.trip-strip .trip-right{align-items:flex-end;text-align:right}

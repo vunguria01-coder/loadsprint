@@ -34,6 +34,13 @@ function loadLeaflet(): Promise<any> {
   });
 }
 
+// Pull a clean "City, ST" out of a full street address; fall back to the input.
+function cityState(addr: string): string {
+  if (!addr) return addr;
+  const m = addr.match(/([A-Za-z .'-]+),\s*([A-Z]{2})\b/);
+  return m ? `${m[1].trim()}, ${m[2]}` : addr;
+}
+
 export function LoadMap({
   load,
   mutate,
@@ -51,6 +58,7 @@ export function LoadMap({
   const satLabels = useRef<any>(null);
   const [viewMode, setViewMode] = useState<"satellite" | "street">("satellite");
   const [copiedCity, setCopiedCity] = useState("");
+  const [driverCity, setDriverCity] = useState("");
   const [routeMiles, setRouteMiles] = useState<number | null>(null);
   const [driverEta, setDriverEta] = useState<{
     hasGps: boolean;
@@ -78,6 +86,27 @@ export function LoadMap({
       cancelled = true;
     };
   }, [load.id, load.point.lat, load.point.lng]);
+
+  // Reverse-geocode the driver's current position to a readable "City, ST".
+  // Bucketed so it only refreshes when the truck actually moves (~2 km).
+  const latBucket = Math.round(load.point.lat * 50) / 50;
+  const lngBucket = Math.round(load.point.lng * 50) / 50;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/geo/reverse?lat=${load.point.lat}&lng=${load.point.lng}`);
+        const d = await res.json();
+        if (!cancelled && d.ok && d.cityState) setDriverCity(d.cityState);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latBucket, lngBucket]);
 
   async function checkAddress() {
     if (!addr.trim()) return;
@@ -408,11 +437,11 @@ export function LoadMap({
             <div className="addr-view">
               <div className="addr-line">
                 <span className="addr-tag">Pickup</span>
-                <span className="addr-val">{load.originName}</span>
+                <span className="addr-val">{cityState(load.originName)}</span>
               </div>
               <div className="addr-line">
                 <span className="addr-tag">Delivery</span>
-                <span className="addr-val">{load.destName}</span>
+                <span className="addr-val">{cityState(load.destName)}</span>
               </div>
               <button
                 className="btn btn-ghost"
@@ -513,21 +542,19 @@ export function LoadMap({
           </div>
         )}
 
-      {/* Live tracking summary: Origin · Distance · Destination */}
-      <div className="track-block">
+      {/* Trip summary: total route distance + the driver's current city. */}
+      <div className="trip-strip">
         <div className="track-cell">
-          <span className="track-label">Origin</span>
-          <b className="track-val">{load.originName}</b>
-        </div>
-        <div className="track-cell track-mid">
-          <span className="track-label">Distance</span>
+          <span className="track-label">Total route</span>
           <b className="track-val track-dist">
             {routeMiles != null ? `${routeMiles.toFixed(0)} mi` : "…"}
           </b>
         </div>
-        <div className="track-cell">
-          <span className="track-label">Destination</span>
-          <b className="track-val">{load.destName}</b>
+        <div className="track-cell trip-right">
+          <span className="track-label">Driver now</span>
+          <b className="track-val">
+            {driverCity || `${load.point.lat.toFixed(2)}, ${load.point.lng.toFixed(2)}`}
+          </b>
         </div>
       </div>
 
