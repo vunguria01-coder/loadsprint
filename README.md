@@ -15,6 +15,11 @@ Built with **Next.js 15** (App Router), **TypeScript**, **React 19**, **Tailwind
 - A separate **native driver app** (Expo / React Native, iPhone + iPad) talks to this
   same backend; the site is also installable as a PWA.
 
+> **Plain-language guides (Russian):** if you are not a developer, start with
+> **[GUIDE-dispatcher-RU.md](./GUIDE-dispatcher-RU.md)** (how to use LoadSprint as a
+> dispatcher, step by step) and **[GUIDE-owner-RU.md](./GUIDE-owner-RU.md)** (how to
+> deploy, update, and manage it). The rest of this README is the technical reference.
+
 ---
 
 ## Roles
