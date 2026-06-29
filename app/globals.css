@@ -1481,3 +1481,42 @@ table.acc select option{background:#0b1120}
   .pkg-actions{justify-content:stretch}
   .pkg-actions .btn{flex:1;justify-content:center}
 }
+
+/* ============================================================
+   Map upgrades — layer tabs, fit-route, legend (dispatcher + broker)
+   and broker access open/close.
+   ============================================================ */
+/* Layer toggle (Satellite / Map) — top-left on both maps */
+.lmap-tabs,.bmap-tabs{position:absolute;top:12px;left:12px;z-index:500;display:flex;background:rgba(13,22,40,.92);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
+.lmap-tabs button,.bmap-tabs button{background:none;border:0;color:var(--muted);font-family:Manrope;font-weight:700;font-size:12px;padding:7px 11px;cursor:pointer;transition:.15s}
+.lmap-tabs button.on,.bmap-tabs button.on{background:var(--sky);color:#06283d}
+.lmap-tabs button:not(.on):hover,.bmap-tabs button:not(.on):hover{color:#fff}
+
+/* Fit-route + driver buttons */
+.lmap-fit{position:absolute;left:12px;bottom:12px;z-index:500;display:inline-flex;align-items:center;gap:6px;background:rgba(13,22,40,.95);border:1px solid var(--sky);color:var(--sky);font-family:Manrope;font-weight:700;font-size:12.5px;padding:8px 12px;border-radius:10px;cursor:pointer;box-shadow:0 6px 18px -6px rgba(0,0,0,.6)}
+.lmap-fit:hover{background:var(--sky);color:#06283d}
+.bmap-ctl{position:absolute;right:12px;bottom:12px;z-index:500;display:flex;gap:6px}
+.bmap-ctl button{display:inline-flex;align-items:center;gap:5px;background:rgba(13,22,40,.95);border:1px solid var(--sky);color:var(--sky);font-family:Manrope;font-weight:700;font-size:12.5px;padding:8px 11px;border-radius:10px;cursor:pointer;box-shadow:0 6px 18px -6px rgba(0,0,0,.6)}
+.bmap-ctl button:hover{background:var(--sky);color:#06283d}
+
+/* keep the copied-city toast clear of the new tabs (move to top-right) */
+.copied-toast{left:auto;right:12px}
+
+/* Broker map canvas */
+.bmap-wrap{position:relative;z-index:0;isolation:isolate}
+.bmap{height:330px;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0a1424}
+
+/* Shared map legend */
+.lmap-legend,.bmap-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-family:Manrope;font-weight:600;font-size:12px;color:var(--muted)}
+.lmap-legend span,.bmap-legend span{display:inline-flex;align-items:center}
+.lg{width:10px;height:10px;display:inline-block;margin-right:6px;border-radius:2px}
+.lg-p{background:#22c55e}
+.lg-d{background:#ef4444}
+.lg-truck{background:#38BDF8;border-radius:50%;box-shadow:0 0 6px #38bdf8}
+.lg-int{background:#a78bfa;border-radius:50%}
+
+/* Broker access open/close (dispatcher panel) */
+.bshare-access{margin:14px 0 2px}
+.bshare-close-btn{color:var(--muted)}
+.bshare-closed{display:flex;align-items:center;gap:8px;font-family:Manrope;font-weight:700;font-size:13px;color:#fbbf24;margin-bottom:8px}
+.bshare-closed .bsc-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 8px #fbbf24}

@@ -30,6 +30,7 @@ import {
   setInvoice,
   markInvoiceSent,
   ensureBrokerShare,
+  setBrokerShareRevoked,
   setPhotoBrokerVisible,
   publishToBroker,
   pushNotification,
@@ -302,6 +303,18 @@ export async function POST(
       if (me.role !== "dispatcher" && me.role !== "admin")
         return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
       updated = ensureBrokerShare(id);
+      break;
+    }
+    case "broker_close": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = setBrokerShareRevoked(id, true);
+      break;
+    }
+    case "broker_reopen": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      updated = setBrokerShareRevoked(id, false);
       break;
     }
     case "broker_photo": {

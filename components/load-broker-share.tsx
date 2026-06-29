@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Copy, Check, Send } from "lucide-react";
+import { Share2, Copy, Check, Send, Lock, Unlock } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import { useToast } from "@/components/toast";
 
@@ -58,6 +58,26 @@ export function LoadBrokerShare({
     }
   }
 
+  async function closeAccess() {
+    setBusy(true);
+    try {
+      await mutate({ action: "broker_close" });
+      toast("Access closed", "The broker can no longer open this load.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopenAccess() {
+    setBusy(true);
+    try {
+      await mutate({ action: "broker_reopen" });
+      toast("Access reopened", "The broker link works again with the same code.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="panel">
       <h3>
@@ -99,6 +119,27 @@ export function LoadBrokerShare({
             <button className="bshare-copy" onClick={() => copy(load.shareCode || "", "Code")} title="Copy code">
               <Copy size={15} />
             </button>
+          </div>
+
+          {/* Open / close broker access without changing the link or code */}
+          <div className="bshare-access">
+            {load.shareRevoked ? (
+              <>
+                <div className="bshare-closed">
+                  <span className="bsc-dot" /> Broker access is closed
+                </div>
+                <button className="btn btn-ghost btn-block" onClick={reopenAccess} disabled={busy}>
+                  <Unlock size={15} /> Reopen broker access
+                </button>
+                <p className="px" style={{ marginTop: 6 }}>
+                  The broker link shows &ldquo;Tracking closed&rdquo; until you reopen it. The link and code stay the same.
+                </p>
+              </>
+            ) : (
+              <button className="btn btn-ghost btn-block bshare-close-btn" onClick={closeAccess} disabled={busy}>
+                <Lock size={15} /> Close broker access
+              </button>
+            )}
           </div>
 
           {/* Choose which photos the broker can see */}

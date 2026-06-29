@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BrokerMap } from "@/components/broker-map";
 
 type Doc = { name: string; type: string; dataUrl: string };
 type Photo = { id: string; caption: string; dataUrl: string };
+type BStop = { kind: "pickup" | "dropoff"; address: string; lat: number | null; lng: number | null; done?: boolean };
 type Data = {
   ok: boolean;
   ref: string;
@@ -12,6 +14,9 @@ type Data = {
   originName: string;
   destName: string;
   point: { lat: number; lng: number };
+  origin?: { lat: number; lng: number };
+  dest?: { lat: number; lng: number };
+  stops?: BStop[];
   locationUpdatedAt: string;
   paused: boolean;
   pausedLabel: string;
@@ -22,13 +27,6 @@ type Data = {
   documents?: Doc[];
   invoice?: unknown;
 };
-
-function osmSrc(lat: number, lng: number) {
-  const dLat = 0.04;
-  const dLng = 0.07;
-  const bbox = `${lng - dLng}%2C${lat - dLat}%2C${lng + dLng}%2C${lat + dLat}`;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lng}`;
-}
 
 function fmtTime(iso?: string) {
   if (!iso) return "";
@@ -45,6 +43,7 @@ export function BrokerPortal({ token }: { token: string }) {
   const [data, setData] = useState<Data | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [closed, setClosed] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const codeRef = useRef("");
   const STORE_KEY = `bp_code_${token}`;
@@ -58,6 +57,10 @@ export function BrokerPortal({ token }: { token: string }) {
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
+        if (e && e.closed) {
+          setClosed(true);
+          throw new Error("closed");
+        }
         throw new Error(e.error || "Error");
       }
       return (await res.json()) as Data;
@@ -76,6 +79,10 @@ export function BrokerPortal({ token }: { token: string }) {
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
+        if (e && e.closed) {
+          setClosed(true);
+          throw new Error("closed");
+        }
         throw new Error(e.error || "Error");
       }
       const d = (await res.json()) as Data;
@@ -137,7 +144,7 @@ export function BrokerPortal({ token }: { token: string }) {
 
   // Poll status + location while viewing.
   useEffect(() => {
-    if (!authed) return;
+    if (!authed || closed) return;
     const t = setInterval(async () => {
       try {
         const d = await call(false);
@@ -147,7 +154,7 @@ export function BrokerPortal({ token }: { token: string }) {
       }
     }, 6000);
     return () => clearInterval(t);
-  }, [authed, call]);
+  }, [authed, closed, call]);
 
   if (initializing) {
     return (
@@ -155,6 +162,21 @@ export function BrokerPortal({ token }: { token: string }) {
         <div className="bp-card bp-gate">
           <div className="bp-logo">LoadSprint</div>
           <p className="bp-sub">Opening…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (closed) {
+    return (
+      <div className="bp-shell">
+        <div className="bp-card bp-gate">
+          <div className="bp-logo">LoadSprint</div>
+          <h1>Tracking closed</h1>
+          <p className="bp-sub">
+            The dispatcher has closed access to this load. If you still need its
+            status or paperwork, please contact them directly.
+          </p>
         </div>
       </div>
     );
@@ -200,13 +222,15 @@ export function BrokerPortal({ token }: { token: string }) {
         <section className="bp-card">
           <h2>Driver location</h2>
           {d.paused && <div className="bp-note">{d.pausedLabel}</div>}
-          <div className="bp-map">
-            <iframe
-              title="Driver location"
-              src={osmSrc(d.point.lat, d.point.lng)}
-              style={{ width: "100%", height: 300, border: 0, borderRadius: 12 }}
-            />
-          </div>
+          <BrokerMap
+            point={d.point}
+            origin={d.origin}
+            dest={d.dest}
+            originName={d.originName}
+            destName={d.destName}
+            stops={d.stops}
+            paused={d.paused}
+          />
           <div className="bp-map-row">
             <span className="bp-sub">Updated {fmtTime(d.locationUpdatedAt)}</span>
             <a

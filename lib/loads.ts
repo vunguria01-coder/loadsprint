@@ -122,6 +122,7 @@ export type Load = {
   loadRate?: number; // full load price from the rate confirmation
   shareToken?: string; // public broker link token
   shareCode?: string; // access code the broker types to open the link
+  shareRevoked?: boolean; // dispatcher closed broker access to this load
   brokerPublished?: boolean; // dispatcher released final docs to the broker
   brokerPublishedAt?: string;
   pickupDate?: string; // YYYY-MM-DD — scheduled pickup day (for the calendar)
@@ -683,6 +684,19 @@ export function ensureBrokerShare(loadId: string): Load | undefined {
 export function getLoadByToken(token: string): Load | undefined {
   if (!token) return undefined;
   return readLoads().find((l) => l.shareToken === token);
+}
+
+// Close (revoke) or reopen broker access to a load without changing the link/code.
+export function setBrokerShareRevoked(
+  loadId: string,
+  revoked: boolean
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  loads[i].shareRevoked = revoked;
+  writeLoads(loads);
+  return loads[i];
 }
 
 export function setPhotoBrokerVisible(

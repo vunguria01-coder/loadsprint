@@ -44,6 +44,14 @@ export async function POST(
     return NextResponse.json({ ok: false, error: "Wrong code" }, { status: 401 });
   }
 
+  // Dispatcher closed broker access to this load.
+  if (load.shareRevoked) {
+    return NextResponse.json(
+      { ok: false, closed: true, error: "Access closed" },
+      { status: 403 }
+    );
+  }
+
   const loc = brokerPoint(load);
   const published = !!load.brokerPublished;
 
@@ -56,6 +64,15 @@ export async function POST(
     originName: load.originName,
     destName: load.destName,
     point: loc.point,
+    origin: { lat: load.origin.lat, lng: load.origin.lng },
+    dest: { lat: load.dest.lat, lng: load.dest.lng },
+    stops: (load.stops || []).map((s) => ({
+      kind: s.kind,
+      address: s.address,
+      lat: s.point?.lat ?? null,
+      lng: s.point?.lng ?? null,
+      done: !!s.done,
+    })),
     locationUpdatedAt: loc.at,
     paused: loc.paused,
     pausedLabel: loc.pausedLabel,

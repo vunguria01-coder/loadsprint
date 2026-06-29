@@ -46,6 +46,10 @@ export function LoadMap({
   const mainMarker = useRef<any>(null);
   const pointRef = useRef(load.point);
   const routeLine = useRef<any>(null);
+  const streetLayer = useRef<any>(null);
+  const satImagery = useRef<any>(null);
+  const satLabels = useRef<any>(null);
+  const [viewMode, setViewMode] = useState<"satellite" | "street">("satellite");
   const [copiedCity, setCopiedCity] = useState("");
   const [routeMiles, setRouteMiles] = useState<number | null>(null);
   const [driverEta, setDriverEta] = useState<{
@@ -106,6 +110,49 @@ export function LoadMap({
     }
   }
 
+  // Zoom out to show the whole route (driver + pickup + stops + delivery).
+  function fitRoute() {
+    const L = window.L;
+    if (!L || !map.current) return;
+    if (routeLine.current) {
+      try {
+        map.current.fitBounds(routeLine.current.getBounds(), { padding: [40, 40] });
+        return;
+      } catch {
+        /* ignore */
+      }
+    }
+    const pts: [number, number][] = [
+      [pointRef.current.lat, pointRef.current.lng],
+      [load.origin.lat, load.origin.lng],
+      [load.dest.lat, load.dest.lng],
+    ];
+    (load.stops || []).forEach((s) => {
+      if (s.point) pts.push([s.point.lat, s.point.lng]);
+    });
+    try {
+      map.current.fitBounds(L.latLngBounds(pts), { padding: [40, 40] });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Toggle between satellite imagery and a clean street map.
+  function switchView(next: "satellite" | "street") {
+    const L = window.L;
+    if (!L || !map.current) return;
+    setViewMode(next);
+    if (next === "street") {
+      if (satImagery.current) map.current.removeLayer(satImagery.current);
+      if (satLabels.current) map.current.removeLayer(satLabels.current);
+      if (streetLayer.current) streetLayer.current.addTo(map.current);
+    } else {
+      if (streetLayer.current) map.current.removeLayer(streetLayer.current);
+      if (satImagery.current) satImagery.current.addTo(map.current);
+      if (satLabels.current) satLabels.current.addTo(map.current);
+    }
+  }
+
   async function copyDriverCity() {
     try {
       const p = pointRef.current;
@@ -151,14 +198,19 @@ export function LoadMap({
         [load.point.lat, load.point.lng],
         6
       );
-      L.tileLayer(
+      satImagery.current = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         { maxZoom: 19 }
-      ).addTo(m);
-      L.tileLayer(
+      );
+      satLabels.current = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
         { maxZoom: 19, opacity: 0.9 }
-      ).addTo(m);
+      );
+      streetLayer.current = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      });
+      satImagery.current.addTo(m);
+      satLabels.current.addTo(m);
 
       const trailerIcon = L.divIcon({
         className: "",
@@ -171,6 +223,35 @@ export function LoadMap({
       }).addTo(m);
       // Click the driver marker → copy the city/state where they are now.
       mainMarker.current.on("click", copyDriverCity);
+
+      // Pickup / delivery / intermediate-stop pins so the route is readable.
+      const pin = (bg: string, label: string) =>
+        L.divIcon({
+          className: "",
+          html:
+            `<div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;` +
+            `border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${bg};` +
+            `border:2px solid #0b1120;box-shadow:0 2px 7px rgba(0,0,0,.55)">` +
+            `<span style="transform:rotate(45deg);color:#fff;font:700 10px Manrope,system-ui,sans-serif">${label}</span></div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 24],
+          popupAnchor: [0, -22],
+        });
+      L.marker([load.origin.lat, load.origin.lng], { icon: pin("#22c55e", "P") })
+        .addTo(m)
+        .bindPopup(`Pickup<br>${load.originName}`);
+      L.marker([load.dest.lat, load.dest.lng], { icon: pin("#ef4444", "D") })
+        .addTo(m)
+        .bindPopup(`Delivery<br>${load.destName}`);
+      (load.stops || []).forEach((s, i) => {
+        if (s.point) {
+          L.marker([s.point.lat, s.point.lng], {
+            icon: pin(s.kind === "pickup" ? "#22c55e" : "#f59e0b", String(i + 1)),
+          })
+            .addTo(m)
+            .bindPopup(`${s.kind === "pickup" ? "Pickup" : "Drop"}<br>${s.address}`);
+        }
+      });
 
       // faint straight reference line origin -> dest
       L.polyline(
@@ -341,10 +422,35 @@ export function LoadMap({
       )}
       <div className="lmap-wrap">
         <div className="lmap" ref={mapEl} />
+        <div className="lmap-tabs">
+          <button
+            type="button"
+            className={viewMode === "satellite" ? "on" : ""}
+            onClick={() => switchView("satellite")}
+          >
+            Satellite
+          </button>
+          <button
+            type="button"
+            className={viewMode === "street" ? "on" : ""}
+            onClick={() => switchView("street")}
+          >
+            Map
+          </button>
+        </div>
+        <button type="button" className="lmap-fit" onClick={fitRoute} title="Fit whole route">
+          ⤢ Route
+        </button>
         <button type="button" className="recenter-btn" onClick={recenterDriver} title="Center on driver">
-          🎯 Driver
+          ◎ Driver
         </button>
         {copiedCity && <div className="copied-toast">📍 {copiedCity} — copied</div>}
+      </div>
+      <div className="lmap-legend">
+        <span><i className="lg lg-p" /> Pickup</span>
+        <span><i className="lg lg-d" /> Delivery</span>
+        <span><i className="lg lg-truck" /> Driver</span>
+        {isInternalUser && <span><i className="lg lg-int" /> Internal</span>}
       </div>
       <div className="coords">
         <span className="c">

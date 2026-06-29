@@ -1,0 +1,231 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+declare global {
+  interface Window {
+    L?: any;
+  }
+}
+
+function loadLeaflet(): Promise<any> {
+  return new Promise((resolve) => {
+    if (window.L) return resolve(window.L);
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    const existing = document.getElementById("leaflet-js") as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.L));
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "leaflet-js";
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.onload = () => resolve(window.L);
+    document.body.appendChild(s);
+  });
+}
+
+type LL = { lat: number; lng: number };
+type BStop = { kind: "pickup" | "dropoff"; address: string; lat: number | null; lng: number | null; done?: boolean };
+
+export function BrokerMap({
+  point,
+  origin,
+  dest,
+  originName,
+  destName,
+  stops,
+  paused,
+}: {
+  point: LL;
+  origin?: LL;
+  dest?: LL;
+  originName: string;
+  destName: string;
+  stops?: BStop[];
+  paused?: boolean;
+}) {
+  const mapEl = useRef<HTMLDivElement>(null);
+  const map = useRef<any>(null);
+  const driver = useRef<any>(null);
+  const streetLayer = useRef<any>(null);
+  const satLayer = useRef<any>(null);
+  const [view, setView] = useState<"street" | "satellite">("street");
+
+  // Build the list of all meaningful points (for fitting bounds + route line).
+  function allLatLngs(): [number, number][] {
+    const pts: [number, number][] = [[point.lat, point.lng]];
+    if (origin) pts.push([origin.lat, origin.lng]);
+    (stops || []).forEach((s) => {
+      if (typeof s.lat === "number" && typeof s.lng === "number") pts.push([s.lat, s.lng]);
+    });
+    if (dest) pts.push([dest.lat, dest.lng]);
+    return pts;
+  }
+
+  function fitAll() {
+    const L = window.L;
+    if (!L || !map.current) return;
+    const pts = allLatLngs();
+    if (pts.length >= 2) {
+      try {
+        map.current.fitBounds(L.latLngBounds(pts), { padding: [38, 38] });
+      } catch {
+        /* ignore */
+      }
+    } else {
+      map.current.setView([point.lat, point.lng], 9, { animate: true });
+    }
+  }
+
+  function centerDriver() {
+    if (map.current) map.current.setView([point.lat, point.lng], 11, { animate: true });
+  }
+
+  function switchView(next: "street" | "satellite") {
+    const L = window.L;
+    if (!L || !map.current) return;
+    setView(next);
+    if (next === "satellite") {
+      if (streetLayer.current) map.current.removeLayer(streetLayer.current);
+      if (satLayer.current) satLayer.current.addTo(map.current);
+    } else {
+      if (satLayer.current) map.current.removeLayer(satLayer.current);
+      if (streetLayer.current) streetLayer.current.addTo(map.current);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    loadLeaflet().then((L) => {
+      if (cancelled || !mapEl.current || map.current) return;
+      const m = L.map(mapEl.current, { zoomControl: true, attributionControl: false }).setView(
+        [point.lat, point.lng],
+        7
+      );
+
+      streetLayer.current = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      });
+      satLayer.current = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19 }
+      );
+      streetLayer.current.addTo(m);
+
+      // Route guide: origin -> stops(with coords) -> dest.
+      const line: [number, number][] = [];
+      if (origin) line.push([origin.lat, origin.lng]);
+      (stops || []).forEach((s) => {
+        if (typeof s.lat === "number" && typeof s.lng === "number") line.push([s.lat, s.lng]);
+      });
+      if (dest) line.push([dest.lat, dest.lng]);
+      if (line.length >= 2) {
+        L.polyline(line, { color: "#38BDF8", weight: 4, opacity: 0.85, dashArray: "1 0" }).addTo(m);
+      }
+
+      const pin = (bg: string, label: string) =>
+        L.divIcon({
+          className: "",
+          html:
+            `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;` +
+            `border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${bg};` +
+            `border:2px solid #0b1120;box-shadow:0 2px 8px rgba(0,0,0,.55)">` +
+            `<span style="transform:rotate(45deg);color:#fff;font:700 11px Manrope,system-ui,sans-serif">${label}</span></div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 26],
+          popupAnchor: [0, -24],
+        });
+
+      if (origin) {
+        L.marker([origin.lat, origin.lng], { icon: pin("#22c55e", "P") })
+          .addTo(m)
+          .bindPopup(`Pickup<br>${originName}`);
+      }
+      // Intermediate stops that have coordinates (numbered).
+      (stops || []).forEach((s, i) => {
+        if (typeof s.lat === "number" && typeof s.lng === "number") {
+          L.marker([s.lat, s.lng], { icon: pin(s.kind === "pickup" ? "#22c55e" : "#f59e0b", String(i + 1)) })
+            .addTo(m)
+            .bindPopup(`${s.kind === "pickup" ? "Pickup" : "Drop"}<br>${s.address}`);
+        }
+      });
+      if (dest) {
+        L.marker([dest.lat, dest.lng], { icon: pin("#ef4444", "D") })
+          .addTo(m)
+          .bindPopup(`Delivery<br>${destName}`);
+      }
+
+      const driverIcon = L.divIcon({
+        className: "",
+        html:
+          '<div style="width:20px;height:20px;border-radius:50%;background:#38BDF8;' +
+          'border:3px solid #0b1120;box-shadow:0 0 0 4px rgba(56,189,248,.25),0 0 12px #38BDF8"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+      driver.current = L.marker([point.lat, point.lng], { icon: driverIcon })
+        .addTo(m)
+        .bindPopup("Driver");
+
+      map.current = m;
+      setTimeout(() => {
+        m.invalidateSize();
+        fitAll();
+      }, 120);
+    });
+    return () => {
+      cancelled = true;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        driver.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Move the driver marker when the polled point changes.
+  useEffect(() => {
+    if (driver.current) driver.current.setLatLng([point.lat, point.lng]);
+  }, [point.lat, point.lng]);
+
+  return (
+    <div>
+      <div className="bmap-wrap">
+        <div className="bmap" ref={mapEl} />
+        <div className="bmap-tabs">
+          <button
+            type="button"
+            className={view === "street" ? "on" : ""}
+            onClick={() => switchView("street")}
+          >
+            Map
+          </button>
+          <button
+            type="button"
+            className={view === "satellite" ? "on" : ""}
+            onClick={() => switchView("satellite")}
+          >
+            Satellite
+          </button>
+        </div>
+        <div className="bmap-ctl">
+          <button type="button" onClick={fitAll} title="Fit whole route">⤢ Route</button>
+          <button type="button" onClick={centerDriver} title="Center on driver">◎ Driver</button>
+        </div>
+      </div>
+      <div className="bmap-legend">
+        <span><i className="lg lg-p" /> Pickup</span>
+        <span><i className="lg lg-d" /> Delivery</span>
+        <span><i className="lg lg-truck" /> Driver{paused ? " (paused)" : ""}</span>
+      </div>
+    </div>
+  );
+}
