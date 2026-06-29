@@ -39,77 +39,113 @@ export function LoadInvoiceAi({
     const JsPDF = await loadJsPDF();
     const doc = new JsPDF({ unit: "pt", format: "letter" });
     const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
     const M = 48;
+    const AMOUNT_W = 110; // reserved width for the right-hand amount column
+    const DESC_W = W - 2 * M - AMOUNT_W; // wrap descriptions within this width
 
+    // Header band.
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, W, 96, "F");
+    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(24);
-    doc.setTextColor(17, 17, 17);
-    doc.text("INVOICE", M, 64);
+    doc.setFontSize(26);
+    doc.text("INVOICE", M, 50);
 
-    // Top-right: sender + load ref
+    // Carrier ("from") block, top-right inside the band.
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(203, 213, 225); // slate-300
+    let ry = 32;
+    (data.from || "LoadSprint")
+      .split("\n")
+      .slice(0, 5)
+      .forEach((ln) => {
+        doc.text(ln, W - M, ry, { align: "right" });
+        ry += 12.5;
+      });
+
+    // Route / reference summary just under the band (NOT inside line labels).
+    const route = `Load ${load.ref} — ${load.originName} to ${load.destName}`;
+    doc.setTextColor(100, 116, 139);
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    let ry = 54;
-    (data.from || "LoadSprint").split("\n").forEach((ln) => {
-      doc.text(ln, W - M, ry, { align: "right" });
-      ry += 13;
-    });
-    doc.text(`Load ${load.ref}`, W - M, ry, { align: "right" });
+    const routeLine = doc.splitTextToSize(route, W - 2 * M)[0];
+    doc.text(routeLine, M, 80);
 
-    let y = 90;
-    doc.setTextColor(100, 100, 100);
-    doc.setFontSize(11);
-    doc.text(data.invoiceNumber, M, y);
-    y += 15;
-    doc.text(`Date: ${data.date}`, M, y);
-    y += 22;
-    doc.setDrawColor(17, 17, 17);
-    doc.line(M, y, W - M, y);
-    y += 26;
-
-    doc.setTextColor(17, 17, 17);
+    let y = 132;
+    // Invoice meta (left) + Bill to (right column).
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.text("INVOICE #", M, y);
+    doc.text("DATE", M, y + 28);
+    doc.text("BILL TO", W / 2, y);
+    doc.setTextColor(17, 24, 39);
     doc.setFont("helvetica", "bold");
-    doc.text("Bill to:", M, y);
+    doc.setFontSize(12);
+    doc.text(String(data.invoiceNumber), M, y + 14);
+    doc.text(String(data.date), M, y + 42);
     doc.setFont("helvetica", "normal");
-    doc.text(data.billTo || "—", M + 52, y);
-    y += 28;
+    doc.setFontSize(11);
+    const billLines = doc.splitTextToSize(data.billTo || "—", W / 2 - M);
+    doc.text(billLines.slice(0, 4), W / 2, y + 14);
 
-    doc.setTextColor(120, 120, 120);
+    y += 70;
+
+    // Table header.
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(1);
+    doc.line(M, y, W - M, y);
+    y += 16;
+    doc.setTextColor(100, 116, 139);
     doc.setFontSize(9);
     doc.text("DESCRIPTION", M, y);
     doc.text("AMOUNT", W - M, y, { align: "right" });
-    y += 8;
-    doc.setDrawColor(220, 220, 220);
+    y += 6;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
     doc.line(M, y, W - M, y);
-    y += 18;
+    y += 20;
 
-    doc.setTextColor(17, 17, 17);
+    // Line items — descriptions wrap, amount stays on the first line, right-aligned.
     doc.setFontSize(11);
     data.lines.forEach((l) => {
-      doc.text(String(l.label), M, y);
+      if (y > H - 120) {
+        doc.addPage();
+        y = M + 20;
+      }
+      const wrapped = doc.splitTextToSize(String(l.label), DESC_W);
+      doc.setTextColor(17, 24, 39);
+      doc.text(wrapped, M, y);
       doc.text(money(l.amount), W - M, y, { align: "right" });
-      y += 8;
-      doc.setDrawColor(235, 235, 235);
-      doc.line(M, y, W - M, y);
-      y += 16;
+      y += 14 * Math.max(1, wrapped.length) + 6;
+      doc.setDrawColor(241, 245, 249);
+      doc.line(M, y - 8, W - M, y - 8);
     });
 
-    y += 6;
-    doc.setDrawColor(17, 17, 17);
-    doc.line(M, y - 14, W - M, y - 14);
+    // Total.
+    y += 8;
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(1);
+    doc.line(W / 2, y - 6, W - M, y - 6);
+    y += 12;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Total", M, y);
+    doc.setFontSize(14);
+    doc.setTextColor(17, 24, 39);
+    doc.text("Total", W / 2, y);
     doc.text(money(data.total), W - M, y, { align: "right" });
 
+    // Notes / payment terms.
     if (data.notes) {
-      y += 30;
+      y += 34;
+      if (y > H - 80) {
+        doc.addPage();
+        y = M + 20;
+      }
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      const wrapped = doc.splitTextToSize(`Notes: ${data.notes}`, W - 2 * M);
-      doc.text(wrapped, M, y);
+      doc.setTextColor(100, 116, 139);
+      const notes = doc.splitTextToSize(String(data.notes), W - 2 * M);
+      doc.text(notes.slice(0, 6), M, y);
     }
 
     return doc.output("datauristring");

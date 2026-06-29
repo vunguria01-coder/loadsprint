@@ -10,6 +10,7 @@ export type JsPDFDoc = {
   setFontSize: (n: number) => void;
   setTextColor: (r: number, g?: number, b?: number) => void;
   setDrawColor: (r: number, g?: number, b?: number) => void;
+  setLineWidth: (w: number) => void;
   setFillColor: (r: number, g?: number, b?: number) => void;
   text: (text: string | string[], x: number, y: number, opts?: Record<string, unknown>) => void;
   splitTextToSize: (text: string, maxWidth: number) => string[];

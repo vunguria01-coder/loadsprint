@@ -35,9 +35,17 @@ type InvoiceInput = {
   company?: CompanyProfile;
 };
 
-const SYSTEM = `You are an accounts-receivable assistant for a freight carrier. Build a clean, correct carrier invoice from the load data. Reply with ONLY a JSON object, no prose, no markdown. Shape:
+const SYSTEM = `You are an accounts-receivable assistant for a freight carrier. Build a clean, modern, professional carrier invoice from the load data. Reply with ONLY a JSON object, no prose, no markdown. Shape:
 {"invoiceNumber": string, "date": "YYYY-MM-DD", "from": string (the carrier company block, multi-line, from the provided company details), "billTo": string (the payer — use the provided Bill-to exactly; do not invent), "lines": [{"label": string, "amount": number}], "subtotal": number, "total": number, "notes": string optional}
-Rules: the main line is the line haul (the agreed load rate). Add separate lines only for items clearly present in the data. Amounts are USD numbers (no symbols). subtotal = sum of lines; total = subtotal (no tax unless stated). Put the carrier's company details (name, address, phone, email, MC/DOT, remit) into "from" exactly as provided; if a company detail is missing, omit that piece. Use the provided Bill-to as "billTo" verbatim; if none was provided, set billTo to "". Never invent a payer or charges not supported by the data.`;
+Rules:
+- The main line is the line haul (the agreed load rate). Label it simply "Line haul" — nothing more.
+- Keep every line "label" SHORT and professional, e.g. "Line haul", "Fuel surcharge", "Detention", "Lumper", "Layover". Each label must be under 40 characters.
+- NEVER put the route, city names, stops, or the load reference inside a line label. Those belong in the header/notes, not in the line items. A label like "Line Haul - Load Ref 123 | A to B (via ...)" is WRONG; use "Line haul".
+- Add accessorial lines only for charges clearly present in the data; do not invent charges.
+- Amounts are USD numbers (no symbols). subtotal = sum of lines; total = subtotal (no tax unless stated).
+- Put the carrier's company details (name, address, phone, email, MC/DOT, remit) into "from" exactly as provided; omit any missing piece.
+- Use the provided Bill-to as "billTo" verbatim; if none was provided, set billTo to "".
+- You may put a short route/reference summary or payment terms in "notes" (one or two short lines), but never inside a line label. Never invent a payer or charges not supported by the data.`;
 
 export async function aiGenerateInvoice(input: InvoiceInput): Promise<AiInvoice | null> {
   const key = process.env.ANTHROPIC_API_KEY;

@@ -45,7 +45,9 @@ export function BrokerPortal({ token }: { token: string }) {
   const [data, setData] = useState<Data | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [initializing, setInitializing] = useState(true);
   const codeRef = useRef("");
+  const STORE_KEY = `bp_code_${token}`;
 
   const call = useCallback(
     async (full: boolean) => {
@@ -63,16 +65,71 @@ export function BrokerPortal({ token }: { token: string }) {
     [token]
   );
 
+  // Authenticate with a given code, remember it so the broker only enters it once.
+  const authWith = useCallback(
+    async (value: string) => {
+      codeRef.current = value.trim().toUpperCase();
+      const res = await fetch(`/api/b/${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeRef.current, full: true }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "Error");
+      }
+      const d = (await res.json()) as Data;
+      setData(d);
+      setAuthed(true);
+      try {
+        localStorage.setItem(STORE_KEY, codeRef.current);
+      } catch {
+        /* storage unavailable — they'll just re-enter next time */
+      }
+    },
+    [token, STORE_KEY]
+  );
+
+  // On first load, reuse a previously-entered code so the broker isn't asked again.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(STORE_KEY);
+      } catch {
+        saved = null;
+      }
+      if (saved) {
+        try {
+          await authWith(saved);
+        } catch {
+          // Code no longer valid (e.g. dispatcher rotated it) — forget it.
+          try {
+            localStorage.removeItem(STORE_KEY);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      if (!cancelled) setInitializing(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [STORE_KEY, authWith]);
+
   async function submit() {
     setErr(null);
     setBusy(true);
-    codeRef.current = code.trim().toUpperCase();
     try {
-      const d = await call(true);
-      setData(d);
-      setAuthed(true);
+      await authWith(code);
     } catch (e) {
-      setErr(e instanceof Error && e.message === "Wrong code" ? "Wrong code — check with your dispatcher." : "Could not open. Check the code.");
+      setErr(
+        e instanceof Error && e.message === "Wrong code"
+          ? "Wrong code — check with your dispatcher."
+          : "Could not open. Check the code."
+      );
     } finally {
       setBusy(false);
     }
@@ -91,6 +148,17 @@ export function BrokerPortal({ token }: { token: string }) {
     }, 6000);
     return () => clearInterval(t);
   }, [authed, call]);
+
+  if (initializing) {
+    return (
+      <div className="bp-shell">
+        <div className="bp-card bp-gate">
+          <div className="bp-logo">LoadSprint</div>
+          <p className="bp-sub">Opening…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!authed) {
     return (
