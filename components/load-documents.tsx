@@ -10,6 +10,8 @@ const DOC_LABELS: Record<string, string> = {
   bol: "BOL",
   pod: "POD",
   attachment: "Attachment",
+  invoice_broker: "Invoice",
+  invoice_driver: "Driver invoice",
 };
 
 // Download a data-URL document to the device.

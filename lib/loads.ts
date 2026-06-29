@@ -719,6 +719,37 @@ export function addDocument(
   return loads[i];
 }
 
+// Save (or replace) the AI-generated broker invoice as a load document so it is
+// stored with the load and automatically included when the dispatcher sends the
+// final documents to the broker. Re-saving replaces the previous AI invoice, so
+// regenerating never leaves duplicate invoices behind.
+export function saveBrokerInvoiceDoc(
+  loadId: string,
+  doc: { name: string; dataUrl: string },
+  actor: { id: string; name: string }
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  // Remove any earlier broker invoice (only ever the AI one — it is never
+  // uploaded manually) to avoid piling up duplicates on regenerate.
+  loads[i].documents = (loads[i].documents || []).filter(
+    (d) => d.type !== "invoice_broker"
+  );
+  loads[i].documents.push({
+    id: crypto.randomUUID(),
+    type: "invoice_broker",
+    name: String(doc.name).slice(0, 120),
+    dataUrl: doc.dataUrl,
+    uploadedById: actor.id,
+    uploadedByName: actor.name,
+    uploadedAt: new Date().toISOString(),
+  });
+  writeLoads(loads);
+  notifyParties(loads[i], actor.id, `Invoice ready: ${doc.name}`);
+  return loads[i];
+}
+
 export function addPhoto(
   loadId: string,
   photo: Omit<LoadPhoto, "id" | "uploadedAt">,

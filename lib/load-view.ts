@@ -5,7 +5,6 @@ export type LoadView = Load & {
   canHold: boolean;
   youId: string;
   youRole: string;
-  youIsOwner?: boolean;
   brokerPaused?: boolean;
   brokerPausedLabel?: string;
   driverPaused?: boolean;
