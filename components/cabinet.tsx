@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, LayoutDashboard, Users, History, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 
@@ -35,6 +35,7 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
     { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} /> },
     { key: "insights", href: "/insights", label: "Insights", icon: <BarChart3 size={18} /> },
+    { key: "settlements", href: "/settlements", label: "Settlements", icon: <Wallet size={18} /> },
     // Team (additional dispatcher seats) — owners only.
     ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} /> }] : []),
     { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
