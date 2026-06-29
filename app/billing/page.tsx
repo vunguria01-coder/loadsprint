@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; session_id?: string }>;
+  searchParams: Promise<{ status?: string }>;
 }) {
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role !== "dispatcher" && me.role !== "admin") redirect("/dashboard");
 
-  const { status, session_id } = await searchParams;
+  const { status } = await searchParams;
 
   return (
     <CabinetServer active="billing">
@@ -28,7 +28,7 @@ export default async function BillingPage({
           <h2 className="h2">Plans &amp; billing</h2>
           <p className="lead">Choose a plan to unlock dispatcher features and add drivers.</p>
         </div>
-        <BillingPlansView status={status} sessionId={session_id} />
+        <BillingPlansView status={status} />
       </div>
     </CabinetServer>
   );

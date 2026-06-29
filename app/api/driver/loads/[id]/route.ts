@@ -64,10 +64,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         );
       }
     }
-    if (status === "Closed" && load.status !== "Delivered") {
+    if (status === "Closed") {
       return NextResponse.json(
-        { ok: false, error: "A load must be delivered before it can be closed." },
-        { status: 400, headers: h }
+        { ok: false, error: "Only the account owner can close a load." },
+        { status: 403, headers: h }
       );
     }
     updated = setStatus(id, status, me.id);

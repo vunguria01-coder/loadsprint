@@ -21,7 +21,6 @@ export async function CabinetServer({
       email={me.email}
       tier={me.tier}
       daysLeft={subDaysLeft(me)}
-      expiresAt={me.tierExpiresAt}
       isOwner={isOwner}
       active={active}
     >

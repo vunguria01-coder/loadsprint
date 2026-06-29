@@ -1,11 +1,41 @@
 import { NextResponse } from "next/server";
 import { verifyWebhook } from "@/lib/stripe";
-import { grantTier, extendOneMonth } from "@/lib/billing-grant";
+import { getUserById, updateUser, findByEmail } from "@/lib/auth";
 
 // Stripe calls this after payments. We verify the signature, then grant the
 // purchased tier + expiry. Configure STRIPE_WEBHOOK_SECRET in Railway and point
 // a Stripe webhook to /api/billing/webhook for these events:
 //   checkout.session.completed, invoice.paid, customer.subscription.deleted
+
+function resolveUser(userId?: string, email?: string) {
+  if (userId) {
+    const u = getUserById(userId);
+    if (u) return u;
+  }
+  if (email) {
+    const u = findByEmail(email);
+    if (u) return u;
+  }
+  return undefined;
+}
+
+function grant(userId: string | undefined, tier: string, durationDays: number, planId?: string, email?: string) {
+  const user = resolveUser(userId, email);
+  if (!user) return;
+  const base = Date.now();
+  const expires = new Date(base + durationDays * 24 * 60 * 60 * 1000).toISOString();
+  updateUser(user.id, { tier: tier as never, tierExpiresAt: expires, planId });
+}
+
+function extendOneMonth(userId: string, tier: string) {
+  const user = getUserById(userId);
+  if (!user) return;
+  // Renewal: push expiry one month from the later of now / current expiry.
+  const current = user.tierExpiresAt ? new Date(user.tierExpiresAt).getTime() : 0;
+  const from = Math.max(Date.now(), current);
+  const expires = new Date(from + 30 * 24 * 60 * 60 * 1000).toISOString();
+  updateUser(userId, { tier: tier as never, tierExpiresAt: expires });
+}
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -27,7 +57,7 @@ export async function POST(req: Request) {
       const email =
         String(obj.customer_email || "") ||
         String((obj.customer_details as { email?: string })?.email || "");
-      if (tier) grantTier(userId, tier, durationDays, meta.planId, email);
+      if (tier) grant(userId, tier, durationDays, meta.planId, email);
     } else if (type === "invoice.paid") {
       // Monthly subscription renewal — extend access another month.
       const sub = (obj.subscription_details as { metadata?: Record<string, string> })?.metadata || {};

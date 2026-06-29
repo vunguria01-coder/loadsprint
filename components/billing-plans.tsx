@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { BILLING_PLANS, fmtUsd, type BillingPlan } from "@/lib/billing-plans";
 
@@ -27,42 +27,9 @@ function PlanCard({ plan, busy, onBuy }: { plan: BillingPlan; busy: string | nul
   );
 }
 
-export function BillingPlansView({
-  status,
-  sessionId,
-}: {
-  status?: string;
-  sessionId?: string;
-}) {
+export function BillingPlansView({ status }: { status?: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [confirming] = useState(status === "success" && !!sessionId);
-
-  // When returning from Stripe Checkout, confirm the payment server-side so the
-  // tier + expiry are set immediately (does not wait on the webhook).
-  useEffect(() => {
-    if (status !== "success" || !sessionId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/billing/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
-        });
-        await res.json().catch(() => ({}));
-      } catch {
-        /* webhook will catch up */
-      }
-      if (cancelled) return;
-      // Reload without the session_id so server components re-render with the new
-      // plan, and the confirm effect doesn't run again.
-      window.location.replace("/billing?status=success");
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [status, sessionId]);
 
   async function buy(planId: string) {
     setBusy(planId);
@@ -92,11 +59,7 @@ export function BillingPlansView({
   return (
     <div className="billing-wrap">
       {status === "success" && (
-        <div className="billing-banner ok">
-          {confirming
-            ? "Payment received — activating your plan…"
-            : "Payment received — your plan is now active. It may take a few seconds to reflect."}
-        </div>
+        <div className="billing-banner ok">Payment received — your plan is now active. It may take a few seconds to reflect.</div>
       )}
       {status === "cancel" && (
         <div className="billing-banner">Checkout cancelled — no charge was made.</div>

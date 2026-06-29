@@ -12,7 +12,6 @@ import {
   setStatus,
   setHold,
   addDocument,
-  saveBrokerInvoiceDoc,
   addPhoto,
   addMessage,
   markMessagesRead,
@@ -62,6 +61,9 @@ function serialize(load: Load, user: User) {
     canHold: user.canFreezeLocation === true,
     youId: user.id,
     youRole: user.role,
+    youIsOwner:
+      user.role === "admin" ||
+      (user.role === "dispatcher" && !user.ownerId),
   };
   // The internal working location is for dispatcher/driver only — never a broker.
   if (user.role === "broker") {
@@ -157,11 +159,21 @@ export async function POST(
             );
           }
         }
-        if (status === "Closed" && load.status !== "Delivered") {
-          return NextResponse.json(
-            { ok: false, error: "A load must be delivered before it can be closed." },
-            { status: 400 }
-          );
+        if (status === "Closed") {
+          // Only the account OWNER (or admin) may close a load — a sub-dispatcher
+          // (one with an ownerId) cannot. Closing must come from a delivered load.
+          if (me.role === "dispatcher" && me.ownerId) {
+            return NextResponse.json(
+              { ok: false, error: "Only the account owner can close a load." },
+              { status: 403 }
+            );
+          }
+          if (load.status !== "Delivered") {
+            return NextResponse.json(
+              { ok: false, error: "A load must be delivered before it can be closed." },
+              { status: 400 }
+            );
+          }
         }
       }
 
@@ -394,18 +406,6 @@ export async function POST(
           uploadedByName: me.name,
         },
         me.id
-      );
-      break;
-    }
-    case "save_invoice": {
-      if (me.role !== "dispatcher" && me.role !== "admin")
-        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-      if (!body.dataUrl || !body.name)
-        return NextResponse.json({ ok: false, error: "Bad invoice" }, { status: 400 });
-      updated = saveBrokerInvoiceDoc(
-        id,
-        { name: String(body.name).slice(0, 120), dataUrl: String(body.dataUrl) },
-        { id: me.id, name: me.name }
       );
       break;
     }

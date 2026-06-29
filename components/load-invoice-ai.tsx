@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { FileText } from "lucide-react";
 import { useToast } from "@/components/toast";
-import { loadJsPDF } from "@/components/use-jspdf";
 import type { LoadView } from "@/lib/load-view";
 
 type InvoiceLine = { label: string; amount: number };
@@ -21,133 +20,18 @@ type AiInvoice = {
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
-export function LoadInvoiceAi({
-  load,
-  mutate,
-}: {
-  load: LoadView;
-  mutate?: (body: Record<string, unknown>) => Promise<void>;
-}) {
+export function LoadInvoiceAi({ load }: { load: LoadView }) {
   const toast = useToast();
   const [inv, setInv] = useState<AiInvoice | null>(null);
   const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  // Build a clean PDF of the invoice on the client (jsPDF from CDN).
-  async function buildInvoicePdf(data: AiInvoice): Promise<string> {
-    const JsPDF = await loadJsPDF();
-    const doc = new JsPDF({ unit: "pt", format: "letter" });
-    const W = doc.internal.pageSize.getWidth();
-    const M = 48;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(24);
-    doc.setTextColor(17, 17, 17);
-    doc.text("INVOICE", M, 64);
-
-    // Top-right: sender + load ref
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    let ry = 54;
-    (data.from || "LoadSprint").split("\n").forEach((ln) => {
-      doc.text(ln, W - M, ry, { align: "right" });
-      ry += 13;
-    });
-    doc.text(`Load ${load.ref}`, W - M, ry, { align: "right" });
-
-    let y = 90;
-    doc.setTextColor(100, 100, 100);
-    doc.setFontSize(11);
-    doc.text(data.invoiceNumber, M, y);
-    y += 15;
-    doc.text(`Date: ${data.date}`, M, y);
-    y += 22;
-    doc.setDrawColor(17, 17, 17);
-    doc.line(M, y, W - M, y);
-    y += 26;
-
-    doc.setTextColor(17, 17, 17);
-    doc.setFont("helvetica", "bold");
-    doc.text("Bill to:", M, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(data.billTo || "—", M + 52, y);
-    y += 28;
-
-    doc.setTextColor(120, 120, 120);
-    doc.setFontSize(9);
-    doc.text("DESCRIPTION", M, y);
-    doc.text("AMOUNT", W - M, y, { align: "right" });
-    y += 8;
-    doc.setDrawColor(220, 220, 220);
-    doc.line(M, y, W - M, y);
-    y += 18;
-
-    doc.setTextColor(17, 17, 17);
-    doc.setFontSize(11);
-    data.lines.forEach((l) => {
-      doc.text(String(l.label), M, y);
-      doc.text(money(l.amount), W - M, y, { align: "right" });
-      y += 8;
-      doc.setDrawColor(235, 235, 235);
-      doc.line(M, y, W - M, y);
-      y += 16;
-    });
-
-    y += 6;
-    doc.setDrawColor(17, 17, 17);
-    doc.line(M, y - 14, W - M, y - 14);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Total", M, y);
-    doc.text(money(data.total), W - M, y, { align: "right" });
-
-    if (data.notes) {
-      y += 30;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      const wrapped = doc.splitTextToSize(`Notes: ${data.notes}`, W - 2 * M);
-      doc.text(wrapped, M, y);
-    }
-
-    return doc.output("datauristring");
-  }
-
-  // Persist the invoice as a load document so it is sent to the broker on "Send".
-  async function saveToLoad(data: AiInvoice) {
-    if (!mutate) return;
-    setSaving(true);
-    try {
-      const dataUrl = await buildInvoicePdf(data);
-      const name = `Invoice ${data.invoiceNumber}.pdf`;
-      await mutate({ action: "save_invoice", name, dataUrl });
-      setSaved(true);
-    } catch {
-      setSaved(false);
-      toast(
-        "Saved to view only",
-        "Couldn't attach the invoice to the load. Tap “Save to load” to retry."
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function generate() {
     setBusy(true);
-    setSaved(false);
     try {
       const res = await fetch(`/api/loads/${load.id}/invoice`, { method: "POST" });
       const data = await res.json();
-      if (res.ok && data.ok) {
-        setInv(data.invoice);
-        // Auto-save so the dispatcher never has to remember a separate step.
-        await saveToLoad(data.invoice);
-      } else {
-        toast("Could not build invoice", data.error || "Try again.");
-      }
+      if (res.ok && data.ok) setInv(data.invoice);
+      else toast("Could not build invoice", data.error || "Try again.");
     } catch {
       toast("Network error", "Please try again.");
     } finally {
@@ -205,8 +89,7 @@ export function LoadInvoiceAi({
         <>
           <p className="px">
             This load is closed. Let AI build the carrier invoice from the load
-            rate and stops — it is saved to the load and sent to the broker when
-            you release the final documents.
+            rate and stops — then review and print it.
           </p>
           <button className="btn btn-primary btn-block" onClick={generate} disabled={busy}>
             {busy ? "Building invoice…" : "✦ Generate invoice with AI"}
@@ -230,10 +113,7 @@ export function LoadInvoiceAi({
               type="text"
               value={inv.billTo}
               placeholder="Taken from the rate con — edit if needed"
-              onChange={(e) => {
-                setInv({ ...inv, billTo: e.target.value });
-                setSaved(false);
-              }}
+              onChange={(e) => setInv({ ...inv, billTo: e.target.value })}
             />
           </label>
           <div className="inv-lines">
@@ -249,35 +129,8 @@ export function LoadInvoiceAi({
             </div>
           </div>
           {inv.notes && <p className="inv-notes">{inv.notes}</p>}
-
-          {mutate && (
-            <p
-              className="px"
-              style={{
-                marginTop: 12,
-                fontSize: 13,
-                color: saved ? "var(--ok, #15803d)" : "var(--muted)",
-              }}
-            >
-              {saving
-                ? "Saving invoice to the load…"
-                : saved
-                ? "✓ Saved to this load — it will be sent to the broker with the final documents."
-                : "Not saved yet — tap “Save to load” so it reaches the broker."}
-            </p>
-          )}
-
-          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             <button className="btn btn-primary" onClick={printInvoice}>Print / Save PDF</button>
-            {mutate && !saved && (
-              <button
-                className="btn btn-ghost"
-                onClick={() => saveToLoad(inv)}
-                disabled={saving}
-              >
-                {saving ? "Saving…" : "Save to load"}
-              </button>
-            )}
             <button className="btn btn-ghost" onClick={generate} disabled={busy}>
               {busy ? "…" : "Regenerate"}
             </button>

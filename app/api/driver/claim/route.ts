@@ -4,7 +4,6 @@ import {
   createSession,
   findByEmail,
   hashPassword,
-  verifyPassword,
   newId,
 } from "@/lib/auth";
 import { claimInvite, verifyCode } from "@/lib/invites";
@@ -31,46 +30,10 @@ export async function POST(req: Request) {
         { status: 400, headers: h }
       );
     }
-    // Existing account: let the driver CONNECT to this additional dispatcher by
-    // verifying their current password, instead of blocking. Same app screen
-    // (code + name + password) — no app rebuild needed.
-    const existing = findByEmail(invite.email);
-    if (existing) {
-      if (existing.role !== "driver") {
-        return NextResponse.json(
-          {
-            ok: false,
-            error:
-              "This email is already registered to a non-driver account. Use a different email.",
-          },
-          { status: 409, headers: h }
-        );
-      }
-      if (!verifyPassword(String(password), existing.salt, existing.hash)) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error:
-              "An account already exists for this email — enter your existing password to connect.",
-          },
-          { status: 401, headers: h }
-        );
-      }
-      claimInvite(String(code));
-      const token = createSession({
-        id: existing.id,
-        name: existing.name,
-        email: existing.email,
-        role: "driver",
-      });
+    if (findByEmail(invite.email)) {
       return NextResponse.json(
-        {
-          ok: true,
-          linked: true,
-          token,
-          driver: { id: existing.id, name: existing.name, email: existing.email },
-        },
-        { headers: h }
+        { ok: false, error: "An account already exists for this email. Please sign in." },
+        { status: 409, headers: h }
       );
     }
     const { salt, hash } = hashPassword(String(password));

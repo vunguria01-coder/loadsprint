@@ -30,7 +30,8 @@ export function LoadStatusPanel({
     if (!canEdit) return false;
     if (isDispatcher) {
       if (s === "Delivered") return false;
-      if (s === "Closed") return load.status === "Delivered";
+      // Only the account owner can close a load (sub-dispatchers can't).
+      if (s === "Closed") return load.status === "Delivered" && load.youIsOwner === true;
     }
     return true;
   }
@@ -44,7 +45,9 @@ export function LoadStatusPanel({
         {!canEdit
           ? "Live delivery progress for this load."
           : isDispatcher
-          ? "Tap a stage to update. Only the assigned driver can mark a load Delivered."
+          ? load.youIsOwner
+            ? "Tap a stage to update. Only the assigned driver can mark a load Delivered."
+            : "Tap a stage to update. Only the assigned driver can mark Delivered, and only the account owner can Close a load."
           : "Tap a stage to update. Changes appear instantly for the broker."}
       </p>
       <div className="steps-v">
