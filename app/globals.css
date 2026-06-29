@@ -1108,3 +1108,65 @@ table.acc select option{background:#0b1120}
 .al-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .al-head h3{font-size:16px;color:#fff;margin:0;font-family:Poppins}
 .al-count{font-size:12px;font-weight:700;color:var(--sky);background:rgba(56,189,248,.12);padding:2px 9px;border-radius:999px}
+
+/* ============================================================
+   Cabinet visual polish — dispatcher app screens only.
+   Scoped under .cab*/.cab-content so the public landing is untouched.
+   ============================================================ */
+
+/* Headings: the marketing-size 50px reads heavy in-app — tighten to an
+   elegant, app-like scale with crisp tracking. */
+.cab-content .h2{font-size:clamp(26px,2.4vw,34px);letter-spacing:-.015em;line-height:1.14}
+.cab-content .h2 svg{width:24px;height:24px;color:var(--sky)}
+.cab-content .eyebrow{font-size:11.5px;letter-spacing:.2em;margin-bottom:12px}
+.cab-content .lead{font-size:15.5px;color:var(--muted);line-height:1.55}
+.cab-content .shead{margin-bottom:30px}
+.cab-content .shead p{margin-top:10px}
+
+/* Cards: a soft, consistent depth across every card in the app. */
+.cab-content .panel,
+.cab-content .plan-card,
+.cab-content .rev-card,
+.cab-content .seat-meter,
+.cab-content .earn-card,
+.cab-content .start-card,
+.cab-content .load-card{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 22px 46px -30px rgba(0,0,0,.78);
+}
+.cab-content .load-card{transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.cab-content .load-card:hover{transform:translateY(-2px)}
+
+/* Sidebar: refined active state with a brand accent rail. */
+.cab-side .cab-link{transition:background .15s ease,color .15s ease}
+.cab-side .cab-link.active{background:linear-gradient(90deg,rgba(37,99,235,.22),rgba(37,99,235,.06));position:relative}
+.cab-side .cab-link.active::before{content:"";position:absolute;left:-2px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--grad)}
+.cab-acc-btn{transition:border-color .15s ease,background .15s ease}
+.cab-acc-btn:hover{border-color:rgba(56,189,248,.4)}
+
+/* Inputs: a touch more room. */
+.cab-content .field input,
+.cab-content .field select,
+.cab-content .field textarea{padding:13px 14px;border-radius:12px}
+
+/* Flat-fill buttons get depth + a subtle lift in-app. */
+.cab-content .plan-btn,
+.cab-content .pkg-btn{transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;box-shadow:0 12px 26px -14px rgba(56,189,248,.65)}
+.cab-content .plan-btn:hover,
+.cab-content .pkg-btn:hover{transform:translateY(-2px)}
+
+/* Plans: make the middle (Gold) tier read as the recommended choice. */
+.cab-content .plan-grid .plan-card{position:relative}
+.cab-content .plan-grid .plan-card:nth-child(2){
+  border-color:rgba(56,189,248,.5);
+  box-shadow:0 0 0 1px rgba(56,189,248,.22), 0 30px 58px -28px rgba(56,189,248,.45);
+}
+.cab-content .plan-grid .plan-card:nth-child(2)::before{
+  content:"Popular";position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  background:var(--grad);color:#fff;font-family:Manrope;font-weight:800;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:999px;
+  box-shadow:0 10px 22px -8px rgba(56,189,248,.7);white-space:nowrap;
+}
+.cab-content .plan-grid .plan-card:nth-child(2) .plan-btn{background:var(--grad);color:#fff}
+
+/* Headline tracking for the small section headers we added. */
+.cab-content .al-head h3,.cab-content .start-head h3{letter-spacing:-.01em}
