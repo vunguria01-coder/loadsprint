@@ -1226,3 +1226,38 @@ table.acc select option{background:#0b1120}
 @media (max-width:560px){
   .pricing-card.is-popular,.pricing-card.is-popular:hover{transform:none}
 }
+
+/* ============================================================
+   Home (dashboard overview) — stat cards with the signature rail.
+   ============================================================ */
+.home-wrap{max-width:1040px}
+.home-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+
+.home-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:16px;margin-bottom:26px}
+.home-stat{position:relative;border:1px solid var(--line);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(148,170,205,.06),rgba(148,170,205,.015));overflow:hidden;transition:transform .2s ease,border-color .2s ease}
+.home-stat:hover{transform:translateY(-3px);border-color:rgba(56,189,248,.4)}
+.home-stat::before{content:"";position:absolute;left:0;right:0;top:0;height:3px}
+.home-stat .hs-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:14px}
+.home-stat .hs-val{font-family:Poppins;font-weight:800;font-size:30px;color:#fff;line-height:1;letter-spacing:-.02em}
+.home-stat .hs-label{font-family:Manrope;font-weight:700;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:7px}
+.sx-blue::before{background:linear-gradient(90deg,#2563eb,#60a5fa)}
+.sx-blue .hs-ic{background:rgba(37,99,235,.15);color:#60a5fa}
+.sx-sky::before{background:linear-gradient(90deg,#0ea5e9,#7dd3fc)}
+.sx-sky .hs-ic{background:rgba(56,189,248,.15);color:#38bdf8}
+.sx-green::before{background:linear-gradient(90deg,#16a34a,#4ade80)}
+.sx-green .hs-ic{background:rgba(22,163,74,.15);color:#4ade80}
+.sx-emerald::before{background:linear-gradient(90deg,#059669,#34d399)}
+.sx-emerald .hs-ic{background:rgba(5,150,105,.15);color:#34d399}
+
+.home-empty{border:1px dashed var(--line);border-radius:16px;padding:26px;text-align:center;color:var(--muted)}
+.home-empty p{margin:0 0 10px;font-size:14.5px}
+.home-empty-link{display:inline-flex;align-items:center;gap:6px;color:var(--sky);font-family:Manrope;font-weight:700;font-size:13.5px;text-decoration:none}
+.home-empty-link:hover{filter:brightness(1.15)}
+
+/* ============================================================
+   Signature rail — a quiet sky shimmer on list cards across the
+   whole app, brightening on hover. Ties every screen together.
+   ============================================================ */
+.cab-content .load-card,.cab-content .rev-card{position:relative;overflow:hidden}
+.cab-content .load-card::before,.cab-content .rev-card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,rgba(56,189,248,.55),transparent);opacity:.45;transition:opacity .2s ease}
+.cab-content .load-card:hover::before,.cab-content .rev-card:hover::before{opacity:1}

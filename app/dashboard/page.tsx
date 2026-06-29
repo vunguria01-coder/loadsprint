@@ -1,133 +1,105 @@
-import { CabinetServer } from "@/components/cabinet-server";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Package, Users, BarChart3 } from "lucide-react";
+import { Package, Users, PackageCheck, DollarSign, ArrowRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
-import { subDaysLeft } from "@/lib/auth";
+import { hasAccess } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
-import { TierBadge } from "@/components/tier-badge";
-import { LogoutButton } from "@/components/logout-button";
-import { DriverManager } from "@/components/driver-manager";
-import { NotificationsBell } from "@/components/notifications-bell";
+import { getLoadsByDispatcher } from "@/lib/loads";
+import { CabinetServer } from "@/components/cabinet-server";
+import { ActiveLoads } from "@/components/active-loads";
+import { GettingStarted } from "@/components/getting-started";
 
 export const metadata: Metadata = {
-  title: "Dashboard — LoadSprint",
+  title: "Home — LoadSprint",
   robots: { index: false, follow: false },
 };
-
-const roleLabels: Record<string, string> = {
-  broker: "Broker",
-  dispatcher: "Dispatcher",
-  driver: "Driver",
-};
-
-const brokerCards = [
-  { Icon: Package, title: "Post a load", desc: "Create and publish freight for carriers to book." },
-  { Icon: Users, title: "Carrier network", desc: "Browse and manage your vetted carrier relationships." },
-  { Icon: BarChart3, title: "Margins & reports", desc: "Track rates, margins, and lane performance." },
-];
-
-const dispatcherCards = [
-  { Icon: Package, title: "Active loads", desc: "Assign drivers and keep every shipment on schedule." },
-  { Icon: Users, title: "Driver roster", desc: "Coordinate availability across your drivers." },
-  { Icon: BarChart3, title: "Live tracking", desc: "Monitor pickups, transit, and on-time delivery." },
-];
 
 export default async function DashboardPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role === "admin") redirect("/admin");
+  if (me.role !== "dispatcher") redirect("/loads");
+  if (!hasAccess(me)) redirect("/pricing");
 
-  const cards = me.role === "dispatcher" ? dispatcherCards : brokerCards;
-  const invites = me.role === "dispatcher" ? getInvitesByRole(me.id, "driver") : [];
-  const daysLeft = subDaysLeft(me);
-  const expired = me.tier !== "none" && daysLeft !== null && daysLeft < 0;
+  const invites = getInvitesByRole(me.id, "driver");
+  const myLoads = getLoadsByDispatcher(me.id);
+  const driverCount = new Set(invites.map((i) => i.email.toLowerCase())).size;
+
+  const active = myLoads.filter((l) => l.status !== "Delivered" && l.status !== "Closed");
+  const completed = myLoads.filter((l) => l.status === "Delivered" || l.status === "Closed");
+
+  const activeLoads = active.map((l) => ({
+    id: l.id,
+    ref: l.ref,
+    driverName: l.driverName,
+    originName: l.originName,
+    destName: l.destName,
+    status: l.status,
+  }));
+
+  const pct = me.commissionPct || 0;
+  const earned = Math.round(
+    (completed.reduce((s, l) => s + (l.loadRate || 0), 0) * pct) / 100
+  );
+  const showEarnings = pct > 0;
+
+  const firstName = me.name?.split(" ")[0] || "there";
 
   return (
     <CabinetServer active="dashboard">
-      <div className="wrap">
-          <div className="dash-hello">
-            <h1>
-              Welcome, <span className="grad-text">{me.name.split(" ")[0]}</span>
-            </h1>
-            <p>
-              You&apos;re signed in as a {roleLabels[me.role].toLowerCase()}.
-              Here&apos;s your workspace.
-            </p>
-            <div className="plan-row">
-              <span className="pl">Current plan:</span>
-              <TierBadge tier={me.tier} />
-              {me.tier !== "none" && (
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: expired ? "#fca5a5" : "var(--muted)",
-                  }}
-                >
-                  {daysLeft === null
-                    ? "No expiry"
-                    : expired
-                    ? `Expired ${-daysLeft} day(s) ago — contact your administrator`
-                    : `${daysLeft} day(s) left`}
-                </span>
-              )}
-              <Link href="/pricing" className="btn btn-ghost" style={{ padding: "9px 16px" }}>
-                {me.tier === "none" ? "Choose a plan" : "Manage plan"}
-              </Link>
-              {me.role === "dispatcher" && (
-                <Link
-                  href="/drivers"
-                  className="btn btn-ghost"
-                  style={{ padding: "9px 16px" }}
-                >
-                  Drivers
-                </Link>
-              )}
-              {me.role === "dispatcher" && (
-                <Link
-                  href="/invoice-settings"
-                  className="btn btn-ghost"
-                  style={{ padding: "9px 16px" }}
-                >
-                  Invoice details
-                </Link>
-              )}
-              <Link href="/loads" className="btn btn-primary" style={{ padding: "9px 16px" }}>
-                Open loads
-              </Link>
-            </div>
+      <div className="wrap home-wrap">
+        <div className="home-head">
+          <div>
+            <span className="eyebrow">Overview</span>
+            <h2 className="h2">Welcome back, {firstName}</h2>
+            <p className="lead">Everything that needs your attention, in one place.</p>
           </div>
+          <Link href="/drivers" className="btn btn-primary home-cta">
+            <Users size={17} /> Manage drivers
+          </Link>
+        </div>
 
-          <div className="dash-cards">
-            {cards.map((c) => {
-              const Icon = c.Icon;
-              return (
-                <Link className="dash-card" href="/loads" key={c.title}>
-                  <div className="di">
-                    <Icon strokeWidth={1.9} />
-                  </div>
-                  <h3>{c.title}</h3>
-                  <p>{c.desc}</p>
-                </Link>
-              );
-            })}
+        <div className="home-stats">
+          <div className="home-stat sx-blue">
+            <div className="hs-ic"><Package size={18} /></div>
+            <div className="hs-val">{active.length}</div>
+            <div className="hs-label">Active loads</div>
           </div>
-
-          {me.role === "dispatcher" && (
-            <div style={{ marginTop: 24 }}>
-              <DriverManager invites={invites} />
+          <div className="home-stat sx-sky">
+            <div className="hs-ic"><Users size={18} /></div>
+            <div className="hs-val">{driverCount}</div>
+            <div className="hs-label">Drivers</div>
+          </div>
+          <div className="home-stat sx-green">
+            <div className="hs-ic"><PackageCheck size={18} /></div>
+            <div className="hs-val">{completed.length}</div>
+            <div className="hs-label">Completed</div>
+          </div>
+          {showEarnings && (
+            <div className="home-stat sx-emerald">
+              <div className="hs-ic"><DollarSign size={18} /></div>
+              <div className="hs-val">${earned.toLocaleString("en-US")}</div>
+              <div className="hs-label">Your earnings</div>
             </div>
           )}
-
-          <div className="dash-note">
-            Open <strong>Loads</strong> to track location, manage documents and
-            photos, change status, and chat — all in one place. Driver accounts
-            connect here once the mobile app is live.
-          </div>
         </div>
+
+        {myLoads.length === 0 && <GettingStarted />}
+
+        {activeLoads.length > 0 ? (
+          <ActiveLoads loads={activeLoads} />
+        ) : (
+          myLoads.length > 0 && (
+            <div className="home-empty">
+              <p>No active loads right now. Open a driver to create the next one.</p>
+              <Link href="/drivers" className="home-empty-link">
+                Go to drivers <ArrowRight size={15} />
+              </Link>
+            </div>
+          )
+        )}
+      </div>
     </CabinetServer>
   );
 }
