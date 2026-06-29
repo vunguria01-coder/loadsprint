@@ -72,8 +72,8 @@ function helpFor(path: string): Help {
       title: "Completed",
       intro: "Delivered and closed loads, grouped by driver.",
       points: [
-        "Open a load to check its photos and documents.",
-        "\"Download package\" gives you a single PDF with all the load's paperwork.",
+        "Open a load (tap the card) to check its photos, documents and invoice.",
+        "\"Review & send\" shows what's inside the broker package — confirmation, photos and invoice — so you can check and fix it, then download the ZIP for your broker.",
       ],
     };
   if (path.startsWith("/calendar"))

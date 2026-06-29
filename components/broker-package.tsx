@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Download } from "lucide-react";
+import Link from "next/link";
+import { Package, Download, X, Check, FileText, Image as ImageIcon, Receipt, Pencil } from "lucide-react";
 import { loadJsPDF, type JsPDFDoc } from "@/components/use-jspdf";
 import { loadJsZip } from "@/components/use-jszip";
 import { useToast } from "@/components/toast";
@@ -151,40 +152,60 @@ export function BrokerPackage({
   compact?: boolean;
 }) {
   const toast = useToast();
-  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [building, setBuilding] = useState(false);
+  const [data, setData] = useState<PackageData | null>(null);
 
-  async function build() {
-    setBusy(true);
+  // Open the review modal and load what's inside the package.
+  async function openReview(e?: React.MouseEvent) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setOpen(true);
+    if (data) return; // already loaded
+    setLoading(true);
     try {
       const res = await fetch(`/api/loads/${loadId}/package`);
-      const data: PackageData = await res.json();
-      if (!res.ok || !data.ok) {
-        toast("Could not build package", data.error || "Try again.");
-        setBusy(false);
-        return;
+      const d: PackageData = await res.json();
+      if (!res.ok || !d.ok) {
+        toast("Could not load package", d.error || "Try again.");
+        setOpen(false);
+      } else {
+        setData(d);
       }
+    } catch {
+      toast("Package error", "Could not load the package.");
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
 
+  function close() {
+    setOpen(false);
+  }
+
+  // Build the ZIP from the already-loaded data and download it.
+  async function download() {
+    if (!data) return;
+    setBuilding(true);
+    try {
       const JsZip = await loadJsZip();
       const zip = new JsZip();
 
-      // 1) Confirmation (rate con) — keep original format.
       if (data.confirmation) {
         const ext = extFromDataUrl(data.confirmation.dataUrl);
         zip.file(`confirmation.${ext}`, base64Of(data.confirmation.dataUrl), { base64: true });
       }
-
-      // 2) Raw photos.
       data.photos.forEach((p) => {
         zip.file(p.name, base64Of(p.dataUrl), { base64: true });
       });
-
-      // 3) Photos combined into a PDF (AI/code-built).
       if (data.photos.length > 0) {
         const pPdf = await photosPdf(data.photos);
         zip.file("photos.pdf", base64Of(pPdf), { base64: true });
       }
-
-      // 4) Invoice PDF (AI-generated, price from the rate con).
       if (data.invoice) {
         const iPdf = await invoicePdf(data.invoice, data.ref);
         zip.file("invoice.pdf", base64Of(iPdf), { base64: true });
@@ -203,34 +224,111 @@ export function BrokerPackage({
     } catch {
       toast("Package error", "Could not build the package.");
     } finally {
-      setBusy(false);
+      setBuilding(false);
     }
   }
 
+  const conf = data?.confirmation || null;
+  const photos = data?.photos || [];
+  const invoice = data?.invoice || null;
+
+  const modal = open && (
+    <>
+      <div className="pkg-scrim" onClick={close} />
+      <div className="pkg-modal" role="dialog" aria-label="Broker package">
+        <div className="pkg-modal-head">
+          <div>
+            <div className="pkg-eyebrow">Broker package</div>
+            <div className="pkg-modal-title">{data?.ref || loadRef}</div>
+          </div>
+          <button className="pkg-x" onClick={close} aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="px" style={{ padding: "8px 0 14px" }}>Loading what&apos;s inside…</p>
+        ) : data ? (
+          <>
+            <p className="pkg-sub">Check everything below. Open the load to fix anything, then download.</p>
+
+            <div className="pkg-items">
+              <div className={`pkg-item${conf ? " ok" : " no"}`}>
+                <span className="pkg-ic"><FileText size={16} /></span>
+                <div className="pkg-it-body">
+                  <b>Rate confirmation</b>
+                  <span>{conf ? conf.name : "Not attached — open the load to add it"}</span>
+                </div>
+                <span className="pkg-flag">{conf ? <Check size={16} /> : "Missing"}</span>
+              </div>
+
+              <div className={`pkg-item${photos.length ? " ok" : " no"}`}>
+                <span className="pkg-ic"><ImageIcon size={16} /></span>
+                <div className="pkg-it-body">
+                  <b>{photos.length} photo{photos.length === 1 ? "" : "s"}</b>
+                  <span>{photos.length ? "Included in the ZIP and a photos PDF" : "No photos yet"}</span>
+                  {photos.length > 0 && (
+                    <div className="pkg-thumbs">
+                      {photos.slice(0, 6).map((p, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={p.dataUrl} alt={`Photo ${i + 1}`} />
+                      ))}
+                      {photos.length > 6 && <span className="pkg-more">+{photos.length - 6}</span>}
+                    </div>
+                  )}
+                </div>
+                <span className="pkg-flag">{photos.length ? <Check size={16} /> : "—"}</span>
+              </div>
+
+              <div className={`pkg-item${invoice ? " ok" : " no"}`}>
+                <span className="pkg-ic"><Receipt size={16} /></span>
+                <div className="pkg-it-body">
+                  <b>Invoice</b>
+                  <span>
+                    {invoice
+                      ? `#${invoice.invoiceNumber} · total ${money(invoice.total)}`
+                      : "Not generated yet — open the load to create it"}
+                  </span>
+                </div>
+                <span className="pkg-flag">{invoice ? <Check size={16} /> : "Missing"}</span>
+              </div>
+            </div>
+
+            <div className="pkg-actions">
+              <Link href={`/loads/${loadId}`} className="btn btn-ghost">
+                <Pencil size={15} /> Open load to edit
+              </Link>
+              <button type="button" className="btn btn-primary" onClick={download} disabled={building}>
+                <Download size={15} /> {building ? "Preparing…" : "Download package"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="px">Could not load the package.</p>
+        )}
+      </div>
+    </>
+  );
+
   if (compact) {
     return (
-      <button
-        type="button"
-        className="pkg-btn"
-        disabled={busy}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          build();
-        }}
-      >
-        <Download size={15} /> {busy ? "Preparing…" : "Download package"}
-      </button>
+      <>
+        <button type="button" className="pkg-btn" disabled={loading && open} onClick={openReview}>
+          <Package size={15} /> Review &amp; send
+        </button>
+        {modal}
+      </>
     );
   }
 
   return (
     <div className="panel">
       <h3><Package /> Broker package</h3>
-      <p className="px">One ZIP with the confirmation, photos, a photos PDF, and the AI invoice — ready to send to the broker.</p>
-      <button className="btn btn-primary" disabled={busy} onClick={build} style={{ padding: "10px 16px", marginTop: 10 }}>
-        <Download size={15} /> {busy ? "Preparing package…" : "Download broker package (ZIP)"}
+      <p className="px">Check the confirmation, photos and invoice, then download one ZIP ready to send to the broker.</p>
+      <button className="btn btn-primary" onClick={openReview} style={{ padding: "10px 16px", marginTop: 10 }}>
+        <Package size={15} /> Review &amp; send package
       </button>
+      {modal}
     </div>
   );
 }
