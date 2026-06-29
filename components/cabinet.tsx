@@ -43,12 +43,17 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
   ];
 }
 
-function subLabel(tier: string, daysLeft: number | null): string {
+function subLabel(tier: string, daysLeft: number | null, expiresAt?: string): string {
   if (tier === "none") return "No plan";
   const t = tier[0].toUpperCase() + tier.slice(1);
   if (daysLeft === null) return `${t} · no expiry`;
   if (daysLeft < 0) return `${t} · expired`;
-  return `${t} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+  const left = `${t} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+  if (!expiresAt) return left;
+  const d = new Date(expiresAt);
+  if (isNaN(d.getTime())) return left;
+  const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${left} · until ${date}`;
 }
 
 export function Cabinet({
@@ -57,6 +62,7 @@ export function Cabinet({
   email,
   tier,
   daysLeft,
+  expiresAt,
   isOwner = false,
   active,
   children,
@@ -66,6 +72,7 @@ export function Cabinet({
   email: string;
   tier: string;
   daysLeft: number | null;
+  expiresAt?: string;
   isOwner?: boolean;
   active?: string;
   children: ReactNode;
@@ -135,7 +142,7 @@ export function Cabinet({
                   </div>
                   <div className={`cab-acc-sub${expired ? " expired" : ""}`}>
                     <span className="cas-dot" />
-                    {subLabel(tier, daysLeft)}
+                    {subLabel(tier, daysLeft, expiresAt)}
                   </div>
                   {(role === "dispatcher" || role === "admin") && (
                     <Link href="/billing" className="cab-acc-item" onClick={() => setAcc(false)}>Plans &amp; billing</Link>

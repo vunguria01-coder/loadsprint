@@ -36,7 +36,7 @@ export async function createCheckoutSession(opts: {
 
   const body: Record<string, unknown> = {
     mode: isSub ? "subscription" : "payment",
-    success_url: `${baseUrl}/billing?status=success`,
+    success_url: `${baseUrl}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/billing?status=cancel`,
     client_reference_id: userId,
     customer_email: email,
@@ -71,6 +71,26 @@ export async function createCheckoutSession(opts: {
     return { ok: true, url: data.url };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error" };
+  }
+}
+
+// Fetch a Checkout Session from Stripe by id (used to confirm a payment when the
+// user returns from Checkout, so access is granted even if the webhook is slow
+// or not configured). Returns the parsed session object, or null.
+export async function getCheckoutSession(
+  id: string
+): Promise<Record<string, unknown> | null> {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key || !id) return null;
+  try {
+    const res = await fetch(`${API}/checkout/sessions/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    const data = await res.json();
+    if (!res.ok) return null;
+    return data as Record<string, unknown>;
+  } catch {
+    return null;
   }
 }
 
