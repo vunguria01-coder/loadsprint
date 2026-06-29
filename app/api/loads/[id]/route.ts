@@ -12,6 +12,7 @@ import {
   setStatus,
   setHold,
   addDocument,
+  saveBrokerInvoiceDoc,
   addPhoto,
   addMessage,
   markMessagesRead,
@@ -393,6 +394,18 @@ export async function POST(
           uploadedByName: me.name,
         },
         me.id
+      );
+      break;
+    }
+    case "save_invoice": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      if (!body.dataUrl || !body.name)
+        return NextResponse.json({ ok: false, error: "Bad invoice" }, { status: 400 });
+      updated = saveBrokerInvoiceDoc(
+        id,
+        { name: String(body.name).slice(0, 120), dataUrl: String(body.dataUrl) },
+        { id: me.id, name: me.name }
       );
       break;
     }

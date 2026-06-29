@@ -115,7 +115,7 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
             </div>
             <div>
               {/* Invoice is the focus on a closed load */}
-              <LoadInvoiceAi load={load} />
+              <LoadInvoiceAi load={load} mutate={mutate} />
               <Collapsible title="Status">
                 <LoadStatusPanel load={load} mutate={mutate} />
               </Collapsible>
