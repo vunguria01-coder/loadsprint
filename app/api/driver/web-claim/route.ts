@@ -4,6 +4,7 @@ import {
   createSession,
   findByEmail,
   hashPassword,
+  verifyPassword,
   newId,
   SESSION_COOKIE,
 } from "@/lib/auth";
@@ -25,11 +26,48 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    if (findByEmail(invite.email)) {
-      return NextResponse.json(
-        { ok: false, error: "An account already exists for this email. Please sign in." },
-        { status: 409 }
-      );
+    // An account already exists for this email. Instead of blocking, let an
+    // existing driver CONNECT to this (additional) dispatcher by verifying their
+    // current password. Loads from any dispatcher already reach a driver by
+    // email, so "joining" just means claiming this invite — no new account.
+    const existing = findByEmail(invite.email);
+    if (existing) {
+      if (existing.role !== "driver") {
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              "This email is already registered to a non-driver account. Use a different email.",
+          },
+          { status: 409 }
+        );
+      }
+      if (!verifyPassword(String(password), existing.salt, existing.hash)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              "An account already exists for this email — enter your existing password to connect.",
+          },
+          { status: 401 }
+        );
+      }
+      // Link this already-registered driver to the new dispatcher.
+      claimInvite(String(code));
+      const token = createSession({
+        id: existing.id,
+        name: existing.name,
+        email: existing.email,
+        role: "driver",
+      });
+      const res = NextResponse.json({ ok: true, linked: true });
+      res.cookies.set(SESSION_COOKIE, token, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+      return res;
     }
     const { salt, hash } = hashPassword(String(password));
     const id = newId();
