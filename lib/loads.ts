@@ -124,6 +124,8 @@ export type Load = {
   shareCode?: string; // access code the broker types to open the link
   brokerPublished?: boolean; // dispatcher released final docs to the broker
   brokerPublishedAt?: string;
+  pickupDate?: string; // YYYY-MM-DD — scheduled pickup day (for the calendar)
+  deliveryDate?: string; // YYYY-MM-DD — scheduled delivery day (for the calendar)
   createdAt: string;
 };
 
@@ -602,6 +604,26 @@ export function getLoadById(id: string): Load | undefined {
 }
 export function getLoadsByDispatcher(dispatcherId: string): Load[] {
   return readLoads().filter((l) => l.dispatcherId === dispatcherId);
+}
+
+// Set (or clear) the scheduled pickup/delivery dates for a load. Returns the
+// updated load, or null when not found / not owned by this dispatcher.
+export function setLoadSchedule(
+  id: string,
+  dispatcherId: string,
+  pickupDate?: string,
+  deliveryDate?: string,
+  isAdmin = false
+): Load | null {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === id);
+  if (i === -1) return null;
+  if (!isAdmin && loads[i].dispatcherId !== dispatcherId) return null;
+  const clean = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s.trim()) ? s.trim() : undefined);
+  loads[i].pickupDate = clean(pickupDate);
+  loads[i].deliveryDate = clean(deliveryDate);
+  writeLoads(loads);
+  return loads[i];
 }
 
 // Total value of completed (Delivered/Closed) loads for a dispatcher — the base

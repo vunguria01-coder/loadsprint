@@ -1369,3 +1369,56 @@ table.acc select option{background:#0b1120}
 .inv-doc-foot{margin-top:14px;padding-top:12px;border-top:1px solid #e8edf3;color:#64748b;font-size:12px;font-style:italic}
 .inv-preview-hint{color:var(--muted-2);font-size:12px;margin-top:10px;text-align:center}
 @media(max-width:900px){.inv-settings{grid-template-columns:1fr}.inv-preview{position:static}}
+
+/* ============================================================
+   Calendar (schedule) — month grid + load scheduler.
+   ============================================================ */
+.cal-wrap{max-width:1000px}
+.cal-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.cal-month{font-family:Poppins;font-weight:800;font-size:20px;color:#fff;letter-spacing:-.01em}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(148,170,205,.06);color:#fff;cursor:pointer;transition:.15s ease}
+.cal-nav button:hover{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.08);color:var(--sky)}
+.cal-nav .cal-today{width:auto;padding:0 14px;font-family:Manrope;font-weight:700;font-size:13px}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;border:1px solid var(--line);border-radius:16px;padding:10px;background:linear-gradient(180deg,rgba(148,170,205,.04),rgba(148,170,205,.01));box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 22px 46px -30px rgba(0,0,0,.78)}
+.cal-wd{text-align:center;font-family:Manrope;font-weight:800;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);padding:6px 0 8px}
+.cal-cell{min-height:96px;border:1px solid var(--line-2);border-radius:10px;background:rgba(8,14,28,.35);padding:7px 7px 6px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.cal-cell.cal-empty{background:transparent;border-color:transparent}
+.cal-cell.cal-now{border-color:rgba(56,189,248,.55);box-shadow:0 0 0 1px rgba(56,189,248,.25) inset}
+.cal-dnum{font-family:Manrope;font-weight:700;font-size:12px;color:var(--muted)}
+.cal-now .cal-dnum{color:var(--sky)}
+.cal-evs{display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.cal-ev{display:flex;align-items:center;gap:5px;font-family:Manrope;font-weight:700;font-size:11px;padding:3px 7px;border-radius:7px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid}
+.cal-ev .ev-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.ev-pick{color:#7dd3fc;background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.35)}
+.ev-pick .ev-dot{background:#38bdf8}
+.ev-drop{color:#86efac;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35)}
+.ev-drop .ev-dot{background:#4ade80}
+.cal-ev:hover{filter:brightness(1.15)}
+
+.cal-legend{display:flex;gap:18px;margin:12px 2px 0}
+.cal-legend span{display:inline-flex;align-items:center;gap:7px;font-family:Manrope;font-weight:600;font-size:12.5px;color:var(--muted)}
+.cal-legend .ev-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ev-pick-dot{background:#38bdf8}
+.ev-drop-dot{background:#4ade80}
+
+.cal-sched{margin-top:30px}
+.cal-sched h3{font-family:Poppins;font-weight:800;font-size:17px;color:#fff;margin:0 0 4px;letter-spacing:-.01em}
+.cal-slist{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.cal-srow{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(148,170,205,.05),rgba(148,170,205,.015));padding:14px 16px}
+.cal-sinfo{flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px}
+.cal-sref{font-family:Poppins;font-weight:800;font-size:15px;color:#fff;text-decoration:none}
+.cal-sref:hover{color:var(--sky)}
+.cal-sroute{color:var(--muted);font-size:12.5px}
+.cal-sdate{display:flex;flex-direction:column;gap:5px}
+.cal-sdate label{font-family:Manrope;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2)}
+.cal-sdate input{background:rgba(8,14,28,.6);border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:#fff;font-family:Inter;font-size:13.5px;color-scheme:dark}
+.cal-sdate input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+
+@media(max-width:620px){
+  .cal-cell{min-height:78px}
+  .cal-ev{font-size:10px;padding:2px 5px}
+  .cal-srow{gap:10px}
+  .cal-sdate input{padding:8px 9px}
+}
