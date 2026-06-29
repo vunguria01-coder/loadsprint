@@ -152,7 +152,10 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           <>
             <div>
               <LoadMap load={load} mutate={mutate} />
-              <LoadChat load={load} mutate={mutate} />
+              <LoadDocuments load={load} mutate={mutate} />
+              <Collapsible title="Load chat">
+                <LoadChat load={load} mutate={mutate} />
+              </Collapsible>
             </div>
             <div>
               <LoadStatusPanel load={load} mutate={mutate} />
@@ -176,12 +179,15 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
                   ))}
                 </div>
               )}
-              <LoadDocuments load={load} mutate={mutate} />
-              <LoadPhotos load={load} mutate={mutate} />
-              <PhotosToPdf load={load} mutate={mutate} />
               {(load.youRole === "dispatcher" || load.youRole === "admin") && (
                 <LoadBrokerShare load={load} mutate={mutate} />
               )}
+              <Collapsible title="Cargo photos">
+                <LoadPhotos load={load} mutate={mutate} />
+              </Collapsible>
+              <Collapsible title="Photos → PDF">
+                <PhotosToPdf load={load} mutate={mutate} />
+              </Collapsible>
             </div>
           </>
         )}
