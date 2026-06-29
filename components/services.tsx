@@ -12,32 +12,32 @@ const services = [
   {
     icon: Sparkles,
     title: "AI rate-con import",
-    desc: "Drop in a rate confirmation and AI pulls the reference, rate, payer, and every stop — full street addresses with ZIP — in seconds.",
+    desc: "Drop in a rate con — AI fills the reference, rate, payer and every stop in seconds.",
   },
   {
     icon: Route,
     title: "Multi-stop loads",
-    desc: "Handle up to 10 pickups and 10 drop-offs on one load, each with its address, date and appointment time, kept in order.",
+    desc: "Up to 10 pickups and drop-offs per load, each with its time, kept in order.",
   },
   {
     icon: MapPin,
     title: "Live GPS tracking",
-    desc: "See each driver's real position on the map, plus live distance to the next pickup and to delivery — and which stop they're on right now.",
+    desc: "See each driver on the map, with live distance to the next stop and delivery.",
   },
   {
     icon: Smartphone,
     title: "Driver mobile app",
-    desc: "Drivers get their stops, one-tap address copy, the rate confirmation, and cargo & paperwork photos — all on iOS.",
+    desc: "Drivers get every stop, one-tap addresses, and cargo photos on iOS.",
   },
   {
     icon: FileText,
     title: "AI invoices & broker packets",
-    desc: "Generate the carrier invoice automatically and download a tidy ZIP — confirmation, photos, a photos PDF, and the invoice — ready to send.",
+    desc: "Auto-build the invoice and one ZIP packet — ready to send the broker.",
   },
   {
     icon: ShieldCheck,
     title: "Secure team access",
-    desc: "Email + password with a 2FA email code, trusted devices, and roles for dispatchers, drivers and brokers — everyone sees just what they need.",
+    desc: "Email + 2FA, trusted devices, and roles for dispatchers, drivers and brokers.",
   },
 ];
 
@@ -52,9 +52,8 @@ export function Services() {
             <span className="grad-text">in one app</span>
           </h2>
           <p className="lead">
-            From the moment a rate con lands to the invoice you send the broker,
-            LoadSprint runs the whole load — so you spend less time on paperwork
-            and more time moving freight.
+            From rate con to broker invoice, LoadSprint runs the whole load — less
+            paperwork, more freight.
           </p>
         </Reveal>
         <div className="cards">

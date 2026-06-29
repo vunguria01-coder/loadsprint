@@ -32,26 +32,25 @@ export function Footer() {
               style={{ height: 30, width: "auto" }}
             />
             <p>
-              Moving freight faster — connecting shippers with a reliable,
-              nationwide carrier network.
+              Run your whole dispatch from one place — AI rate cons, live driver
+              tracking, and one-click broker packets.
             </p>
           </div>
           <div className="foot-col">
-            <h5>Services</h5>
-            <a href="#services">Full Truckload</a>
-            <a href="#services">Less Than Truckload</a>
-            <a href="#services">Expedited</a>
-            <a href="#services">Reefer &amp; Flatbed</a>
+            <h5>Product</h5>
+            <a href="#services">Features</a>
+            <a href="#how">How it works</a>
+            <a href="#pricing">Pricing</a>
           </div>
           <div className="foot-col">
             <h5>Company</h5>
-            <a href="#about">About Us</a>
-            <a href="#why">Why LoadSprint</a>
             <a href="#testimonials">Testimonials</a>
+            <a href="/privacy">Privacy</a>
           </div>
           <div className="foot-col">
             <h5>Get started</h5>
-            <a href="#quote">Get a Quote</a>
+            <a href="/register">Create account</a>
+            <a href="/login">Sign in</a>
           </div>
         </div>
         <div className="foot-bottom">

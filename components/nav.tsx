@@ -5,10 +5,9 @@ import Image from "next/image";
 import { X, ArrowRight } from "lucide-react";
 
 const links = [
-  { href: "#services", label: "Services" },
-  { href: "#why", label: "Why LoadSprint" },
+  { href: "#services", label: "Features" },
   { href: "#how", label: "How it works" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "#pricing", label: "Pricing" },
 ];
 
 export function Nav({ authed = false }: { authed?: boolean }) {
@@ -57,11 +56,8 @@ export function Nav({ authed = false }: { authed?: boolean }) {
                 <a href="/login" className="btn btn-signin btn-quote">
                   Sign in
                 </a>
-                <a href="/register" className="btn btn-ghost btn-quote">
-                  Register
-                </a>
-                <a href="#quote" className="btn btn-primary btn-quote">
-                  Get a Quote
+                <a href="/register" className="btn btn-primary btn-quote">
+                  Get started
                 </a>
               </>
             )}
@@ -86,7 +82,7 @@ export function Nav({ authed = false }: { authed?: boolean }) {
       </header>
 
       <div className={`mobile-menu${open ? " open" : ""}`}>
-        {[...links, { href: "#shippers", label: "Shippers" }].map((l) => (
+        {links.map((l) => (
           <a key={l.href} href={l.href} onClick={() => setOpen(false)}>
             {l.label}
           </a>
@@ -106,17 +102,10 @@ export function Nav({ authed = false }: { authed?: boolean }) {
             </a>
             <a
               href="/register"
-              className="btn btn-ghost"
-              onClick={() => setOpen(false)}
-            >
-              Register
-            </a>
-            <a
-              href="#quote"
               className="btn btn-primary"
               onClick={() => setOpen(false)}
             >
-              Get a Quote <ArrowRight size={17} />
+              Get started <ArrowRight size={17} />
             </a>
           </>
         )}

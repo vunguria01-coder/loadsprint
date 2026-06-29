@@ -3,12 +3,10 @@ import { currentUser } from "@/lib/guard";
 import { Hero } from "@/components/hero";
 import { Stats } from "@/components/stats";
 import { Services } from "@/components/services";
-import { WhyChoose } from "@/components/why-choose";
 import { HowItWorks } from "@/components/how-it-works";
-import { Audience } from "@/components/audience";
-import { QuoteForm } from "@/components/quote-form";
-import { About } from "@/components/about";
+import { PricingHome } from "@/components/pricing-home";
 import { Testimonials } from "@/components/testimonials";
+import { FinalCta } from "@/components/final-cta";
 import { Footer } from "@/components/footer";
 
 export default async function Home() {
@@ -20,12 +18,10 @@ export default async function Home() {
         <Hero />
         <Stats />
         <Services />
-        <WhyChoose />
         <HowItWorks />
-        <Audience />
-        <QuoteForm />
-        <About />
+        <PricingHome />
         <Testimonials />
+        <FinalCta />
       </main>
       <Footer />
     </>

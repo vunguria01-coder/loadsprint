@@ -46,10 +46,8 @@ export function Hero() {
             </span>
           </h1>
           <p className="sub">
-            LoadSprint turns a rate confirmation into a ready-to-run load in seconds.
-            AI pulls every stop, address and rate; your drivers get a clean mobile
-            app; and you track them live — then send the broker a finished invoice
-            packet in one click.
+            AI reads your rate con, your drivers run the stops, and you track them
+            live — then send the broker a finished invoice packet in one click.
           </p>
           <div className="hero-cta">
             <a href="/register" className="btn btn-primary">
