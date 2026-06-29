@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
 
 const links = [
   { href: "#services", label: "Services" },

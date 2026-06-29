@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Download, Send, Plus } from "lucide-react";
+import { FileText, Send, Plus } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import type { InvoiceCell } from "@/lib/loads";
 import type { InvoiceProfile } from "@/lib/schemas";
