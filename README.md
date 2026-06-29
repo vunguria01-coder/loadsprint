@@ -1,181 +1,203 @@
-# LoadSprint — Freight Brokerage & Logistics Platform
+# LoadSprint — Dispatch & Carrier Platform
 
-Production-ready freight brokerage website built with **Next.js 15**, **TypeScript**,
-**Tailwind CSS**, **Framer Motion**, **Lucide**, and **React Hook Form + Zod**.
+LoadSprint is a SaaS for freight **dispatchers and carriers**. A dispatcher invites
+drivers, creates loads (with AI reading the broker's rate confirmation), tracks the
+truck live, exchanges documents/photos/chat with the driver, generates carrier
+invoices, and shares a read-only tracking portal with the broker.
 
-Tagline: *Moving Freight Faster.*
+Built with **Next.js 15** (App Router), **TypeScript**, **React 19**, **Tailwind CSS**,
+**Leaflet** maps, **Stripe** billing, **Resend** email, **HERE** truck routing, and the
+**Anthropic API** for rate-con reading and invoice generation.
+
+- **Live site:** https://loadsprint.us.com (backup: `loadsprint-production.up.railway.app`)
+- **Hosting:** Railway (Nixpacks). It is a standard Next.js app and can run on any
+  Node host.
+- A separate **native driver app** (Expo / React Native, iPhone + iPad) talks to this
+  same backend; the site is also installable as a PWA.
 
 ---
 
-## Quick start (easiest)
+## Roles
 
-You need **Node.js 18.18 or newer** installed first: https://nodejs.org
+- **Dispatcher** — the main user. Invites drivers, creates and tracks loads, handles
+  documents and invoices.
+  - **Owner dispatcher** — the one who pays the subscription. Can invite extra
+    dispatchers (team seats), set each one's commission %, and remove them.
+  - **Sub-dispatcher** — invited by an owner; works under the owner's subscription.
+- **Driver** — uses the mobile app or the PWA. Sees only loads assigned to their
+  email, updates status, uploads POD photos, chats. A driver can now be connected to
+  **several dispatchers** at once (each dispatcher invites their email; the driver
+  enters the join code with their existing password to link).
+- **Broker** *(no login)* — opens a share link, enters a one-time code, and watches
+  status, location and selected documents.
+- **Admin** — back-office account for granting plans, editing prices, and special
+  tools.
 
-- **Windows:** double-click **`start.bat`**
-- **macOS / Linux:** in a terminal, run:
-  ```bash
-  chmod +x start.sh   # first time only
-  ./start.sh
-  ```
+---
 
-The script installs dependencies on the first run, starts the dev server, and
-opens **http://localhost:3000** in your browser.
+## Quick start (local development)
 
-## Manual start
+You need **Node.js 18.18+**.
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+npm run dev          # http://localhost:3000
 ```
 
-## Build for production
+Production build:
 
 ```bash
 npm run build
-npm run start      # serves the production build
+npm run start        # serves the production build (PORT defaults to 8080)
 ```
+
+> Note: do **not** add a `babel.config.js` — it breaks the Next.js build. The project
+> uses the default SWC compiler.
 
 ---
 
-## Project structure
+## Environment variables
+
+Copy `.env.example` to `.env.local` (local) or set these in Railway (production).
+
+| Variable | Required | What it does |
+|---|---|---|
+| `AUTH_SECRET` | Yes | Signs the session cookie. Use a long random string. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | Yes | Bootstrap admin, created on first login. |
+| `STRIPE_SECRET_KEY` | For billing | Stripe secret key (`sk_live_…` / `sk_test_…`). |
+| `STRIPE_WEBHOOK_SECRET` | For billing | `whsec_…` from the Stripe webhook endpoint. |
+| `RESEND_API_KEY` | For email | Resend API key for sending invite emails. |
+| `EMAIL_FROM` | For email | Sender, e.g. `LoadSprint <invites@loadsprint.us.com>`. |
+| `HERE_API_KEY` | For routing | HERE REST key for truck-legal routes, distance, ETA. |
+| `ANTHROPIC_API_KEY` | For AI | Reads rate confirmations and builds carrier invoices. |
+| `DATA_DIR` | Optional | Folder for the JSON data files (defaults to `./data`). |
+| `TWOFA_ENABLED` | Optional | `true` turns on email 2-factor login. Off by default. |
+| `SEED_DEMO` | Optional | `false` disables the auto-created demo accounts. |
+| `DRIVER_APP_URL` / `NEXT_PUBLIC_DRIVER_APP_URL` | Optional | Base URL used in driver invite links. |
+| `NEXT_PUBLIC_SITE_URL` | Optional | Public site URL used in some links. |
+
+Billing, email, routing and AI each degrade gracefully if their key is missing
+(the related feature simply turns off), so the app still runs without them.
+
+---
+
+## How it works
+
+### Drivers (dispatcher → driver)
+The dispatcher adds a driver by email and gets a one-time **join code** (and an app
+link). The driver enters that code in the app/PWA to register — or, if they already
+have an account, to **connect to this dispatcher** as well. The dispatcher's "Drivers"
+screen shows each driver, how many loads they have, and a seat counter for their plan.
+
+### Loads & the load workspace (`/loads/[id]`)
+Creating a load is a 3-step wizard: **upload the rate confirmation → the AI detects
+every pickup and drop-off, the rate and the bill-to → verify → confirm**. The PDF is
+saved to the load automatically.
+
+The load workspace includes:
+- **Live location** — Leaflet map, coordinates and last-updated time. HERE provides
+  the remaining truck-legal distance and ETA. A privacy hold can freeze the marker at
+  the truck's real parked point, and an internal marker (dispatcher/driver only) is
+  never sent to the broker.
+- **Documents** — Rate Con, BOL, POD, attachments, and invoices.
+- **Cargo photos** — grouped by phase (before pickup / in transit / at delivery).
+- **Load chat** — dispatcher ↔ driver ↔ broker, with files, timestamps, read receipts.
+- **Status** — Assigned → Picked Up → In Transit → At Delivery → Delivered → Closed.
+  Only the **assigned driver** can mark a load **Delivered**, and only with a
+  proof-of-delivery photo. **Closing** a load can be done directly by the owner,
+  dispatcher or driver.
+- **Notifications** — a bell polls for new photos, documents, status changes and chat.
+
+### AI carrier invoice
+On a finished load the dispatcher taps "Generate invoice with AI". The invoice is
+built from the load data, rendered to a clean PDF, and **saved to the load
+automatically**, so it is included when the dispatcher sends final documents to the
+broker.
+
+### Broker portal (`/b/<token>`)
+From a load, the dispatcher creates a share link plus an access code. The broker opens
+the link, **enters the code once** (it is remembered on their device), and sees live
+status, location (OpenStreetMap), the rate confirmation, and any photos the dispatcher
+ticked as visible. After the dispatcher hits **Send final documents**, the broker also
+sees the invoice and the rest of the paperwork. The internal driver-pay invoice is
+never shown to the broker.
+
+### Teams & commissions (owner dispatcher)
+The owner invites extra dispatchers on **/team** (seat limits by plan), sets each one's
+commission %, and can remove them. Sub-dispatchers work under the owner's subscription.
+Each dispatcher sees their own earnings (commission × delivered/closed loads).
+
+### Billing (Stripe)
+`/billing` offers monthly subscriptions and one-month one-time purchases:
+
+| Plan | Monthly | One month | Drivers |
+|---|---|---|---|
+| Silver | $19/mo | $25 | 2 |
+| Gold | $59/mo | $90 | 8 |
+| Platinum | $199/mo | $300 | 30 |
+
+Extra drivers beyond the plan are billed separately. Payment runs through Stripe
+Checkout; on return the app confirms the session and grants the plan + expiry
+immediately (the webhook handles monthly renewals).
+
+---
+
+## Data storage
+
+User, load, invite and settings data live as **JSON files** under `DATA_DIR`
+(`data/` by default): `users.json`, `loads.json`, `invites.json`, `notifications.json`,
+`settings.json`. This is simple and works out of the box. On hosts that wipe the disk
+between deploys, the demo accounts and 2FA setup are made self-healing/idempotent.
+For larger scale, swap these file helpers for a real database.
+
+---
+
+## Admin panel (`/admin`)
+
+Sign in with the admin account (from `ADMIN_*`). From there the admin can manage every
+account, **grant a plan** (set days; `0` = no expiry), **edit the public prices**, and
+grant the per-account **location-freeze** tool.
+
+Demo accounts (created automatically unless `SEED_DEMO=false`):
+- Driver: `demo.driver@loadsprint.us.com`
+- Dispatcher: `demo.dispatch@loadsprint.us.com`
+
+---
+
+## Mobile driver app & PWA
+
+- **Native app:** a separate Expo / React Native project (folder `loadsprint-driver`)
+  builds the iPhone/iPad app via EAS and points at this backend. See that project's
+  own instructions.
+- **PWA:** the website is installable on a phone (Add to Home Screen on iPhone, Install
+  prompt on Android). PWA pieces: `app/manifest.ts`, `public/sw.js`,
+  `components/pwa-register.tsx`, and the icons in `public/`.
+
+---
+
+## Project structure (high level)
 
 ```
 loadsprint/
 ├─ app/
-│  ├─ layout.tsx              # SEO metadata, fonts, JSON-LD schema, ToastProvider
-│  ├─ page.tsx                # assembles all sections
-│  ├─ globals.css             # design system (brand tokens + component styles)
-│  └─ api/
-│     ├─ quote/route.ts       # POST /api/quote   (validated with Zod)
-│     ├─ carrier/route.ts     # POST /api/carrier
-│     └─ contact/route.ts     # POST /api/contact
-├─ components/                # one file per section + shared helpers
-│  ├─ nav, hero, stats, services, why-choose, how-it-works
-│  ├─ audience, quote-form, about, testimonials, carrier-form
-│  ├─ faq, contact, footer
-│  ├─ reveal.tsx              # scroll-reveal wrapper (Framer Motion)
-│  ├─ counter.tsx            # animated stat counters
-│  └─ toast.tsx              # toast notifications (context + provider)
-├─ lib/schemas.ts            # Zod schemas shared by forms and API routes
-├─ public/loadsprint-logo.png
-└─ tailwind.config.ts / tsconfig.json / next.config.mjs
+│  ├─ layout.tsx, page.tsx, globals.css   # shell, landing, design system
+│  ├─ login, register, dashboard          # auth + role landing
+│  ├─ drivers, drivers/[email]            # dispatcher: drivers + a driver's loads
+│  ├─ loads, loads/[id]                   # load list + full load workspace
+│  ├─ team                                # owner: dispatcher seats + commissions
+│  ├─ billing, pricing                    # Stripe plans
+│  ├─ invoice-settings                    # carrier company details for invoices
+│  ├─ review, history                     # completed loads / activity
+│  ├─ b/[token]                           # public broker portal
+│  ├─ admin/…                             # admin panel
+│  └─ api/…                               # all server routes (loads, driver, billing, b, ai, …)
+├─ components/                            # UI: create-load, load-workspace, cabinet, etc.
+├─ lib/                                   # auth, loads, billing, stripe, email, here, ai-*, invites, …
+└─ public/                               # icons, splash, logo
 ```
-
-## Forms & backend
-
-The three lead forms (quote, carrier, contact) validate on the client with Zod and
-POST to their matching API route, which re-validates server-side and currently
-just logs the payload (`console.log`). To wire up real delivery, edit the
-`// TODO` line in each file under `app/api/*/route.ts` — send an email, push to
-a CRM, or store in a database.
-
-## Accounts (broker / dispatcher)
-
-The site includes registration and sign-in for two roles — **Broker** and
-**Dispatcher**. Driver accounts are intentionally left out; they will live in a
-separate mobile app.
-
-- Pages: `/register`, `/login`, and a protected `/dashboard`.
-- API: `app/api/register`, `app/api/login`, `app/api/logout`.
-- Logic: `lib/auth.ts` — passwords are hashed with Node's built-in `crypto`
-  (scrypt + random salt), and sessions are signed HTTP-only cookies.
-- Storage: users are saved to a local `data/users.json` file so it works out of
-  the box on your machine. **This file storage is for local development only** —
-  for production, replace the store functions in `lib/auth.ts` with a real
-  database (Postgres, etc.). Set a strong `AUTH_SECRET` (see `.env.example`).
-
-## Admin panel `/admin`
-
-Sign in with the admin account to reach the panel. The admin is created
-automatically on first login from `.env` (defaults below — change them):
-
-```
-Email:    admin@loadsprint.com
-Password: admin12345
-```
-
-From the panel the admin can:
-
-- **Manage accounts** — see every account and its role.
-- **Grant subscriptions** — set any account's plan to Silver, Gold, Premium, or Free.
-- **Edit prices anytime** — the three tier prices, currency, and billing label;
-  changes apply instantly on the public `/pricing` page (stored in `data/settings.json`).
-- **Grant the restricted "location freeze" tool** — a per-account toggle. When
-  granted, that single account sees a hidden control on their dashboard to hold a
-  driver's reported location in place. Accounts without the grant never see it.
-
-## Subscriptions & self-serve checkout
-
-`/pricing` shows the three plans (Silver / Gold / Premium) at the admin-set
-prices. Signed-in users can subscribe themselves; the current plan is highlighted.
-**Payment is simulated** — wire up Stripe Checkout in `app/api/subscribe/route.ts`
-before going live.
-
-## Driver invites (dispatcher)
-
-On a dispatcher's dashboard, the **Add a driver** box takes a driver email and
-generates a one-time join code plus an app link. The link is meant to be emailed
-to the driver; opening it in the future driver app pre-fills the code so they can
-register. The web side (code generation, `app/api/driver-invite`, and
-`lib/invites.ts` with `verifyCode` for the app to call) is ready; email delivery
-and the mobile app connect later. Set `DRIVER_APP_URL` to the real app URL.
-
-## Loads (tracking, documents, photos, chat, status)
-
-`/loads` lists loads; dispatchers see them grouped by driver (open a driver →
-open a load). `/loads/[id]` is the full workspace:
-
-- **Live location** — map (Leaflet, loaded from CDN, so the browser needs
-  internet), coordinates, and last-updated time. The demo advances the trailer
-  along its route to simulate live GPS; a real device/ELD feed replaces this.
-- **Privacy hold** (granted accounts only) — pauses broadcasting and holds the
-  marker at the trailer's *real* parked point. The broker sees an honest
-  "Parked" status with the real last-fix time — never a fabricated live ping.
-- **Internal marker** (dispatcher/driver only) — a private working location you
-  can place/drag freely. It is stripped from any broker API response on the
-  server, so it is never shared with the broker.
-- **Documents** — Rate Con, BOL, POD, attachments; open inside the app.
-- **Cargo photos** — gallery by phase (before pickup / in transit / at delivery).
-- **Load chat** — dispatcher ↔ driver ↔ broker, scoped to the load, with files,
-  PDFs, photos, timestamps, and read receipts.
-- **Status** — Assigned → Picked Up → In Transit → At Delivery → Delivered →
-  Closed; changes appear instantly for the broker.
-- **Notifications** — the bell polls for new photos, documents, status changes,
-  messages, and deliveries.
-
-## Driver PWA (install from the website, no App Store)
-
-Drivers can use the site as an installable app on their phone — no App Store
-needed:
-
-- The driver entry point is **`/driver`** (register with the dispatcher's invite
-  code, or sign in). After that they land on `/loads` and `/loads/[id]` with the
-  same tracking, files, photo upload, status, chat, and POD flow.
-- On **iPhone**: open the site in Safari → Share → **Add to Home Screen**. It
-  installs an icon and opens full-screen like an app.
-- On **Android**: Chrome shows an **Install app** prompt automatically.
-- Taking photos works through the upload buttons (the phone offers the camera).
-- PWA pieces: `app/manifest.ts` (served at `/manifest.webmanifest`),
-  `public/sw.js` (service worker), `components/pwa-register.tsx`, and the icons
-  in `public/` (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`).
-
-To install on a phone you must serve the site over **HTTPS** (e.g. deploy to
-Vercel). On `localhost` during development the PWA works in the browser but the
-"Add to Home Screen" install needs HTTPS or `localhost` (Safari allows it on the
-same machine; phones on your LAN need HTTPS).
-
-A separate native iOS app (Expo) also exists for later App Store / TestFlight
-distribution; the PWA shares the same backend, so you can switch when you grow.
-
-## Customizing
-
-- **Brand colors / fonts:** `tailwind.config.ts` and the `:root` block in `app/globals.css`.
-- **Logo:** replace `public/loadsprint-logo.png`.
-- **Contact details / map:** `components/contact.tsx` (the map uses a keyless
-  Google Maps embed pointed at Atlanta, GA — change the `q=` value to your address).
-- **Copy & section content:** the data arrays at the top of each component.
 
 ## Deploy
 
-Deploys to **Vercel** with zero config — push the repo and import it, or run
-`npx vercel`.
+Push to the repo connected to Railway; it builds with Nixpacks and runs `npm run start`.
+Set the environment variables above in the Railway dashboard. The app is a standard
+Next.js project, so any Node host (Vercel, etc.) works too.
