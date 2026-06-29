@@ -1261,3 +1261,45 @@ table.acc select option{background:#0b1120}
 .cab-content .load-card,.cab-content .rev-card{position:relative;overflow:hidden}
 .cab-content .load-card::before,.cab-content .rev-card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,rgba(56,189,248,.55),transparent);opacity:.45;transition:opacity .2s ease}
 .cab-content .load-card:hover::before,.cab-content .rev-card:hover::before{opacity:1}
+
+/* ============================================================
+   Richer driver cards (Drivers screen).
+   ============================================================ */
+.drv-av{flex:0 0 auto;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-family:Poppins;font-weight:800;font-size:18px;color:#cfe6ff;background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(37,99,235,.16));border:1px solid rgba(56,189,248,.28)}
+.driver-row-link{gap:14px}
+.drv-main{flex:1;min-width:0}
+.drv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.driver-name-lg{font-family:Poppins;font-weight:700;font-size:16px;color:#fff}
+.drv-badge{font-family:Manrope;font-weight:800;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid}
+.drv-badge.ok{color:#4ade80;border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.12)}
+.drv-badge.pending{color:#fbbf24;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.12)}
+.drv-email{color:var(--muted);font-size:13px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drv-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.drv-chip{font-family:Manrope;font-weight:600;font-size:12px;color:var(--muted);background:rgba(148,170,205,.08);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.drv-chip b{color:#fff;font-weight:800}
+.drv-chev{color:var(--muted-2);flex:0 0 auto}
+
+/* ============================================================
+   Insights (analytics) — pure-CSS charts.
+   ============================================================ */
+.ins-section{margin-top:28px}
+.ins-section h3{font-family:Poppins;font-weight:800;font-size:17px;color:#fff;margin:0 0 4px;letter-spacing:-.01em}
+.ins-section .ins-sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.ins-card{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(148,170,205,.05),rgba(148,170,205,.015));padding:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 22px 46px -30px rgba(0,0,0,.78)}
+
+.ins-bars{display:flex;align-items:flex-end;gap:10px;height:190px;padding-top:8px}
+.ins-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.ins-bar .ib-fill{width:100%;max-width:46px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#7dd3fc,#2563eb);min-height:4px;box-shadow:0 12px 26px -12px rgba(56,189,248,.65);transition:height .35s ease}
+.ins-bar .ib-val{font-family:Manrope;font-weight:700;font-size:10.5px;color:var(--muted);min-height:14px}
+.ins-bar .ib-label{font-family:Manrope;font-weight:600;font-size:11px;color:var(--muted-2)}
+
+.ins-drv{display:flex;flex-direction:column;gap:15px}
+.ins-drv-row{display:flex;flex-direction:column;gap:7px}
+.ins-drv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ins-drv-name{font-family:Manrope;font-weight:700;font-size:14px;color:#fff}
+.ins-drv-meta{font-family:Manrope;font-weight:600;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.ins-drv-rev{font-family:Poppins;font-weight:800;color:#4ade80}
+.ins-track{height:8px;border-radius:999px;background:rgba(148,170,205,.1);overflow:hidden}
+.ins-track .it-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#38bdf8);transition:width .35s ease}
+.ins-foot{margin-top:22px;color:var(--muted);font-size:13.5px;line-height:1.5}
+.ins-foot strong{color:#4ade80;font-weight:800}

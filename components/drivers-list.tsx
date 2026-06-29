@@ -78,14 +78,23 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
                 className="driver-row-link"
                 style={{ textDecoration: "none" }}
               >
-                <div className="lc-main">
-                  <div className="driver-name-lg">{d.name}</div>
-                  <div className="lc-route">{d.email}</div>
-                  <div className="px" style={{ marginTop: 4 }}>
-                    {d.active} active · {d.total} total {d.joined ? "" : "· invite pending"}
+                <div className="drv-av" aria-hidden="true">
+                  {(d.name || d.email).trim().charAt(0).toUpperCase()}
+                </div>
+                <div className="lc-main drv-main">
+                  <div className="drv-top">
+                    <span className="driver-name-lg">{d.name}</span>
+                    <span className={`drv-badge ${d.joined ? "ok" : "pending"}`}>
+                      {d.joined ? "Active" : "Pending"}
+                    </span>
+                  </div>
+                  <div className="drv-email">{d.email}</div>
+                  <div className="drv-chips">
+                    <span className="drv-chip"><b>{d.active}</b> active</span>
+                    <span className="drv-chip"><b>{d.total}</b> total</span>
                   </div>
                 </div>
-                <ChevronRight />
+                <ChevronRight className="drv-chev" />
               </Link>
 
               {confirm === d.email ? (
