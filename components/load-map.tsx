@@ -224,7 +224,17 @@ export function LoadMap({
       // Click the driver marker → copy the city/state where they are now.
       mainMarker.current.on("click", copyDriverCity);
 
-      // Pickup / delivery / intermediate-stop pins so the route is readable.
+      // faint straight reference line origin -> dest
+      L.polyline(
+        [
+          [load.origin.lat, load.origin.lng],
+          [load.dest.lat, load.dest.lng],
+        ],
+        { color: "#2563EB", weight: 2, opacity: 0.25, dashArray: "6 8" }
+      ).addTo(m);
+
+      // Ordered, geocoded stops + a truck route that threads through them all,
+      // with numbered markers and always-visible address labels.
       const pin = (bg: string, label: string) =>
         L.divIcon({
           className: "",
@@ -237,50 +247,75 @@ export function LoadMap({
           iconAnchor: [12, 24],
           popupAnchor: [0, -22],
         });
-      L.marker([load.origin.lat, load.origin.lng], { icon: pin("#22c55e", "P") })
-        .addTo(m)
-        .bindPopup(`Pickup<br>${load.originName}`);
-      L.marker([load.dest.lat, load.dest.lng], { icon: pin("#ef4444", "D") })
-        .addTo(m)
-        .bindPopup(`Delivery<br>${load.destName}`);
-      (load.stops || []).forEach((s, i) => {
-        if (s.point) {
-          L.marker([s.point.lat, s.point.lng], {
-            icon: pin(s.kind === "pickup" ? "#22c55e" : "#f59e0b", String(i + 1)),
-          })
-            .addTo(m)
-            .bindPopup(`${s.kind === "pickup" ? "Pickup" : "Drop"}<br>${s.address}`);
-        }
-      });
+      const tip = {
+        permanent: true as const,
+        direction: "right" as const,
+        className: "stop-label",
+        offset: [10, -10] as [number, number],
+      };
+      const drawFallbackPins = () => {
+        if (!map.current) return;
+        L.marker([load.origin.lat, load.origin.lng], { icon: pin("#22c55e", "1") })
+          .addTo(map.current)
+          .bindTooltip(load.originName, tip)
+          .bindPopup(`Pickup<br>${load.originName}`);
+        L.marker([load.dest.lat, load.dest.lng], { icon: pin("#ef4444", "2") })
+          .addTo(map.current)
+          .bindTooltip(load.destName, tip)
+          .bindPopup(`Delivery<br>${load.destName}`);
+      };
 
-      // faint straight reference line origin -> dest
-      L.polyline(
-        [
-          [load.origin.lat, load.origin.lng],
-          [load.dest.lat, load.dest.lng],
-        ],
-        { color: "#2563EB", weight: 2, opacity: 0.25, dashArray: "6 8" }
-      ).addTo(m);
-
-      // Real truck route line (origin -> dest), drawn as soon as it loads.
-      fetch(`/api/loads/${load.id}/route-line`)
+      fetch(`/api/loads/${load.id}/waypoints`)
         .then((r) => r.json())
         .then((d) => {
-          if (!map.current || !d.ok || !Array.isArray(d.points) || d.points.length < 2) return;
+          if (!map.current) return;
+          const wps: Array<{ kind: string; address: string; lat: number; lng: number }> =
+            d.ok && Array.isArray(d.waypoints) ? d.waypoints : [];
+          if (wps.length < 2) {
+            drawFallbackPins();
+            return;
+          }
           if (typeof d.distanceMeters === "number") setRouteMiles(d.distanceMeters / 1609.34);
-          const latlngs = d.points.map((p: { lat: number; lng: number }) => [p.lat, p.lng]);
-          routeLine.current = L.polyline(latlngs, {
+
+          // The line the driver follows: real road route through every stop, or
+          // a clean connector through the stops in order if routing is offline.
+          const linePts: [number, number][] =
+            Array.isArray(d.points) && d.points.length >= 2
+              ? d.points.map((p: { lat: number; lng: number }) => [p.lat, p.lng])
+              : wps.map((w) => [w.lat, w.lng] as [number, number]);
+          routeLine.current = L.polyline(linePts, {
             color: "#38BDF8",
             weight: 4,
             opacity: 0.9,
           }).addTo(map.current);
+
+          // Numbered, labelled marker for every stop in order.
+          wps.forEach((w, i) => {
+            const isFirst = i === 0;
+            const isLast = i === wps.length - 1;
+            const bg = isFirst
+              ? "#22c55e"
+              : isLast
+              ? "#ef4444"
+              : w.kind === "pickup"
+              ? "#22c55e"
+              : "#f59e0b";
+            const role = isLast ? "Delivery" : w.kind === "pickup" ? "Pickup" : "Drop";
+            L.marker([w.lat, w.lng], { icon: pin(bg, String(i + 1)) })
+              .addTo(map.current)
+              .bindTooltip(w.address, tip)
+              .bindPopup(`${i + 1}. ${role}<br>${w.address}`);
+          });
+
           try {
-            map.current.fitBounds(routeLine.current.getBounds(), { padding: [40, 40] });
+            map.current.fitBounds(routeLine.current.getBounds(), { padding: [44, 44] });
           } catch {
             /* ignore */
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          drawFallbackPins();
+        });
 
       if (isInternalUser) {
         m.on("click", (e: any) => {

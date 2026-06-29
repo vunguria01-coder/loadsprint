@@ -1520,3 +1520,7 @@ table.acc select option{background:#0b1120}
 .bshare-close-btn{color:var(--muted)}
 .bshare-closed{display:flex;align-items:center;gap:8px;font-family:Manrope;font-weight:700;font-size:13px;color:#fbbf24;margin-bottom:8px}
 .bshare-closed .bsc-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 8px #fbbf24}
+
+/* Always-visible address labels on stop markers (both maps) */
+.leaflet-tooltip.stop-label{background:rgba(13,22,40,.96);border:1px solid var(--line);color:#fff;font-family:Manrope,system-ui,sans-serif;font-weight:600;font-size:11px;line-height:1.2;padding:3px 8px;border-radius:7px;box-shadow:0 4px 12px -4px rgba(0,0,0,.6);max-width:172px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leaflet-tooltip.stop-label::before{display:none}

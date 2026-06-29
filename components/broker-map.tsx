@@ -119,17 +119,6 @@ export function BrokerMap({
       );
       streetLayer.current.addTo(m);
 
-      // Route guide: origin -> stops(with coords) -> dest.
-      const line: [number, number][] = [];
-      if (origin) line.push([origin.lat, origin.lng]);
-      (stops || []).forEach((s) => {
-        if (typeof s.lat === "number" && typeof s.lng === "number") line.push([s.lat, s.lng]);
-      });
-      if (dest) line.push([dest.lat, dest.lng]);
-      if (line.length >= 2) {
-        L.polyline(line, { color: "#38BDF8", weight: 4, opacity: 0.85, dashArray: "1 0" }).addTo(m);
-      }
-
       const pin = (bg: string, label: string) =>
         L.divIcon({
           className: "",
@@ -142,25 +131,48 @@ export function BrokerMap({
           iconAnchor: [13, 26],
           popupAnchor: [0, -24],
         });
+      const tip = {
+        permanent: true as const,
+        direction: "right" as const,
+        className: "stop-label",
+        offset: [10, -10] as [number, number],
+      };
 
-      if (origin) {
-        L.marker([origin.lat, origin.lng], { icon: pin("#22c55e", "P") })
-          .addTo(m)
-          .bindPopup(`Pickup<br>${originName}`);
+      // Ordered waypoints: prefer the real (geocoded) stop list; otherwise just
+      // pickup → delivery. Numbered 1..N in driving order.
+      const geocoded = (stops || []).filter(
+        (s) => typeof s.lat === "number" && typeof s.lng === "number"
+      ) as Array<{ kind: "pickup" | "dropoff"; address: string; lat: number; lng: number }>;
+      type WP = { address: string; lat: number; lng: number; role: "Pickup" | "Drop" | "Delivery" };
+      let wps: WP[] = [];
+      if (geocoded.length >= 2) {
+        wps = geocoded.map((s, i) => ({
+          address: s.address,
+          lat: s.lat,
+          lng: s.lng,
+          role: i === geocoded.length - 1 ? "Delivery" : s.kind === "pickup" ? "Pickup" : "Drop",
+        }));
+      } else {
+        if (origin) wps.push({ address: originName, lat: origin.lat, lng: origin.lng, role: "Pickup" });
+        if (dest) wps.push({ address: destName, lat: dest.lat, lng: dest.lng, role: "Delivery" });
       }
-      // Intermediate stops that have coordinates (numbered).
-      (stops || []).forEach((s, i) => {
-        if (typeof s.lat === "number" && typeof s.lng === "number") {
-          L.marker([s.lat, s.lng], { icon: pin(s.kind === "pickup" ? "#22c55e" : "#f59e0b", String(i + 1)) })
-            .addTo(m)
-            .bindPopup(`${s.kind === "pickup" ? "Pickup" : "Drop"}<br>${s.address}`);
-        }
+
+      // The line the driver follows, threading the stops in order.
+      if (wps.length >= 2) {
+        L.polyline(
+          wps.map((w) => [w.lat, w.lng]),
+          { color: "#38BDF8", weight: 4, opacity: 0.85 }
+        ).addTo(m);
+      }
+
+      // Numbered, labelled markers (address always visible).
+      wps.forEach((w, i) => {
+        const bg = w.role === "Delivery" ? "#ef4444" : w.role === "Pickup" ? "#22c55e" : "#f59e0b";
+        L.marker([w.lat, w.lng], { icon: pin(bg, String(i + 1)) })
+          .addTo(m)
+          .bindTooltip(w.address, tip)
+          .bindPopup(`${i + 1}. ${w.role}<br>${w.address}`);
       });
-      if (dest) {
-        L.marker([dest.lat, dest.lng], { icon: pin("#ef4444", "D") })
-          .addTo(m)
-          .bindPopup(`Delivery<br>${destName}`);
-      }
 
       const driverIcon = L.divIcon({
         className: "",

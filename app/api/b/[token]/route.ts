@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLoadByToken, currentPoint, type Load } from "@/lib/loads";
+import { ensureStopsGeocoded } from "@/lib/geocode-stops";
 
 // Public broker portal API. No login — access is gated by the share code.
 // POST /api/b/[token]  body: { code: string, full?: boolean }
@@ -32,12 +33,11 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const load = getLoadByToken(token);
+  let load = getLoadByToken(token);
   // Generic 404 so probing tokens reveals nothing.
   if (!load || !load.shareToken) {
     return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   }
-
   const body = await req.json().catch(() => ({}));
   const code = String(body.code || "").trim().toUpperCase();
   if (!load.shareCode || code !== load.shareCode) {
@@ -51,6 +51,9 @@ export async function POST(
       { status: 403 }
     );
   }
+
+  // Ensure every stop has coordinates so the broker map can plot them in order.
+  load = await ensureStopsGeocoded(load);
 
   const loc = brokerPoint(load);
   const published = !!load.brokerPublished;

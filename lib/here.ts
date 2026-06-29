@@ -124,7 +124,7 @@ export type TruckDims = {
 export async function truckRoute(
   origin: GeoPoint,
   dest: GeoPoint,
-  opts: { withSteps?: boolean; truck?: TruckDims } = {}
+  opts: { withSteps?: boolean; truck?: TruckDims; via?: GeoPoint[] } = {}
 ): Promise<TruckRoute | null> {
   const key = process.env.HERE_API_KEY;
   if (!key) return null;
@@ -138,11 +138,16 @@ export async function truckRoute(
     grossWeight: t.grossWeight && t.grossWeight > 0 ? t.grossWeight : TRUCK.grossWeight,
     axleCount: t.axleCount && t.axleCount > 0 ? t.axleCount : TRUCK.axleCount,
   };
+  const viaStr = (opts.via || [])
+    .filter((p) => p && typeof p.lat === "number" && typeof p.lng === "number")
+    .map((p) => `&via=${p.lat},${p.lng}`)
+    .join("");
   const url =
     `https://router.hereapi.com/v8/routes` +
     `?transportMode=truck` +
     `&routingMode=fast` +
     `&origin=${origin.lat},${origin.lng}` +
+    viaStr +
     `&destination=${dest.lat},${dest.lng}` +
     `&return=${ret}` +
     `&units=imperial` +
