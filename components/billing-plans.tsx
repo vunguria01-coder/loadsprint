@@ -1,27 +1,69 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { BILLING_PLANS, fmtUsd, type BillingPlan } from "@/lib/billing-plans";
 
-function PlanCard({ plan, busy, onBuy }: { plan: BillingPlan; busy: string | null; onBuy: (id: string) => void }) {
+type Mode = "subscription" | "one_time";
+
+const TIER_META: Record<string, { tagline: string; accent: string; popular?: boolean }> = {
+  silver: { tagline: "For owner-operators getting started", accent: "silver" },
+  gold: { tagline: "For growing dispatch teams", accent: "gold", popular: true },
+  platinum: { tagline: "For high-volume operations", accent: "platinum" },
+};
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function included(plan: BillingPlan): string[] {
+  return [
+    "Live GPS tracking & ETA",
+    "AI rate-con reading & invoices",
+    "Broker tracking portal",
+    "Documents, photos & chat",
+    plan.mode === "subscription" ? "Cancel anytime" : "No auto-renew",
+  ];
+}
+
+function PriceCard({
+  plan,
+  busy,
+  onBuy,
+}: {
+  plan: BillingPlan;
+  busy: string | null;
+  onBuy: (id: string) => void;
+}) {
+  const meta = TIER_META[plan.tier] || { tagline: "", accent: "silver" };
   const isBusy = busy === plan.id;
+  const title = cap(plan.tier);
   return (
-    <div className="plan-card">
-      <div className="plan-name">{plan.label}</div>
-      <div className="plan-price">
+    <div className={`pricing-card tier-${meta.accent}${meta.popular ? " is-popular" : ""}`}>
+      {meta.popular && <div className="pricing-ribbon">Most popular</div>}
+      <div className="pricing-tier">{title}</div>
+      <div className="pricing-tagline">{meta.tagline}</div>
+      <div className="pricing-amount">
         {fmtUsd(plan.amountCents)}
-        <span>
-          {plan.mode === "subscription" ? "/mo" : " once"}
-        </span>
+        <span>{plan.mode === "subscription" ? "/mo" : " once"}</span>
       </div>
-      <ul className="plan-feats">
-        <li><Check size={15} /> {plan.drivers} drivers</li>
-        <li><Check size={15} /> {plan.mode === "subscription" ? "Auto-renews monthly" : "One month, no auto-renew"}</li>
-        <li><Check size={15} /> All dispatcher features</li>
+      <div className="pricing-drivers">Up to {plan.drivers} drivers</div>
+      <ul className="pricing-feats">
+        {included(plan).map((f, i) => (
+          <li key={i}>
+            <Check size={15} /> {f}
+          </li>
+        ))}
       </ul>
-      <button type="button" className="plan-btn" disabled={!!busy} onClick={() => onBuy(plan.id)}>
-        {isBusy ? "Opening checkout…" : plan.mode === "subscription" ? "Subscribe" : "Buy"}
+      <button
+        type="button"
+        className="pricing-cta"
+        disabled={!!busy}
+        onClick={() => onBuy(plan.id)}
+      >
+        {isBusy
+          ? "Opening checkout…"
+          : plan.mode === "subscription"
+          ? `Get ${title}`
+          : `Buy ${title}`}
       </button>
     </div>
   );
@@ -36,6 +78,7 @@ export function BillingPlansView({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState<Mode>("subscription");
   const [confirming] = useState(status === "success" && !!sessionId);
 
   // When returning from Stripe Checkout, confirm the payment server-side so the
@@ -55,8 +98,6 @@ export function BillingPlansView({
         /* webhook will catch up */
       }
       if (cancelled) return;
-      // Reload without the session_id so server components re-render with the new
-      // plan, and the confirm effect doesn't run again.
       window.location.replace("/billing?status=success");
     })();
     return () => {
@@ -86,11 +127,12 @@ export function BillingPlansView({
     }
   }
 
-  const monthly = BILLING_PLANS.filter((p) => p.mode === "subscription");
-  const once = BILLING_PLANS.filter((p) => p.mode === "one_time" && p.durationDays === 30);
+  const plans = BILLING_PLANS.filter(
+    (p) => p.mode === mode && (mode === "subscription" || p.durationDays === 30)
+  );
 
   return (
-    <div className="billing-wrap">
+    <div className="pricing-wrap">
       {status === "success" && (
         <div className="billing-banner ok">
           {confirming
@@ -103,21 +145,42 @@ export function BillingPlansView({
       )}
       {error && <div className="billing-banner err">{error}</div>}
 
-      <h3 className="billing-h">Monthly subscription</h3>
-      <p className="billing-sub">Billed automatically every month. Cancel anytime.</p>
-      <div className="plan-grid">
-        {monthly.map((p) => <PlanCard key={p.id} plan={p} busy={busy} onBuy={buy} />)}
+      <div className="pricing-head">
+        <h3>Choose your plan</h3>
+        <p>Every feature is included on every plan — just pick the driver capacity you need.</p>
+        <div className="pricing-toggle" role="tablist" aria-label="Billing period">
+          <button
+            type="button"
+            className={mode === "subscription" ? "on" : ""}
+            onClick={() => setMode("subscription")}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            className={mode === "one_time" ? "on" : ""}
+            onClick={() => setMode("one_time")}
+          >
+            One month
+          </button>
+        </div>
+        <div className="pricing-period-note">
+          {mode === "subscription"
+            ? "Billed automatically every month · cancel anytime"
+            : "A single payment for one month · no auto-renew"}
+        </div>
       </div>
 
-      <h3 className="billing-h">Pay for one month</h3>
-      <p className="billing-sub">A single payment for one month. No auto-renew.</p>
-      <div className="plan-grid">
-        {once.map((p) => <PlanCard key={p.id} plan={p} busy={busy} onBuy={buy} />)}
+      <div className="pricing-grid">
+        {plans.map((p) => (
+          <PriceCard key={p.id} plan={p} busy={busy} onBuy={buy} />
+        ))}
       </div>
 
-      <p className="billing-note">
-        Payments are processed securely by Stripe. Apple Pay, Google Pay and cards are supported.
-        Extra drivers beyond your plan limit are $10/mo each.
+      <p className="pricing-trust">
+        <ShieldCheck size={15} />
+        Secure checkout by Stripe · Apple Pay, Google Pay &amp; cards accepted · Extra drivers are
+        $10/mo each
       </p>
     </div>
   );

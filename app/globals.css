@@ -1170,3 +1170,59 @@ table.acc select option{background:#0b1120}
 
 /* Headline tracking for the small section headers we added. */
 .cab-content .al-head h3,.cab-content .start-head h3{letter-spacing:-.01em}
+
+/* ============================================================
+   Ambient depth for the dispatcher app (subtle, scoped to .cab).
+   ============================================================ */
+.cab-main{
+  background:
+    radial-gradient(1100px 560px at 78% -8%, rgba(37,99,235,.12), transparent 60%),
+    radial-gradient(820px 460px at -5% 108%, rgba(56,189,248,.07), transparent 55%);
+}
+
+/* ============================================================
+   Premium pricing page (in-app /billing). New class names so the
+   public landing pricing keeps its own styles.
+   ============================================================ */
+.pricing-wrap{max-width:1040px}
+.pricing-head h3{font-family:Poppins;font-weight:800;font-size:23px;color:#fff;margin:0 0 5px;letter-spacing:-.01em}
+.pricing-head p{color:var(--muted);font-size:14.5px;margin:0 0 18px;max-width:54ch;line-height:1.55}
+
+.pricing-toggle{display:inline-flex;background:var(--navy-800);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+.pricing-toggle button{border:0;background:none;color:var(--muted);font-family:Manrope;font-weight:700;font-size:13.5px;padding:9px 22px;border-radius:999px;cursor:pointer;transition:.18s ease}
+.pricing-toggle button:hover{color:#fff}
+.pricing-toggle button.on{background:var(--grad);color:#fff;box-shadow:0 10px 24px -10px rgba(56,189,248,.75)}
+.pricing-period-note{margin-top:12px;color:var(--muted-2);font-size:12.5px;font-family:Manrope;font-weight:600}
+
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:18px;margin-top:26px;align-items:start}
+.pricing-card{position:relative;border:1px solid var(--line);border-radius:20px;padding:28px 24px 26px;background:linear-gradient(180deg,rgba(148,170,205,.06),rgba(148,170,205,.015));display:flex;flex-direction:column;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.pricing-card:hover{transform:translateY(-4px);border-color:rgba(56,189,248,.45)}
+.pricing-card::after{content:"";position:absolute;left:24px;right:24px;top:0;height:3px;border-radius:0 0 4px 4px;opacity:.95}
+.tier-silver::after{background:linear-gradient(90deg,#7d8aa3,#b6c2d6)}
+.tier-gold::after{background:linear-gradient(90deg,#f59e0b,#fcd34d)}
+.tier-platinum::after{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+
+.pricing-tier{font-family:Poppins;font-weight:800;font-size:20px;color:#fff}
+.pricing-tagline{color:var(--muted);font-size:13px;margin-top:5px;min-height:36px;line-height:1.45}
+.pricing-amount{font-family:Poppins;font-weight:800;font-size:42px;color:#fff;margin:12px 0 0;letter-spacing:-.025em;line-height:1}
+.pricing-amount span{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:0}
+.pricing-drivers{align-self:flex-start;font-family:Manrope;font-weight:700;font-size:12.5px;color:var(--ink);background:rgba(148,170,205,.08);border:1px solid var(--line);padding:6px 12px;border-radius:999px;margin:14px 0 20px}
+.pricing-feats{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:11px;flex:1}
+.pricing-feats li{display:flex;align-items:center;gap:9px;color:var(--ink);font-size:13.5px}
+.pricing-feats li svg{flex:0 0 auto;color:#4ade80}
+.pricing-cta{margin-top:auto;border:1px solid var(--line);border-radius:12px;padding:13px;font-family:Manrope;font-weight:800;font-size:14.5px;cursor:pointer;background:rgba(148,170,205,.1);color:#fff;transition:.18s ease}
+.pricing-cta:hover{background:rgba(56,189,248,.14);border-color:rgba(56,189,248,.55);transform:translateY(-2px)}
+.pricing-cta:disabled{opacity:.6;cursor:default;transform:none}
+
+.pricing-card.is-popular{border-color:rgba(251,191,36,.55);background:linear-gradient(180deg,rgba(251,191,36,.08),rgba(245,158,11,.025));box-shadow:0 0 0 1px rgba(251,191,36,.22),0 44px 84px -42px rgba(251,191,36,.5);transform:translateY(-8px)}
+.pricing-card.is-popular:hover{transform:translateY(-12px)}
+.pricing-card.is-popular .pricing-cta{background:linear-gradient(120deg,#f59e0b,#fbbf24);color:#3a2500;border:0;box-shadow:0 16px 32px -12px rgba(251,191,36,.75)}
+.pricing-card.is-popular .pricing-cta:hover{filter:brightness(1.04);transform:translateY(-2px)}
+.pricing-ribbon{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(120deg,#f59e0b,#fbbf24);color:#3a2500;font-family:Manrope;font-weight:800;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:5px 14px;border-radius:999px;box-shadow:0 12px 28px -10px rgba(251,191,36,.75);white-space:nowrap}
+
+.pricing-trust{display:flex;align-items:center;gap:8px;color:var(--muted-2);font-size:12.5px;margin-top:28px;line-height:1.5}
+.pricing-trust svg{color:#4ade80;flex:0 0 auto}
+
+@media (max-width:560px){
+  .pricing-card.is-popular,.pricing-card.is-popular:hover{transform:none}
+}
