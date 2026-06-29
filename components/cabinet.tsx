@@ -10,6 +10,7 @@ import {
   Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { HelpWidget } from "@/components/help-widget";
 
 type NavItem = { key: string; href: string; label: string; icon: ReactNode };
 
@@ -158,6 +159,7 @@ export function Cabinet({
         </header>
         <main className="cab-content">{children}</main>
       </div>
+      <HelpWidget />
     </div>
   );
 }

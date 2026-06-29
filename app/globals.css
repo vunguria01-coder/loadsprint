@@ -1422,3 +1422,31 @@ table.acc select option{background:#0b1120}
   .cal-srow{gap:10px}
   .cal-sdate input{padding:8px 9px}
 }
+
+/* ============================================================
+   Help widget — floating button (bottom-right) with per-screen
+   instructions.
+   ============================================================ */
+.help-scrim{position:fixed;inset:0;z-index:88;background:rgba(5,9,18,.4)}
+.help-fab-wrap{position:fixed;right:22px;bottom:22px;z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.help-fab{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 16px;border-radius:999px;border:0;cursor:pointer;background:var(--grad);color:#fff;font-family:Manrope;font-weight:800;font-size:14px;box-shadow:0 16px 36px -12px rgba(56,189,248,.7);transition:transform .15s ease,box-shadow .15s ease}
+.help-fab:hover{transform:translateY(-2px);box-shadow:0 22px 44px -12px rgba(56,189,248,.85)}
+.help-fab.open{width:48px;padding:0;justify-content:center;background:var(--card);border:1px solid var(--line);color:#fff;box-shadow:0 16px 36px -12px rgba(0,0,0,.6)}
+.help-fab-label{white-space:nowrap}
+
+.help-panel{width:360px;max-width:calc(100vw - 44px);max-height:min(72vh,560px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 70px -24px rgba(0,0,0,.7);padding:18px;animation:drawer-fade .14s ease}
+.help-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.help-eyebrow{font-family:Manrope;font-weight:800;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--sky)}
+.help-title{font-family:Poppins;font-weight:800;font-size:19px;color:#fff;margin-top:3px;letter-spacing:-.01em}
+.help-x{background:rgba(148,170,205,.08);border:1px solid var(--line);color:var(--muted);width:32px;height:32px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.help-x:hover{color:#fff;border-color:rgba(56,189,248,.4)}
+.help-intro{color:var(--muted);font-size:13.5px;line-height:1.55;margin:0 0 14px}
+.help-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.help-points li{display:flex;gap:11px;align-items:flex-start;color:var(--ink);font-size:13.5px;line-height:1.5}
+.hp-n{flex:0 0 auto;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:rgba(56,189,248,.14);color:#7dd3fc;font-family:Manrope;font-weight:800;font-size:11.5px;border:1px solid rgba(56,189,248,.3);margin-top:1px}
+.help-foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line-2);color:var(--muted-2);font-size:12px}
+
+@media(max-width:560px){
+  .help-fab-wrap{right:16px;bottom:16px}
+  .help-panel{width:calc(100vw - 32px)}
+}
