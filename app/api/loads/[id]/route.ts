@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requestUser } from "@/lib/guard";
 import { corsHeaders } from "@/lib/mobile-auth";
 import { truckRoute, geocodeHere } from "@/lib/here";
+import { setDriverGlobalLocation } from "@/lib/driver-location";
 import { findByEmail, getUserById } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
@@ -192,6 +193,9 @@ export async function POST(
       if (!Number.isFinite(lat) || !Number.isFinite(lng))
         return NextResponse.json({ ok: false, error: "Bad coords" }, { status: 400 });
       updated = setDriverLocation(id, { lat, lng });
+      // Also record it as this driver's last-known position (load-independent),
+      // so the dispatcher can always see where they are.
+      setDriverGlobalLocation(me.email, lat, lng, id);
       // Throttled truck-route ETA refresh as the driver moves.
       if (updated && updated.driverShareLocation !== false && updated.driverPoint && etaIsStale(updated)) {
         const r = await truckRoute(updated.driverPoint, updated.dest);

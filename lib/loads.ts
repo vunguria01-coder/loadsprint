@@ -2,6 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { findByEmail, getUserById } from "@/lib/auth";
+import { getDriverGlobalLocation } from "@/lib/driver-location";
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const LOADS_FILE = path.join(DATA_DIR, "loads.json");
@@ -213,11 +214,12 @@ export function currentPoint(load: Load): GeoPoint {
   if (load.driverShareLocation !== false && load.driverPoint) {
     return load.driverPoint;
   }
-  // Fallback: simulated position advancing along the route.
-  return {
-    lat: load.origin.lat + (load.dest.lat - load.origin.lat) * load.progress,
-    lng: load.origin.lng + (load.dest.lng - load.origin.lng) * load.progress,
-  };
+  // No live GPS yet: show the driver's last known real position (from any recent
+  // load or heartbeat) so the dispatcher sees where they actually are; if we've
+  // never had a fix, fall back to the pickup. No fake "moving" dot.
+  const last = getDriverGlobalLocation(load.driverEmail);
+  if (last) return { lat: last.lat, lng: last.lng };
+  return { lat: load.origin.lat, lng: load.origin.lng };
 }
 
 // Simulate a live GPS ping by advancing the driver along the route.

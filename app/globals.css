@@ -1551,3 +1551,10 @@ table.acc select option{background:#0b1120}
 .final-cta h2{font-family:Poppins;font-weight:800;font-size:clamp(26px,3.4vw,40px);letter-spacing:-.02em;margin:0 0 12px;line-height:1.08}
 .final-cta p{color:var(--muted);font-size:clamp(15px,1.6vw,17px);max-width:52ch;margin:0 auto 26px;line-height:1.55}
 .final-cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Fleet map — all drivers' last-known locations on the Drivers page */
+.fleet-map{height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0a1424;margin-top:10px}
+.fleet-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-family:Manrope;font-weight:600;font-size:12px;color:var(--muted)}
+.fleet-legend span{display:inline-flex;align-items:center}
+.fleet-idle{width:10px;height:10px;border-radius:50%;background:#94a3b8;display:inline-block;margin-right:6px}
+.fleet-empty p{margin-top:6px}

@@ -53,7 +53,7 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
 
   useEffect(() => {
     fetchLoad(false);
-    const t = setInterval(() => fetchLoad(true), 4000);
+    const t = setInterval(() => fetchLoad(false), 4000);
     return () => clearInterval(t);
   }, [fetchLoad]);
 

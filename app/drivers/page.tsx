@@ -5,11 +5,13 @@ import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { DriverManager } from "@/components/driver-manager";
 import { DriversList } from "@/components/drivers-list";
+import { FleetMap } from "@/components/fleet-map";
 import { ActiveLoads } from "@/components/active-loads";
 import { GettingStarted } from "@/components/getting-started";
 import { hasAccess, billingUser, findByEmail } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
+import { getDriverGlobalLocations } from "@/lib/driver-location";
 import { driverAllowance } from "@/lib/billing-plans";
 
 export const metadata: Metadata = {
@@ -50,6 +52,23 @@ export default async function DriversPage() {
       search,
     };
   });
+
+  // Last-known GPS for each driver (load-independent) → the fleet map.
+  const locs = getDriverGlobalLocations(emails);
+  const fleet = drivers
+    .map((d) => {
+      const p = locs[d.email.toLowerCase()];
+      if (!p) return null;
+      return {
+        name: d.name,
+        email: d.email,
+        lat: p.lat,
+        lng: p.lng,
+        at: p.at,
+        active: d.active > 0,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 
   // Driver allowance: how many the plan includes vs how many are used.
   const usedDrivers = emails.length;
@@ -126,6 +145,8 @@ export default async function DriversPage() {
 
           {myLoads.length === 0 && <GettingStarted />}
           <ActiveLoads loads={activeLoads} />
+
+          <FleetMap drivers={fleet} />
 
           {drivers.length === 0 ? (
             <p className="px">
