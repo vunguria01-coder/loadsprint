@@ -33,6 +33,7 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
   }
   return [
     { key: "dashboard", href: "/dashboard", label: "Home", icon: <LayoutDashboard size={18} /> },
+    { key: "active", href: "/active-loads", label: "Active loads", icon: <Truck size={18} /> },
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
     { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} /> },
     { key: "calendar", href: "/calendar", label: "Calendar", icon: <CalendarDays size={18} /> },

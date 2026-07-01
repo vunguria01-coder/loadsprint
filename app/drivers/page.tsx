@@ -6,7 +6,6 @@ import { CabinetServer } from "@/components/cabinet-server";
 import { DriverManager } from "@/components/driver-manager";
 import { DriversList } from "@/components/drivers-list";
 import { FleetMap } from "@/components/fleet-map";
-import { ActiveLoads } from "@/components/active-loads";
 import { GettingStarted } from "@/components/getting-started";
 import { hasAccess, billingUser, findByEmail } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
@@ -85,18 +84,6 @@ export default async function DriversPage() {
   const myEarned = Math.round((myDeliveredTotal * myPct) / 100);
   const showEarnings = me.role === "dispatcher" && myPct > 0;
 
-  // Every in-progress load across all drivers, for the at-a-glance overview.
-  const activeLoads = myLoads
-    .filter((l) => l.status !== "Delivered" && l.status !== "Closed")
-    .map((l) => ({
-      id: l.id,
-      ref: l.ref,
-      driverName: l.driverName,
-      originName: l.originName,
-      destName: l.destName,
-      status: l.status,
-    }));
-
   return (
     <CabinetServer active="drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
@@ -144,7 +131,6 @@ export default async function DriversPage() {
           </div>
 
           {myLoads.length === 0 && <GettingStarted />}
-          <ActiveLoads loads={activeLoads} />
 
           <FleetMap drivers={fleet} />
 
