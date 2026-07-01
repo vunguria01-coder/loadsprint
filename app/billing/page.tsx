@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { BillingPlansView } from "@/components/billing-plans";
+import { DeleteAccount } from "@/components/delete-account";
 
 export const metadata: Metadata = {
   title: "Plans & billing — LoadSprint",
@@ -29,6 +30,7 @@ export default async function BillingPage({
           <p className="lead">Choose a plan to unlock dispatcher features and add drivers.</p>
         </div>
         <BillingPlansView status={status} sessionId={session_id} />
+        <DeleteAccount />
       </div>
     </CabinetServer>
   );

@@ -1558,3 +1558,13 @@ table.acc select option{background:#0b1120}
 .fleet-legend span{display:inline-flex;align-items:center}
 .fleet-idle{width:10px;height:10px;border-radius:50%;background:#94a3b8;display:inline-block;margin-right:6px}
 .fleet-empty p{margin-top:6px}
+
+/* Account deletion — danger zone (Apple 5.1.1(v) compliance) */
+.danger-zone{margin-top:34px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.05);border-radius:16px;padding:22px}
+.danger-zone h3{font-family:Poppins;font-weight:700;font-size:16px;color:#fff;margin:0 0 4px}
+.danger-btn{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.45);color:#f87171;padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;margin-top:10px}
+.danger-btn:hover{background:rgba(248,113,113,.22)}
+.danger-btn:disabled{opacity:.5;cursor:default}
+.da-input{width:100%;background:rgba(8,14,28,.5);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:#fff;font-size:15px;font-weight:700;letter-spacing:.1em;margin:6px 0 4px}
+.da-input:focus{outline:none;border-color:rgba(248,113,113,.6)}
+.da-err{color:#f87171;font-size:13px;margin:6px 0 0}

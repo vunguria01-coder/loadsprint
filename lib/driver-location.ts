@@ -53,3 +53,14 @@ export function getDriverGlobalLocations(
   }
   return out;
 }
+
+// Forget a driver's stored location (used on account deletion).
+export function deleteDriverGlobalLocation(email: string): void {
+  if (!email) return;
+  const s = read();
+  const key = email.toLowerCase();
+  if (s[key]) {
+    delete s[key];
+    write(s);
+  }
+}

@@ -113,3 +113,14 @@ export function deleteInvite(id: string, userId: string, isAdmin = false): boole
   save(invites.filter((i) => i.id !== id));
   return true;
 }
+
+// Remove every invite tied to an email address (used when a driver deletes
+// their own account, regardless of which dispatcher invited them).
+export function removeInvitesByEmail(email: string): number {
+  const invites = getInvites();
+  const target = email.trim().toLowerCase();
+  const kept = invites.filter((i) => i.email.toLowerCase() !== target);
+  const removed = invites.length - kept.length;
+  if (removed > 0) save(kept);
+  return removed;
+}
