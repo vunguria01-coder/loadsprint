@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PWARegister } from "@/components/pwa-register";
+import { VoiceAssistant } from "@/components/voice-assistant";
 
 export const viewport: Viewport = {
   themeColor: "#0F172A",
@@ -81,6 +82,7 @@ export default function RootLayout({
       <body>
         <PWARegister />
         <ToastProvider>{children}</ToastProvider>
+        <VoiceAssistant />
       </body>
     </html>
   );
