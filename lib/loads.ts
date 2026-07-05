@@ -25,6 +25,7 @@ export const DOC_TYPES = [
   "attachment",
   "invoice_broker",
   "invoice_driver",
+  "driver_rate_sheet",
 ] as const;
 export type DocType = (typeof DOC_TYPES)[number];
 
@@ -121,6 +122,7 @@ export type Load = {
   brokerInvoice?: InvoiceCell;
   driverInvoice?: InvoiceCell;
   loadRate?: number; // full load price from the rate confirmation
+  driverRate?: number; // dispatcher-set pay shown to the driver (broker sees original)
   shareToken?: string; // public broker link token
   shareCode?: string; // access code the broker types to open the link
   shareRevoked?: boolean; // dispatcher closed broker access to this load
@@ -786,6 +788,53 @@ export function saveBrokerInvoiceDoc(
   writeLoads(loads);
   notifyParties(loads[i], actor.id, `Invoice ready: ${doc.name}`);
   return loads[i];
+}
+
+// Set (or clear) the driver-facing pay for a load, and store the generated
+// "Driver rate sheet" PDF as a document. The broker always keeps the original
+// rate confirmation — this sheet is shown only to the driver.
+export function setDriverRate(
+  loadId: string,
+  rate: number | undefined,
+  sheetDataUrl: string,
+  actor: { id: string; name: string }
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  loads[i].driverRate = rate;
+  // Replace any existing driver rate sheet.
+  loads[i].documents = (loads[i].documents || []).filter(
+    (d) => d.type !== "driver_rate_sheet"
+  );
+  if (rate && sheetDataUrl) {
+    loads[i].documents.push({
+      id: crypto.randomUUID(),
+      type: "driver_rate_sheet",
+      name: "Driver rate sheet.pdf",
+      dataUrl: sheetDataUrl,
+      uploadedById: actor.id,
+      uploadedByName: actor.name,
+      uploadedAt: new Date().toISOString(),
+    });
+  }
+  writeLoads(loads);
+  return loads[i];
+}
+
+// Transform a load for the DRIVER's eyes: if the dispatcher set a driver pay,
+// show that amount instead of the broker rate, and present the driver rate sheet
+// in place of the original rate confirmation (which stays with the broker).
+export function serializeForDriver(load: Load): Load {
+  if (!load.driverRate) return load;
+  const sheet = (load.documents || []).find((d) => d.type === "driver_rate_sheet");
+  let documents = load.documents || [];
+  if (sheet) {
+    documents = documents
+      .filter((d) => d.type !== "rate_confirmation" && d.type !== "driver_rate_sheet")
+      .concat([{ ...sheet, type: "rate_confirmation", name: "Rate confirmation.pdf" }]);
+  }
+  return { ...load, loadRate: load.driverRate, documents };
 }
 
 export function addPhoto(

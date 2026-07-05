@@ -25,7 +25,12 @@ Rules:
 - "billTo" = the company the invoice should be sent to (usually the broker on the rate con).
 - Omit fields you cannot find. Never invent stops, addresses, ZIPs, or a payer.`;
 
-export async function aiExtractRateCon(text: string): Promise<AiExtract | null> {
+export type AiScope = "all" | "addresses_rate" | "addresses";
+
+export async function aiExtractRateCon(
+  text: string,
+  scope: AiScope = "all"
+): Promise<AiExtract | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || !text.trim()) return null;
 
@@ -76,10 +81,13 @@ export async function aiExtractRateCon(text: string): Promise<AiExtract | null> 
             .filter((s) => s.city || s.address)
         : [];
 
+    // Respect the chosen scope: only addresses, addresses + rate, or everything.
+    const wantRate = scope === "all" || scope === "addresses_rate";
+    const wantPayer = scope === "all";
     return {
       ref: typeof parsed.ref === "string" ? parsed.ref : undefined,
-      rate: typeof parsed.rate === "number" ? parsed.rate : undefined,
-      billTo: typeof parsed.billTo === "string" ? parsed.billTo : undefined,
+      rate: wantRate && typeof parsed.rate === "number" ? parsed.rate : undefined,
+      billTo: wantPayer && typeof parsed.billTo === "string" ? parsed.billTo : undefined,
       pickups: norm(parsed.pickups),
       dropoffs: norm(parsed.dropoffs),
     };

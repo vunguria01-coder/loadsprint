@@ -1568,3 +1568,34 @@ table.acc select option{background:#0b1120}
 .da-input{width:100%;background:rgba(8,14,28,.5);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:#fff;font-size:15px;font-weight:700;letter-spacing:.1em;margin:6px 0 4px}
 .da-input:focus{outline:none;border-color:rgba(248,113,113,.6)}
 .da-err{color:#f87171;font-size:13px;margin:6px 0 0}
+
+/* Driver password reset (in driver panel) */
+.dp-pw-box{padding:0 18px 8px}
+.dp-pw-row{display:flex;gap:8px}
+.dp-pw{flex:1;background:rgba(8,14,28,.5);border:1px solid var(--line);border-radius:9px;padding:10px 12px;color:#fff;font-size:14px}
+.dp-pw:focus{outline:none;border-color:rgba(56,189,248,.5)}
+.dp-pw-btn{background:var(--sky);color:#06283d;border:0;border-radius:9px;padding:0 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.dp-pw-btn:disabled{opacity:.5;cursor:default}
+.dp-pw-msg{margin-top:8px;font-size:13px;color:#f87171}
+.dp-pw-msg.ok{color:#34d399}
+
+/* AI extraction scope selector (create load, step 1) */
+.ai-scope{margin-bottom:16px}
+.ai-scope-label{font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600}
+.ai-scope-opts{display:flex;gap:8px;flex-wrap:wrap}
+.ai-scope-opt{flex:1;min-width:100px;background:rgba(8,14,28,.4);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.ai-scope-opt:hover{border-color:rgba(56,189,248,.35)}
+.ai-scope-opt.on{background:rgba(56,189,248,.12);border-color:var(--sky);color:#fff}
+
+/* Driver pay control (load workspace) */
+.drate{padding:4px 2px}
+.drate-hint{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+.drate-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.drate-input{display:flex;align-items:center;background:rgba(8,14,28,.5);border:1px solid var(--line);border-radius:9px;padding:0 12px;flex:1;min-width:120px}
+.drate-input span{color:var(--muted);font-weight:700;margin-right:4px}
+.drate-input input{background:transparent;border:0;outline:none;color:#fff;font-size:15px;font-weight:700;padding:10px 0;width:100%}
+.drate-save{background:var(--sky);color:#06283d;border:0;border-radius:9px;padding:0 18px;height:40px;font-weight:700;font-size:14px;cursor:pointer}
+.drate-save:disabled{opacity:.5;cursor:default}
+.drate-clear{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:0 14px;height:40px;font-weight:600;font-size:13px;cursor:pointer}
+.drate-msg{margin-top:10px;font-size:13px;color:#f87171}
+.drate-msg.ok{color:#34d399}

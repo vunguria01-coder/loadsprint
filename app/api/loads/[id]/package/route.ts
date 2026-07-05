@@ -24,9 +24,11 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
-  // Confirmation = the rate_confirmation document (fallback: first document).
+  // Confirmation = the rate_confirmation document (never the driver rate sheet).
   const conf =
-    load.documents.find((d) => d.type === "rate_confirmation") || load.documents[0] || null;
+    load.documents.find((d) => d.type === "rate_confirmation") ||
+    load.documents.find((d) => d.type !== "driver_rate_sheet") ||
+    null;
 
   const photos = load.photos.map((p, i) => ({
     name: `photo-${i + 1}${p.dataUrl.includes("image/png") ? ".png" : ".jpg"}`,

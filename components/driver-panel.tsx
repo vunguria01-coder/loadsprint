@@ -15,17 +15,49 @@ type HistoryLoad = {
 
 export function DriverPanel({
   name,
+  email,
   stats,
   history,
 }: {
   name: string;
+  email: string;
   stats: { total: number; completed: number; active: number; earnings: number };
   history: HistoryLoad[];
 }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(history);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pw, setPw] = useState("");
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState("");
   const router = useRouter();
+
+  async function resetPassword() {
+    if (pw.length < 6) {
+      setPwMsg("Password must be at least 6 characters.");
+      return;
+    }
+    setPwBusy(true);
+    setPwMsg("");
+    try {
+      const res = await fetch("/api/drivers/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: pw }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.ok) {
+        setPwMsg("Password updated ✓");
+        setPw("");
+      } else {
+        setPwMsg(d.error || "Could not update the password.");
+      }
+    } catch {
+      setPwMsg("Network error.");
+    } finally {
+      setPwBusy(false);
+    }
+  }
 
   async function removePaid(id: string) {
     if (!confirm("Delete this paid load permanently? This cannot be undone.")) return;
@@ -84,6 +116,33 @@ export function DriverPanel({
             <span>{money(stats.earnings)}</span>
             <label>Earnings</label>
           </div>
+        </div>
+
+        <div className="dp-section">Reset password</div>
+        <div className="dp-pw-box">
+          <p className="px" style={{ marginTop: 0, marginBottom: 10 }}>
+            Set a new password for this driver&apos;s account (min 6 characters).
+          </p>
+          <div className="dp-pw-row">
+            <input
+              className="dp-pw"
+              type="text"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              placeholder="New password"
+            />
+            <button
+              type="button"
+              className="dp-pw-btn"
+              onClick={resetPassword}
+              disabled={pwBusy || pw.length < 6}
+            >
+              {pwBusy ? "Saving…" : "Update"}
+            </button>
+          </div>
+          {pwMsg && (
+            <div className={`dp-pw-msg${pwMsg.includes("✓") ? " ok" : ""}`}>{pwMsg}</div>
+          )}
         </div>
 
         <div className="dp-section">History</div>

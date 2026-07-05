@@ -182,6 +182,7 @@ export function CreateLoad({
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [step, setStep] = useState(1);
+  const [aiScope, setAiScope] = useState<"all" | "addresses_rate" | "addresses">("all");
 
   function copyText(t: string) {
     navigator.clipboard?.writeText(t);
@@ -214,7 +215,7 @@ export function CreateLoad({
         const aiRes = await fetch("/api/ai/rate-con", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, scope: aiScope }),
         });
         const aiData = await aiRes.json();
         if (aiRes.ok && aiData.ok && aiData.result) {
@@ -323,6 +324,32 @@ export function CreateLoad({
       {/* STEP 1 — upload */}
       {step === 1 && (
         <div>
+          <div className="ai-scope">
+            <div className="ai-scope-label">What should the AI read?</div>
+            <div className="ai-scope-opts">
+              <button
+                type="button"
+                className={`ai-scope-opt${aiScope === "all" ? " on" : ""}`}
+                onClick={() => setAiScope("all")}
+              >
+                Everything
+              </button>
+              <button
+                type="button"
+                className={`ai-scope-opt${aiScope === "addresses_rate" ? " on" : ""}`}
+                onClick={() => setAiScope("addresses_rate")}
+              >
+                Addresses + rate
+              </button>
+              <button
+                type="button"
+                className={`ai-scope-opt${aiScope === "addresses" ? " on" : ""}`}
+                onClick={() => setAiScope("addresses")}
+              >
+                Addresses only
+              </button>
+            </div>
+          </div>
           <label className="btn btn-ghost btn-block" style={{ marginBottom: 14, cursor: "pointer" }}>
             <FileUp size={16} /> {reading ? "Reading PDF…" : "Import from rate confirmation (PDF)"}
             <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />

@@ -3,6 +3,7 @@ import { requestUser } from "@/lib/guard";
 import { corsHeaders } from "@/lib/mobile-auth";
 import { truckRoute, geocodeHere } from "@/lib/here";
 import { setDriverGlobalLocation } from "@/lib/driver-location";
+import { generateDriverRateSheet } from "@/lib/driver-rate-sheet";
 import { findByEmail, getUserById } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { deleteLoad } from "@/lib/loads";
@@ -34,6 +35,7 @@ import {
   setBrokerShareRevoked,
   setPhotoBrokerVisible,
   publishToBroker,
+  setDriverRate,
   pushNotification,
   LOAD_STATUSES,
   DOC_TYPES,
@@ -331,6 +333,15 @@ export async function POST(
       if (me.role !== "dispatcher" && me.role !== "admin")
         return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
       updated = publishToBroker(id);
+      break;
+    }
+    case "set_driver_rate": {
+      if (me.role !== "dispatcher" && me.role !== "admin")
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      const raw = Number(body.rate);
+      const rate = Number.isFinite(raw) && raw > 0 ? Math.round(raw) : undefined;
+      const sheet = rate ? await generateDriverRateSheet(load, rate) : "";
+      updated = setDriverRate(id, rate, sheet, { id: me.id, name: me.name });
       break;
     }
     case "invoice_set": {

@@ -10,6 +10,7 @@ import {
   LOAD_STATUSES,
   PHOTO_PHASES,
   DOC_TYPES,
+  serializeForDriver,
   type Load,
   type LoadStatus,
   type PhotoPhase,
@@ -32,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const load = getLoadById(id);
   if (!load || !mine(load, me.email))
     return NextResponse.json({ ok: false }, { status: 404, headers: h });
-  return NextResponse.json({ ok: true, load }, { headers: h });
+  return NextResponse.json({ ok: true, load: serializeForDriver(load) }, { headers: h });
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -99,5 +100,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   if (!updated) return NextResponse.json({ ok: false }, { status: 400, headers: h });
-  return NextResponse.json({ ok: true, load: updated }, { headers: h });
+  return NextResponse.json({ ok: true, load: updated ? serializeForDriver(updated) : updated }, { headers: h });
 }

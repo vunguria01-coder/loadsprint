@@ -81,7 +81,7 @@ export default async function DriverDetailPage({
               <h2 className="h2">{name}</h2>
               <p className="lead">{email}{user ? "" : " · invite pending"}</p>
             </div>
-            <DriverPanel name={name} stats={stats} history={history} />
+            <DriverPanel name={name} email={email} stats={stats} history={history} />
           </div>
 
           <DriverMap points={points} />

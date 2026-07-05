@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
-import { aiExtractRateCon } from "@/lib/ai-extract";
+import { aiExtractRateCon, type AiScope } from "@/lib/ai-extract";
 
 export async function POST(req: Request) {
   const me = await currentUser();
@@ -15,10 +15,14 @@ export async function POST(req: Request) {
   }
   const body = await req.json().catch(() => ({}));
   const text = typeof body?.text === "string" ? body.text : "";
+  const scope: AiScope =
+    body?.scope === "addresses" || body?.scope === "addresses_rate"
+      ? body.scope
+      : "all";
   if (!text.trim()) {
     return NextResponse.json({ ok: false, error: "No text" }, { status: 400 });
   }
-  const result = await aiExtractRateCon(text);
+  const result = await aiExtractRateCon(text, scope);
   if (!result) {
     return NextResponse.json(
       { ok: false, error: "Could not read this document." },

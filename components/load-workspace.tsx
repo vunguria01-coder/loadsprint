@@ -13,6 +13,7 @@ import { PhotosToPdf } from "@/components/photos-to-pdf";
 import { LoadInvoiceAi } from "@/components/load-invoice-ai";
 import { LoadBrokerShare } from "@/components/load-broker-share";
 import { Collapsible } from "@/components/collapsible";
+import { DriverRate } from "@/components/driver-rate";
 
 export function LoadWorkspace({ loadId }: { loadId: string }) {
   const [load, setLoad] = useState<LoadView | null>(null);
@@ -141,6 +142,11 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
               )}
               {/* Files and photos stay visible (expanded) */}
               <LoadDocuments load={load} mutate={mutate} />
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <Collapsible title="Driver pay">
+                  <DriverRate current={load.driverRate} mutate={mutate} />
+                </Collapsible>
+              )}
               <LoadPhotos load={load} mutate={mutate} />
               <PhotosToPdf load={load} mutate={mutate} />
               {(load.youRole === "dispatcher" || load.youRole === "admin") && (
@@ -153,6 +159,11 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
             <div>
               <LoadMap load={load} mutate={mutate} />
               <LoadDocuments load={load} mutate={mutate} />
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <Collapsible title="Driver pay">
+                  <DriverRate current={load.driverRate} mutate={mutate} />
+                </Collapsible>
+              )}
               <Collapsible title="Load chat">
                 <LoadChat load={load} mutate={mutate} />
               </Collapsible>

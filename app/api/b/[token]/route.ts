@@ -101,7 +101,7 @@ export async function POST(
   // internal driver-pay invoice or the rate con (shown separately).
   const documents = published
     ? (load.documents || [])
-        .filter((d) => d.type !== "invoice_driver" && d.type !== "rate_confirmation")
+        .filter((d) => d.type !== "invoice_driver" && d.type !== "rate_confirmation" && d.type !== "driver_rate_sheet")
         .map((d) => ({ name: d.name || d.type, type: d.type, dataUrl: d.dataUrl }))
     : [];
 
