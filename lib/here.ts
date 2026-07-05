@@ -66,7 +66,7 @@ export async function reverseGeocodeHere(
     `https://revgeocode.search.hereapi.com/v1/revgeocode` +
     `?at=${lat},${lng}&lang=en-US&apikey=${key}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     const data = await res.json();
     const a = data?.items?.[0]?.address;
@@ -93,7 +93,7 @@ export async function geocodeHere(address: string): Promise<GeoPoint | null> {
     `&limit=1` +
     `&apikey=${key}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     const data = await res.json();
     const pos = data?.items?.[0]?.position;
@@ -159,7 +159,7 @@ export async function truckRoute(
     `&apikey=${key}`;
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     const data = await res.json();
     const sections = data?.routes?.[0]?.sections;

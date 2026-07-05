@@ -15,6 +15,44 @@ function langFor(text: string): "ru-RU" | "en-US" {
   return /[Ѐ-ӿ]/.test(text) ? "ru-RU" : "en-US";
 }
 
+// Score a voice for quality: prefer modern neural/online voices (Google,
+// Microsoft "Natural"/"Online", Apple premium) over the flat default system
+// ones, and require the language to match.
+function scoreVoice(v: SpeechSynthesisVoice, lang: "ru-RU" | "en-US"): number {
+  const base = lang.slice(0, 2);
+  if (!v.lang || v.lang.slice(0, 2).toLowerCase() !== base) return -1;
+  let s = 0;
+  const name = v.name.toLowerCase();
+  if (v.lang.toLowerCase() === lang.toLowerCase()) s += 3; // exact locale
+  if (name.includes("natural")) s += 6;
+  if (name.includes("neural")) s += 6;
+  if (name.includes("online")) s += 4;
+  if (name.includes("google")) s += 5;
+  if (name.includes("premium") || name.includes("enhanced")) s += 4;
+  // Cloud voices (localService === false) tend to sound far better.
+  if (v.localService === false) s += 3;
+  // Nice-sounding known defaults as a gentle tiebreaker.
+  if (/(samantha|aria|jenny|svetlana|milena|dariya|zira)/.test(name)) s += 2;
+  return s;
+}
+
+// Pick the best-sounding installed voice for the language, or null.
+function pickVoice(
+  voices: SpeechSynthesisVoice[],
+  lang: "ru-RU" | "en-US"
+): SpeechSynthesisVoice | null {
+  let best: SpeechSynthesisVoice | null = null;
+  let bestScore = -1;
+  for (const v of voices) {
+    const sc = scoreVoice(v, lang);
+    if (sc > bestScore) {
+      bestScore = sc;
+      best = v;
+    }
+  }
+  return bestScore >= 0 ? best : null;
+}
+
 export function VoiceAssistant() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,6 +65,7 @@ export function VoiceAssistant() {
   const [supportsVoice, setSupportsVoice] = useState(true);
   const recognitionRef = useRef<any>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   // Only show for signed-in users.
   useEffect(() => {
@@ -49,6 +88,19 @@ export function VoiceAssistant() {
     if (!SR) setSupportsVoice(false);
   }, []);
 
+  // Voices load asynchronously; keep our cache fresh. Nudge the engine to
+  // enumerate them (some browsers only populate after the first getVoices()).
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const load = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length) voicesRef.current = v;
+    };
+    load();
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
+  }, []);
+
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
   }, [messages, thinking]);
@@ -57,8 +109,15 @@ export function VoiceAssistant() {
     if (typeof window === "undefined" || !window.speechSynthesis || !text) return;
     try {
       window.speechSynthesis.cancel();
+      const lang = langFor(text);
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = langFor(text);
+      u.lang = lang;
+      const voice = pickVoice(voicesRef.current, lang);
+      if (voice) u.voice = voice;
+      // Slightly slower + natural pitch reads much warmer than the default.
+      u.rate = 0.97;
+      u.pitch = 1.05;
+      u.volume = 1;
       window.speechSynthesis.speak(u);
     } catch {
       /* ignore */
@@ -77,6 +136,8 @@ export function VoiceAssistant() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: clean, history, path: pathname }),
+          // Never let the thinking spinner hang forever if the server stalls.
+          signal: AbortSignal.timeout(60000),
         });
         const data = await res.json().catch(() => ({}));
         const reply =
@@ -211,8 +272,8 @@ export function VoiceAssistant() {
       <style jsx>{`
         .va-fab {
           position: fixed;
-          left: 20px;
-          bottom: 20px;
+          right: 22px;
+          bottom: 84px;
           z-index: 1000;
           width: 56px;
           height: 56px;
@@ -232,11 +293,11 @@ export function VoiceAssistant() {
         }
         .va-panel {
           position: fixed;
-          left: 20px;
-          bottom: 88px;
+          right: 22px;
+          bottom: 150px;
           z-index: 1000;
           width: min(360px, calc(100vw - 32px));
-          height: min(520px, calc(100vh - 140px));
+          height: min(520px, calc(100vh - 200px));
           background: #fff;
           border: 1px solid #e5e7eb;
           border-radius: 16px;

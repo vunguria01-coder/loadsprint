@@ -27,6 +27,9 @@ function unpack(token: string | undefined): Record<string, unknown> | null {
 
 export const TWOFA_COOKIE = "ls_2fa";
 export const TRUST_COOKIE = "ls_trust";
+// Short-lived challenge for the "forgot password" flow. Kept separate from the
+// 2FA cookie so a reset in progress can't be confused with a sign-in code.
+export const RESET_COOKIE = "ls_reset";
 
 // Generate a 6-digit numeric code.
 export function genCode(): string {

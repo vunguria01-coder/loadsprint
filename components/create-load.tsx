@@ -216,6 +216,8 @@ export function CreateLoad({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, scope: aiScope }),
+          // If extraction stalls, fall back to the heuristic result rather than hang.
+          signal: AbortSignal.timeout(90000),
         });
         const aiData = await aiRes.json();
         if (aiRes.ok && aiData.ok && aiData.result) {

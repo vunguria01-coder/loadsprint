@@ -58,6 +58,19 @@ export const loginSchema = z.object({
 });
 export type LoginValues = z.infer<typeof loginSchema>;
 
+/* ---------- password reset (forgot password) ---------- */
+export const forgotSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+});
+export type ForgotValues = z.infer<typeof forgotSchema>;
+
+export const resetSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  code: z.string().length(6, "Enter the 6-digit code"),
+  password: z.string().min(8, "At least 8 characters"),
+});
+export type ResetValues = z.infer<typeof resetSchema>;
+
 /* ---------- subscriptions ---------- */
 export const TIERS = ["silver", "gold", "platinum"] as const;
 export type Tier = (typeof TIERS)[number];

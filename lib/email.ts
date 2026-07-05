@@ -27,14 +27,21 @@ export async function sendEmail(opts: {
         html: opts.html,
         ...(opts.text ? { text: opts.text } : {}),
       }),
+      // Don't let a slow Resend response hang the sign-in / invite request.
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       const t = await res.text().catch(() => "");
+      // Surface the failure in server logs so delivery problems are diagnosable
+      // (e.g. unverified sending domain, invalid key) instead of failing silently.
+      console.error(`[email] Resend rejected send to ${opts.to} from "${FROM}": HTTP ${res.status} ${t}`);
       return { ok: false, error: t || `HTTP ${res.status}` };
     }
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "send failed" };
+    const msg = e instanceof Error ? e.message : "send failed";
+    console.error(`[email] send to ${opts.to} failed: ${msg}`);
+    return { ok: false, error: msg };
   }
 }
 
@@ -146,6 +153,50 @@ export function twoFactorEmail(code: string): { subject: string; html: string; t
   </body></html>`;
   return { subject, html, text };
 }
+// Password-reset code email.
+export function passwordResetEmail(code: string): { subject: string; html: string; text: string } {
+  const subject = "Reset your LoadSprint password";
+  const text =
+    `Hello,\n\n` +
+    `We received a request to reset the password on your LoadSprint account. ` +
+    `Type the confirmation number below on the password-reset screen:\n\n` +
+    `${code}\n\n` +
+    `This number is valid for 10 minutes. If you didn't request this, you can ` +
+    `safely ignore this message — your password stays unchanged.\n\n` +
+    `LoadSprint dispatch software`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+  <body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:24px 0">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e5e9f2;border-radius:12px">
+          <tr><td style="padding:28px 28px 8px">
+            <div style="font-size:18px;font-weight:bold;color:#111827">LoadSprint</div>
+          </td></tr>
+          <tr><td style="padding:0 28px">
+            <p style="font-size:15px;line-height:1.6;color:#374151;margin:8px 0 0">Hello,</p>
+            <p style="font-size:15px;line-height:1.6;color:#374151;margin:12px 0 0">
+              We received a request to reset your LoadSprint password. Type the
+              confirmation number below on the password-reset screen. It stays valid for 10 minutes.
+            </p>
+          </td></tr>
+          <tr><td style="padding:18px 28px">
+            <div style="background:#f3f6fc;border:1px solid #dde4f1;border-radius:8px;padding:16px;text-align:center;font-size:24px;font-weight:bold;color:#1f2937;letter-spacing:3px">${escapeHtml(code)}</div>
+          </td></tr>
+          <tr><td style="padding:0 28px 8px">
+            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">
+              If you didn't request this, you can safely ignore this message — your password stays unchanged.
+            </p>
+          </td></tr>
+          <tr><td style="padding:14px 28px 26px">
+            <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0">LoadSprint dispatch software</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body></html>`;
+  return { subject, html, text };
+}
+
 function escapeAttr(s: string) {
   return s.replace(/"/g, "%22");
 }

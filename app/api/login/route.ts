@@ -55,10 +55,25 @@ export async function POST(req: Request) {
     const mail = twoFactorEmail(code);
     const sent = await sendEmail({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text });
 
+    // Fail open: if the code cannot be delivered (email not configured, or Resend
+    // rejected/timed out), don't trap the user at a code screen they can never
+    // pass — the password was already verified, so sign them in and log why.
+    // This is what makes turning TWOFA_ENABLED on safe even before email delivery
+    // is fully proven; a misconfiguration degrades to password-only, never a lockout.
+    if (!sent.ok) {
+      console.error(
+        `[login] 2FA code could not be sent to ${user.email} (${sent.skipped ? "email not configured" : sent.error || "send failed"}); signing in without 2FA.`
+      );
+      const token = createSession({ id: user.id, name: user.name, email: user.email, role: user.role });
+      const res = NextResponse.json({ ok: true, role: user.role });
+      res.cookies.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+      res.cookies.set(TRUST_COOKIE, makeTrust(user.email), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+      return res;
+    }
+
     const res = NextResponse.json({
       ok: true,
       need2fa: true,
-      // If email isn't configured, surface that honestly so it isn't a silent dead-end.
       emailed: sent.ok,
       emailSkipped: sent.skipped === true,
     });

@@ -310,6 +310,8 @@ async function callAnthropic(system: string, messages: any[]): Promise<any | nul
         tools: TOOLS,
         messages,
       }),
+      // Per-call cap; the tool loop runs this up to 6× so keep each turn bounded.
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) return null;
     return await res.json();

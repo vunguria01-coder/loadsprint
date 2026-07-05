@@ -97,6 +97,8 @@ Use the load reference in the invoice number (e.g. INV-${input.ref}).`;
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify(body),
+      // Cap the call so a slow/unreachable API can't hang the request forever.
+      signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) return null;
     const data = await res.json();

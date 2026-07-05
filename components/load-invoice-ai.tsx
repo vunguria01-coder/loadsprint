@@ -175,7 +175,11 @@ export function LoadInvoiceAi({
     setBusy(true);
     setSaved(false);
     try {
-      const res = await fetch(`/api/loads/${load.id}/invoice`, { method: "POST" });
+      const res = await fetch(`/api/loads/${load.id}/invoice`, {
+        method: "POST",
+        // Don't let the "generating…" state hang forever if the AI call stalls.
+        signal: AbortSignal.timeout(90000),
+      });
       const data = await res.json();
       if (res.ok && data.ok) {
         setInv(data.invoice);

@@ -56,6 +56,8 @@ export async function aiExtractRateCon(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify(body),
+      // Cap the call so a slow/unreachable API can't hang the request forever.
+      signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) return null;
     const data = await res.json();

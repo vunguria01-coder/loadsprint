@@ -258,6 +258,10 @@ header.nav{position:fixed;inset:0 0 auto 0;z-index:60;transition:.3s ease}
 .field.err input,.field.err select,.field.err textarea{border-color:#f87171;box-shadow:0 0 0 3px rgba(248,113,113,.12)}
 .field .msg{font-size:12px;color:#f87171;display:none}
 .field.err .msg{display:block}
+/* Label row with a trailing text link (e.g. "Forgot password?"). */
+.field-label-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.link-btn{background:none;border:0;padding:0;cursor:pointer;color:var(--sky);font-family:Manrope;font-weight:600;font-size:12.5px;letter-spacing:.02em}
+.link-btn:hover{text-decoration:underline}
 .form-note{margin-top:14px;font-size:12.5px;color:var(--muted-2);text-align:center}
 @media(max-width:920px){.quote-wrap{grid-template-columns:1fr;gap:32px}}
 @media(max-width:520px){.fgrid{grid-template-columns:1fr}}
@@ -1113,6 +1117,13 @@ table.acc select option{background:#0b1120}
    Cabinet visual polish — dispatcher app screens only.
    Scoped under .cab and .cab-content so the public landing stays untouched.
    ============================================================ */
+
+/* The public .wrap is 92vw (viewport-relative), but inside the cabinet the
+   available width is the viewport MINUS the 248px sidebar — so 92vw overflows
+   and forces a horizontal scrollbar with content clipped off the right edge.
+   In-app, fill the content column instead (capped for readability, centered
+   on very wide screens). */
+.cab-content .wrap{width:100%;max-width:var(--maxw);margin-inline:auto}
 
 /* Headings: the marketing-size 50px reads heavy in-app — tighten to an
    elegant, app-like scale with crisp tracking. */
