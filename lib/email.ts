@@ -8,7 +8,7 @@ const FROM = process.env.EMAIL_FROM || "LoadSprint <onboarding@resend.dev>";
 export async function sendEmail(opts: {
   to: string;
   subject: string;
-  html: string;
+  html?: string;
   text?: string;
 }): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   const key = process.env.RESEND_API_KEY;
@@ -24,7 +24,9 @@ export async function sendEmail(opts: {
         from: FROM,
         to: opts.to,
         subject: opts.subject,
-        html: opts.html,
+        // A plain-text-only message (no html) reads as a personal note rather
+        // than a marketing blast — often better for spam filters.
+        ...(opts.html ? { html: opts.html } : {}),
         ...(opts.text ? { text: opts.text } : {}),
       }),
       // Don't let a slow Resend response hang the sign-in / invite request.
@@ -53,7 +55,7 @@ export function driverInviteEmail(opts: {
   code: string;
   appStoreUrl: string;
 }): { subject: string; html: string; text: string } {
-  const subject = `You're invited to LoadSprint — your join code is ${opts.code}`;
+  const subject = `${opts.dispatcherName} invited you to drive with LoadSprint`;
   const html = `<!doctype html><html><body style="margin:0;background:#0b1120;font-family:Arial,Helvetica,sans-serif">
     <div style="max-width:520px;margin:0 auto;padding:32px 24px;color:#e8eef8">
       <h1 style="font-size:22px;margin:0 0 6px;color:#fff">You've been invited to LoadSprint</h1>
@@ -74,11 +76,14 @@ export function driverInviteEmail(opts: {
     </div>
   </body></html>`;
   const text =
-    `You've been invited to LoadSprint by ${opts.dispatcherName}.\n\n` +
-    `Your join code: ${opts.code}\n\n` +
-    `Download the LoadSprint Driver app: ${opts.appStoreUrl}\n` +
-    `Install it, then enter the code above to sign in.\n\n` +
-    `Didn't expect this email? You can safely ignore it.`;
+    `Hi,\n\n` +
+    `${opts.dispatcherName} added you as a driver on LoadSprint.\n\n` +
+    `Your join code:\n` +
+    `${opts.code}\n\n` +
+    `Get the LoadSprint Driver app:\n` +
+    `${opts.appStoreUrl}\n\n` +
+    `Open the app and enter your code to start receiving loads.\n\n` +
+    `Didn't expect this email? You can ignore it.`;
   return { subject, html, text };
 }
 

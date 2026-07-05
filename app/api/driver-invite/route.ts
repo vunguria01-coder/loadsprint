@@ -47,9 +47,11 @@ export async function POST(req: Request) {
   const invite = createInvite(email, me.id, me.name);
   const appLink = `${APP_BASE}?code=${invite.code}`;
 
-  // Email the join code to the driver (skipped silently if email isn't configured).
+  // Email the join code to the driver as PLAIN TEXT only (no HTML) — reads as a
+  // personal note, which tends to clear Gmail's spam/"unsolicited" filter better
+  // than a styled marketing-looking email. Skipped silently if email isn't set up.
   const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appStoreUrl: APP_STORE_URL });
-  const sent = await sendEmail({ to: email, subject: mail.subject, html: mail.html, text: mail.text });
+  const sent = await sendEmail({ to: email, subject: mail.subject, text: mail.text });
 
   return NextResponse.json({
     ok: true,
