@@ -11,34 +11,6 @@ export async function sendEmail(opts: {
   html?: string;
   text?: string;
 }): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
-  // Prefer SMTP (e.g. Google Workspace) when configured — sending through a
-  // Google mailbox gives Gmail-trusted deliverability that a brand-new domain
-  // on a shared ESP can't match. Falls back to Resend when SMTP isn't set.
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      const nodemailer = (await import("nodemailer")).default;
-      const port = Number(process.env.SMTP_PORT || 465);
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port,
-        secure: port === 465, // 465 = implicit TLS; 587 = STARTTLS
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      });
-      await transporter.sendMail({
-        from: FROM,
-        to: opts.to,
-        subject: opts.subject,
-        ...(opts.html ? { html: opts.html } : {}),
-        ...(opts.text ? { text: opts.text } : {}),
-      });
-      return { ok: true };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "smtp send failed";
-      console.error(`[email] SMTP send to ${opts.to} failed: ${msg}`);
-      return { ok: false, error: msg };
-    }
-  }
-
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, skipped: true };
   try {
