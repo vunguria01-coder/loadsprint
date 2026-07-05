@@ -54,13 +54,20 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
     }
   }
 
-  const appBase =
-    process.env.NEXT_PUBLIC_DRIVER_APP_URL || "https://loadsprint.app/driver";
+  const appStoreUrl =
+    process.env.NEXT_PUBLIC_IOS_APP_STORE_URL ||
+    "https://apps.apple.com/app/id6785073294";
 
-  function copyLink(code: string) {
-    const link = `${appBase}?code=${code}`;
-    navigator.clipboard?.writeText(link);
-    toast("Link copied", "App invite link is on your clipboard.");
+  // A ready-to-send message the dispatcher can paste into WhatsApp/SMS/etc.
+  // This is the reliable way to onboard a driver without depending on email
+  // being delivered to their inbox.
+  function copyInvite(code: string) {
+    const msg =
+      `You're invited to LoadSprint as a driver.\n` +
+      `Get the app: ${appStoreUrl}\n` +
+      `Your join code: ${code}`;
+    navigator.clipboard?.writeText(msg);
+    toast("Invite copied", "Paste it to your driver in WhatsApp, SMS or any chat.");
   }
 
   function copyCode(code: string) {
@@ -75,9 +82,10 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
         Add a driver
       </h3>
       <p className="sx">
-        Enter the driver&apos;s email and send the invite. You&apos;ll get a join
-        code — give it to your driver, and they enter it in the LoadSprint driver
-        app under &ldquo;Register with code.&rdquo;
+        Enter the driver&apos;s email to generate a join code. We&apos;ll email it,
+        but you can also tap &ldquo;Copy invite&rdquo; and send the app link + code
+        yourself (WhatsApp, SMS…). The driver enters the code in the LoadSprint
+        driver app under &ldquo;Register with code.&rdquo;
       </p>
       <div className="row">
         <input
@@ -99,11 +107,11 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
               <span className="ie">{iv.email}</span>
               <span className="ic">{iv.code}</span>
               <div style={{ display: "flex", gap: 8 }}>
+                <button className="copy-link" onClick={() => copyInvite(iv.code)}>
+                  Copy invite
+                </button>
                 <button className="copy-link" onClick={() => copyCode(iv.code)}>
                   Copy code
-                </button>
-                <button className="copy-link" onClick={() => copyLink(iv.code)}>
-                  Copy app link
                 </button>
               </div>
               <span className={`ist ist-${iv.status}`}>
