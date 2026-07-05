@@ -211,7 +211,7 @@ export function VoiceAssistant() {
       <style jsx>{`
         .va-fab {
           position: fixed;
-          right: 20px;
+          left: 20px;
           bottom: 20px;
           z-index: 1000;
           width: 56px;
@@ -232,7 +232,7 @@ export function VoiceAssistant() {
         }
         .va-panel {
           position: fixed;
-          right: 20px;
+          left: 20px;
           bottom: 88px;
           z-index: 1000;
           width: min(360px, calc(100vw - 32px));
