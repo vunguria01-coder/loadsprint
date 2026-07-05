@@ -45,32 +45,41 @@ export async function sendEmail(opts: {
   }
 }
 
-// Driver invitation email: join code + app link.
+// Driver invitation email: join code + App Store download. Links only to the
+// Apple App Store (a trusted domain) — not a second brand domain — which keeps
+// the message off Gmail's phishing/"unsolicited" heuristics.
 export function driverInviteEmail(opts: {
   dispatcherName: string;
   code: string;
-  appLink: string;
-}): { subject: string; html: string } {
+  appStoreUrl: string;
+}): { subject: string; html: string; text: string } {
   const subject = `You're invited to LoadSprint — your join code is ${opts.code}`;
   const html = `<!doctype html><html><body style="margin:0;background:#0b1120;font-family:Arial,Helvetica,sans-serif">
     <div style="max-width:520px;margin:0 auto;padding:32px 24px;color:#e8eef8">
       <h1 style="font-size:22px;margin:0 0 6px;color:#fff">You've been invited to LoadSprint</h1>
       <p style="color:#93a4be;font-size:14px;line-height:1.6;margin:0 0 22px">
-        ${escapeHtml(opts.dispatcherName)} added you as a driver. Use the join code
-        below to sign in to the LoadSprint driver app and start receiving loads.
+        ${escapeHtml(opts.dispatcherName)} added you as a driver. Install the
+        LoadSprint Driver app, then enter the join code below to sign in and start
+        receiving loads.
       </p>
       <div style="background:#111c30;border:1px solid #22304a;border-radius:14px;padding:20px;text-align:center;margin-bottom:22px">
         <div style="font-size:11px;color:#93a4be;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your join code</div>
         <div style="font-size:30px;font-weight:800;letter-spacing:4px;color:#38bdf8">${escapeHtml(opts.code)}</div>
       </div>
-      <a href="${escapeAttr(opts.appLink)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px;font-size:15px">Open the driver app</a>
+      <a href="${escapeAttr(opts.appStoreUrl)}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;font-size:15px;border:1px solid #333"> Download on the App Store</a>
       <p style="color:#6b7a93;font-size:12px;line-height:1.6;margin:24px 0 0">
-        If the button doesn't work, open the LoadSprint driver app and enter the
-        code above. Didn't expect this email? You can safely ignore it.
+        After installing, open the LoadSprint Driver app and enter the code above.
+        Didn't expect this email? You can safely ignore it.
       </p>
     </div>
   </body></html>`;
-  return { subject, html };
+  const text =
+    `You've been invited to LoadSprint by ${opts.dispatcherName}.\n\n` +
+    `Your join code: ${opts.code}\n\n` +
+    `Download the LoadSprint Driver app: ${opts.appStoreUrl}\n` +
+    `Install it, then enter the code above to sign in.\n\n` +
+    `Didn't expect this email? You can safely ignore it.`;
+  return { subject, html, text };
 }
 
 // Invite email for an additional dispatcher seat (registers on the website).

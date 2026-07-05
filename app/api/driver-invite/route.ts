@@ -8,6 +8,9 @@ import { driverAllowance } from "@/lib/billing-plans";
 import { sendEmail, driverInviteEmail } from "@/lib/email";
 
 const APP_BASE = process.env.DRIVER_APP_URL || "https://loadsprint.app/driver";
+// Apple App Store page for the LoadSprint Driver app. Overridable via env.
+const APP_STORE_URL =
+  process.env.IOS_APP_STORE_URL || "https://apps.apple.com/app/id6785073294";
 
 export async function POST(req: Request) {
   const me = await currentUser();
@@ -45,8 +48,8 @@ export async function POST(req: Request) {
   const appLink = `${APP_BASE}?code=${invite.code}`;
 
   // Email the join code to the driver (skipped silently if email isn't configured).
-  const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appLink });
-  const sent = await sendEmail({ to: email, subject: mail.subject, html: mail.html });
+  const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appStoreUrl: APP_STORE_URL });
+  const sent = await sendEmail({ to: email, subject: mail.subject, html: mail.html, text: mail.text });
 
   return NextResponse.json({
     ok: true,
