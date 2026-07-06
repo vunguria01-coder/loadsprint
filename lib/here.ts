@@ -121,11 +121,39 @@ function haversineKm(a: GeoPoint, b: GeoPoint): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-// Drop vertices that jump more than maxStepKm from the last kept vertex.
-function despike(points: GeoPoint[], maxStepKm: number): GeoPoint[] {
+// Drop bogus vertices from a HERE polyline. A real route point sits inside the
+// bounding box of the actual waypoints (origin/via/dest) plus a road-detour
+// margin, or within a short step of the previous kept point. Corrupt points
+// (e.g. a flipped-sign longitude in the wrong hemisphere) fail both and are
+// dropped — without cascading over the legitimate gaps HERE leaves between
+// route sections.
+function despike(
+  points: GeoPoint[],
+  anchors: GeoPoint[],
+  marginDeg: number,
+  maxStepKm: number
+): GeoPoint[] {
+  let minLa = 90,
+    maxLa = -90,
+    minLo = 180,
+    maxLo = -180;
+  for (const a of anchors) {
+    if (!a || typeof a.lat !== "number" || typeof a.lng !== "number") continue;
+    minLa = Math.min(minLa, a.lat);
+    maxLa = Math.max(maxLa, a.lat);
+    minLo = Math.min(minLo, a.lng);
+    maxLo = Math.max(maxLo, a.lng);
+  }
+  const inBox = (p: GeoPoint) =>
+    p.lat >= minLa - marginDeg &&
+    p.lat <= maxLa + marginDeg &&
+    p.lng >= minLo - marginDeg &&
+    p.lng <= maxLo + marginDeg;
   const out: GeoPoint[] = [];
   for (const p of points) {
-    if (out.length === 0 || haversineKm(out[out.length - 1], p) <= maxStepKm) out.push(p);
+    if (inBox(p) || (out.length > 0 && haversineKm(out[out.length - 1], p) <= maxStepKm)) {
+      out.push(p);
+    }
   }
   return out;
 }
@@ -235,7 +263,7 @@ export async function truckRoute(
     // teleports implausibly far from the last kept one; no real road step
     // between polyline vertices is hundreds of km. distance/duration come from
     // HERE's summary, so they stay correct regardless.
-    const clean = despike(points, 400);
+    const clean = despike(points, [origin, dest, ...(opts.via || [])], 5, 300);
 
     return {
       distanceMeters,
