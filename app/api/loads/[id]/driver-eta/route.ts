@@ -30,9 +30,15 @@ export async function GET(
   // "to delivery" figure use — so the check works from live GPS or last-known.
   const from = currentPoint(load);
 
+  // Route to the real first pickup and final delivery stops. load.origin/dest
+  // can be an ungeocoded placeholder on multi-stop loads, so prefer the stops.
+  const geoStops = (load.stops || []).filter((s) => s.point);
+  const pickupPt = geoStops.length > 0 ? geoStops[0].point! : load.origin;
+  const deliveryPt = geoStops.length > 0 ? geoStops[geoStops.length - 1].point! : load.dest;
+
   const [toPickup, toDelivery] = await Promise.all([
-    truckRoute(from, load.origin, {}),
-    truckRoute(from, load.dest, {}),
+    truckRoute(from, pickupPt, {}),
+    truckRoute(from, deliveryPt, {}),
   ]);
   return NextResponse.json({
     ok: true,
