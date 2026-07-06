@@ -22,18 +22,23 @@ for (let i = 0; i < FP_ENCODING.length; i++) FP_DEC[FP_ENCODING[i]] = i;
 
 function decodeHerePolyline(encoded: string): GeoPoint[] {
   let index = 0;
+  // Use plain arithmetic (not 32-bit bitwise `<<`/`|`), because HERE precision-7
+  // coordinates scale past 2^31 and would overflow a 32-bit int — flipping the
+  // sign and throwing points into the wrong hemisphere (a line across the sea).
+  // Doubles are exact to 2^53, well above any lat/lng * 10^7 value.
   const next = (): number => {
     let result = 0;
     let shift = 0;
     let b: number;
     do {
       b = FP_DEC[encoded[index++]];
-      result |= (b & 0x1f) << shift;
+      result += (b & 0x1f) * Math.pow(2, shift);
       shift += 5;
     } while (b & 0x20);
     return result;
   };
-  const toSigned = (v: number) => (v & 1 ? ~(v >> 1) : v >> 1);
+  // Zigzag decode without bitwise ops (which are 32-bit and would also overflow).
+  const toSigned = (v: number) => (v % 2 ? -(v + 1) / 2 : v / 2);
   try {
     next(); // header version
     const headerContent = next();
