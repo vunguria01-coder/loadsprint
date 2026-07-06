@@ -597,13 +597,13 @@ export function LoadMap({
 
       {/* Ask: how far is the driver from any address */}
       <div className="addr-check">
-        <div className="addr-check-label">Distance from driver to an address</div>
+        <div className="addr-check-label">How far is the driver from an address?</div>
         <div className="addr-check-row">
           <input
             type="text"
             value={addr}
             onChange={(e) => setAddr(e.target.value)}
-            placeholder="Type an address or city…"
+            placeholder="Pickup, delivery, or any address / city…"
             onKeyDown={(e) => e.key === "Enter" && checkAddress()}
           />
           <button type="button" onClick={checkAddress} disabled={addrBusy || !addr.trim()}>
@@ -613,8 +613,8 @@ export function LoadMap({
         {addrError && <div className="addr-err">{addrError}</div>}
         {addrResult && (
           <div className="addr-res">
-            🚛 <b>{addrResult.miles.toFixed(0)} mi</b> · ETA {fmtEta(addrResult.etaSeconds)} →{" "}
-            {addrResult.label}
+            🚛 <b>{addrResult.miles.toFixed(0)} mi</b> · {humanDur(addrResult.etaSeconds)} · ETA{" "}
+            {fmtEta(addrResult.etaSeconds)} → {addrResult.label}
           </div>
         )}
       </div>

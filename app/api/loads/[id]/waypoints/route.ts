@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
-import { getLoadById, currentPoint } from "@/lib/loads";
+import { getLoadById, currentPoint, type GeoPoint } from "@/lib/loads";
 import { truckRoute } from "@/lib/here";
 import { ensureStopsGeocoded } from "@/lib/geocode-stops";
 
@@ -56,23 +56,42 @@ export async function GET(
   // haven't completed yet, to the final delivery. So the drawn line + the
   // distance/time are "what's left from where the driver is now".
   const last = waypoints[waypoints.length - 1];
-  const remaining =
+  const remaining: GeoPoint[] =
     load.stops && load.stops.length > 0
       ? load.stops.filter((s) => s.point && !s.done).map((s) => ({ lat: s.point!.lat, lng: s.point!.lng }))
       : [];
   // If no multi-stop list (or all done), just head to the delivery point.
   const navTargets = remaining.length > 0 ? remaining : [{ lat: last.lat, lng: last.lng }];
   const origin = currentPoint(load); // driver's live position (or best-known)
-  const dest = navTargets[navTargets.length - 1];
-  const via = navTargets.slice(0, -1);
-  const r = await truckRoute(origin, dest, { via });
+
+  // Route each leg (driver→stop1, stop1→stop2, …) separately and concatenate.
+  // A single multi-"via" call sometimes returns glitchy section geometry
+  // (a truncated leg, or a sign-flipped coordinate across an ocean); per-leg
+  // calls come back clean and their joins land exactly on the stops.
+  const legStops: GeoPoint[] = [origin, ...navTargets];
+  const legs: [GeoPoint, GeoPoint][] = [];
+  for (let i = 0; i < legStops.length - 1; i++) legs.push([legStops[i], legStops[i + 1]]);
+  const legResults = await Promise.all(legs.map(([a, b]) => truckRoute(a, b, {})));
+
+  let points: GeoPoint[] = [];
+  let distanceMeters = 0;
+  let durationSeconds = 0;
+  let anyRoute = false;
+  for (const lr of legResults) {
+    if (!lr) continue;
+    anyRoute = true;
+    // Skip the duplicated join vertex between consecutive legs.
+    points = points.concat(points.length > 0 ? lr.points.slice(1) : lr.points);
+    distanceMeters += lr.distanceMeters;
+    durationSeconds += lr.durationSeconds;
+  }
 
   return NextResponse.json({
     ok: true,
     waypoints,
     origin, // where the nav line starts (the driver)
-    points: r?.points ?? null,
-    distanceMeters: r?.distanceMeters ?? null,
-    durationSeconds: r?.durationSeconds ?? null,
+    points: anyRoute && points.length >= 2 ? points : null,
+    distanceMeters: anyRoute ? distanceMeters : null,
+    durationSeconds: anyRoute ? durationSeconds : null,
   });
 }
