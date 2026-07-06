@@ -1610,3 +1610,275 @@ table.acc select option{background:#0b1120}
 .drate-clear{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:0 14px;height:40px;font-weight:600;font-size:13px;cursor:pointer}
 .drate-msg{margin-top:10px;font-size:13px;color:#f87171}
 .drate-msg.ok{color:#34d399}
+
+/* ---------- Trucks ---------- */
+/* Negative-net accent for stat tiles (mirrors .sx-* family). */
+.sx-red::before{background:linear-gradient(90deg,#dc2626,#f87171)}
+.sx-red .hs-ic{background:rgba(220,38,38,.15);color:#f87171}
+
+/* Truck fleet grid + cards */
+.truck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.truck-card{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:16px;padding:18px;background:linear-gradient(180deg,rgba(148,170,205,.06),rgba(148,170,205,.015));text-decoration:none;color:#fff;transition:transform .18s ease,border-color .18s ease}
+.truck-card:hover{transform:translateY(-2px);border-color:rgba(56,189,248,.4)}
+.tc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tc-title{display:flex;align-items:center;gap:8px;font-family:Poppins;font-weight:700;font-size:16px;color:#fff}
+.tc-title svg{color:var(--sky)}
+.tc-sub{font-family:Manrope;font-size:12.5px;color:var(--muted)}
+.tc-driver{font-family:Manrope;font-size:12.5px;color:var(--muted-2)}
+.tc-fin{display:flex;gap:14px;margin-top:4px;padding-top:12px;border-top:1px solid var(--line-2)}
+.tc-fin>div{display:flex;flex-direction:column;gap:2px}
+.tc-fin-l{font-family:Manrope;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+.tc-fin-v{font-family:Poppins;font-weight:800;font-size:15px;color:#fff}
+.tc-fin-v.pos{color:#34d399}
+.tc-fin-v.neg{color:#f87171}
+.tc-status{font-family:Manrope;font-weight:700;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.st-active{background:rgba(52,211,153,.14);color:#34d399}
+.st-in_shop{background:rgba(251,191,36,.16);color:#fbbf24}
+.st-parked{background:rgba(148,170,205,.14);color:var(--muted)}
+.st-sold{background:rgba(248,113,113,.15);color:#f87171}
+
+/* Add-truck modal */
+.tm-box{max-width:640px;width:100%}
+.tm-body{padding:18px 20px 20px}
+.tm-hint{font-size:12.5px;color:var(--muted-2);margin:14px 0 0}
+.tm-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+/* Expense / fuel-card forms + journals */
+.tx-form{margin-top:14px}
+.tx-add{display:flex;justify-content:flex-end;margin-top:12px}
+.tx-list{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.tx-empty{color:var(--muted-2);font-size:13.5px;padding:10px 2px}
+.tx-row{display:flex;align-items:center;gap:12px;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;background:rgba(148,170,205,.03)}
+.tx-tag{flex:none;display:inline-flex;align-items:center;gap:4px;font-family:Manrope;font-weight:700;font-size:11px;letter-spacing:.02em;padding:4px 9px;border-radius:8px;background:rgba(56,189,248,.12);color:#7dd3fc;text-transform:capitalize}
+.tx-tag.k-repair,.tx-tag.k-maintenance{background:rgba(251,191,36,.14);color:#fbbf24}
+.tx-tag.k-fuel{background:rgba(52,211,153,.14);color:#34d399}
+.tx-tag.k-purchase,.tx-tag.k-loan{background:rgba(37,99,235,.16);color:#60a5fa}
+.tx-tag.k-insurance,.tx-tag.k-tolls,.tx-tag.k-other{background:rgba(148,170,205,.12);color:var(--muted)}
+.tx-mid{flex:1;min-width:0}
+.tx-note{font-family:Manrope;font-weight:600;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-family:Manrope;font-size:12px;color:var(--muted-2);margin-top:2px}
+.tx-amt{flex:none;font-family:Poppins;font-weight:800;font-size:15px;color:#fff}
+.tx-del{flex:none;background:none;border:0;cursor:pointer;color:var(--muted-2);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;transition:.15s}
+.tx-del:hover{background:rgba(248,113,113,.12);color:#f87171}
+.tx-del:disabled{opacity:.5;cursor:default}
+
+/* Inline "How to" help disclosures on the truck page */
+.tk-help{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:rgba(56,189,248,.05);overflow:hidden}
+.tk-help>summary{cursor:pointer;list-style:none;padding:12px 14px;font-family:Manrope;font-weight:700;font-size:13.5px;color:#7dd3fc;display:flex;align-items:center;gap:8px;user-select:none}
+.tk-help>summary::-webkit-details-marker{display:none}
+.tk-help>summary::before{content:"?";flex:none;width:18px;height:18px;border-radius:50%;background:rgba(56,189,248,.18);color:#38bdf8;font-size:12px;font-weight:800;display:grid;place-items:center}
+.tk-help>summary::after{content:"▸";margin-left:auto;color:var(--muted-2);transition:transform .18s}
+.tk-help[open]>summary::after{transform:rotate(90deg)}
+.tk-help-body{padding:2px 16px 16px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.tk-help-body p{margin:8px 0}
+.tk-help-body ol{margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+.tk-help-body ul{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.tk-help-body b{color:#fff;font-weight:700}
+.tk-help-body i{color:#cdd8ea;font-style:italic}
+.tk-help-note{color:var(--muted-2);font-size:12.5px;border-top:1px solid var(--line-2);padding-top:10px}
+
+/* Reports year table */
+.rep-table{width:100%;border-collapse:collapse;font-family:Manrope}
+.rep-table th{text-align:left;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-2);font-weight:700;padding:12px 16px;border-bottom:1px solid var(--line)}
+.rep-table td{font-size:14px;color:#fff;padding:13px 16px;border-bottom:1px solid var(--line-2)}
+.rep-table tr:last-child td{border-bottom:0}
+.rep-table td.pos{color:#34d399;font-weight:700}
+.rep-table td.neg{color:#f87171;font-weight:700}
+
+/* ---------- Loadboard search / filter ---------- */
+.lb-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.lb-search{flex:1;min-width:220px;margin:0}
+.lb-status{flex:none;font-family:Inter,sans-serif;font-size:14px;color:#fff;background:rgba(8,14,28,.7);border:1px solid var(--line);border-radius:11px;padding:0 38px 0 14px;height:46px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2393A4BE' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.lb-status:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.lb-status option{background:#0b1120}
+
+/* Home CTA row (New load + Manage drivers) */
+.home-cta-row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* New-load driver picker modal */
+.nl-box{max-width:460px;width:100%}
+.nl-body{padding:16px 18px 18px}
+.nl-list{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow-y:auto}
+.nl-empty{color:var(--muted-2);font-size:13.5px;padding:14px 4px}
+.nl-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:rgba(148,170,205,.03);border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;cursor:pointer;transition:.15s;color:#fff}
+.nl-row:hover{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.06)}
+.nl-av{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(56,189,248,.14);color:#38bdf8;font-family:Poppins;font-weight:700;font-size:14px}
+.nl-info{flex:1;min-width:0}
+.nl-name{font-family:Manrope;font-weight:700;font-size:14px;color:#fff}
+.nl-email{font-family:Manrope;font-size:12px;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nl-chev{color:var(--muted-2);flex:none}
+
+/* =====================================================================
+   FRESH — light theme for the dispatcher app only (scoped to .cab).
+   The public marketing/auth pages keep their original dark styling.
+   Mint-white ground, teal accent, ink text.
+   ===================================================================== */
+.cab{
+  --bg:#EDF3F1; --navy-900:#EDF3F1; --navy-800:#E6F1ED; --navy:#0E1D1B;
+  --card:#FFFFFF; --card-hi:#EAF3F1;
+  --line:#DBE7E3; --line-2:#E9F0ED;
+  --sky:#0D9488; --blue:#0F766E; --grad:linear-gradient(120deg,#0D9488,#14B8A6);
+  --ink:#0E1D1B; --text:#0E1D1B; --muted:#5A6E69; --muted-2:#8B9C97;
+  --accent-soft:rgba(13,148,136,.12);
+  background:var(--bg); color:var(--ink);
+}
+
+/* base text + headings */
+.cab-content{color:var(--ink)}
+.cab :is(h1,h2,h3,h4){color:var(--ink)}
+.cab .lead,.cab .admin-sub,.cab .px{color:var(--muted)}
+
+/* App chrome: sidebar, topbar, account */
+.cab-side{background:var(--card)}
+.cab-main{background:
+  radial-gradient(1100px 560px at 82% -10%, rgba(13,148,136,.08), transparent 60%),
+  radial-gradient(820px 460px at -6% 110%, rgba(20,184,166,.06), transparent 55%);}
+.cab-top{background:rgba(255,255,255,.82)}
+.cab-burger{color:var(--ink)}
+.cab-link{color:var(--muted)}
+.cab-link:hover{background:var(--accent-soft)}
+.cab-side .cab-link.active{background:linear-gradient(90deg,rgba(13,148,136,.16),rgba(13,148,136,.04));color:var(--blue)}
+.cab-link.active svg{color:var(--sky)}
+.cab-back{color:var(--muted);background:var(--card-hi);border-color:var(--line)}
+.cab-back:hover{color:var(--blue);background:var(--accent-soft);border-color:rgba(13,148,136,.4)}
+.cab-acc-btn{background:var(--card);color:var(--ink)}
+.cab-acc-btn:hover{border-color:rgba(13,148,136,.4)}
+.cab-acc-menu{box-shadow:0 18px 48px -20px rgba(16,40,36,.35)}
+.cab-acc-sub{color:var(--blue);background:var(--accent-soft);border-color:rgba(13,148,136,.3)}
+.cab-acc-item{color:var(--ink)}
+.cab-acc-item:hover{background:var(--accent-soft)}
+
+/* Card depth: soft light shadow instead of the heavy dark one */
+.cab-content .panel,.cab-content .plan-card,.cab-content .rev-card,
+.cab-content .seat-meter,.cab-content .earn-card,.cab-content .start-card,
+.cab-content .load-card,.cab-content .ins-card{
+  box-shadow:0 1px 2px rgba(16,40,36,.05), 0 18px 40px -28px rgba(16,40,36,.28);
+}
+
+/* Flip hardcoded white text to ink across app components */
+.cab :is(.hs-val,.tc-title,.tc-fin-v,.tx-note,.tx-amt,.lc-ref,.nl-name,
+  .dp-name,.dp-ref,.seat-count,.billing-h,.plan-name,.plan-price,.rev-driver,
+  .driver-name-lg,.stop-addr,.addr-val,.ai-addr,.ai-head,.track-val,
+  .inv-meta b,.inv-line b,.inv-from div,.collapsible-head,.wiz-step.on,
+  .dm-email,.invite .ie,.pdf-head b,.pdfp-picked,.pdfp-zlabel,.pricing-tier,
+  .pricing-amount,.pricing-head h3,.dg-name,.driver-name-lg,.coords .c b){color:var(--ink)}
+.cab .dp-stat span{color:var(--ink)}
+.cab .rep-table td{color:var(--ink)}
+.cab .lc-route{color:var(--muted)}
+
+/* Inputs / selects / textareas → light fills */
+.cab :is(.field input,.field select,.field textarea,.dm-add input,
+  .driver-search input,.lb-status,.addr-form input,.add-driver .row input,
+  .addr-check-row input,.inv-billedit input,.acc select,.price-edit input){
+  background:#F4FAF8;color:var(--ink);border-color:var(--line);
+}
+.cab :is(.field option,.lb-status option,.acc select option){background:#fff;color:var(--ink)}
+.cab .driver-search input{background:none}
+.cab .driver-search{background:#F4FAF8;border-color:var(--line)}
+.cab :is(.field input,.field textarea)::placeholder{color:var(--muted-2)}
+
+/* Stat tiles: white cards, teal-leaning accent bars kept for good/bad meaning */
+.cab .home-stat{background:#fff}
+.cab .home-stat:hover{border-color:rgba(13,148,136,.4)}
+.cab .sx-blue::before{background:linear-gradient(90deg,#0D9488,#2DD4BF)}
+.cab .sx-blue .hs-ic{background:rgba(13,148,136,.13);color:#0D9488}
+.cab .sx-sky::before{background:linear-gradient(90deg,#0891B2,#22D3EE)}
+.cab .sx-sky .hs-ic{background:rgba(8,145,178,.13);color:#0891B2}
+
+/* Truck cards / rows / help notes on light */
+.cab .truck-card{background:#fff}
+.cab .truck-card:hover{border-color:rgba(13,148,136,.4)}
+.cab .tx-row,.cab .nl-row{background:#F6FAF9}
+.cab .tx-row:hover,.cab .nl-row:hover{background:var(--accent-soft);border-color:rgba(13,148,136,.4)}
+.cab .tk-help{background:rgba(13,148,136,.06)}
+.cab .tk-help>summary{color:var(--blue)}
+.cab .tk-help>summary::before{background:rgba(13,148,136,.16);color:#0D9488}
+.cab .tk-help-body b{color:var(--ink)}
+.cab .tk-help-body i{color:#33564f}
+
+/* Buttons */
+.cab .btn-ghost{background:var(--card-hi);color:var(--ink);border-color:var(--line)}
+.cab .btn-ghost:hover{border-color:rgba(13,148,136,.4)}
+.cab .btn-primary{color:#fff}
+
+/* Loadboard search + status */
+.cab .lb-status{background:#F4FAF8;color:var(--ink)}
+
+/* Logo is a white wordmark — darken it so it reads on the light sidebar */
+.cab-side .cab-brand img{filter:brightness(0) saturate(0);opacity:.86}
+/* Notifications bell + misc icon buttons stay legible on light */
+.cab .notif-btn,.cab .notif-btn svg{color:var(--muted)}
+
+/* Load workspace: lighten the dark-fill sub-panels for the Fresh theme */
+.cab :is(.addr-edit,.pdf-box,.pdfp,.pdfp-status,.addr-check){background:#F5FAF8}
+.cab .pdf-text{background:#F1F7F5;color:var(--ink)}
+.cab :is(.pdfp-bar,.pdfp-zoom){background:#EAF3F1}
+.cab .pdfp-zbtn{background:#fff;color:var(--ink)}
+.cab :is(.addr-form input,.addr-check-row input,.inv-billedit input){background:#F5FAF8;color:var(--ink)}
+.cab .addr-val{color:var(--ink)}
+.cab .eta-row{color:#0f766e;background:rgba(13,148,136,.08);border-color:rgba(13,148,136,.25)}
+.cab .collapsible{background:#F5FAF8}
+
+/* Fresh: lighten remaining dark sub-panels across the deeper app screens */
+.cab :is(.plan-card,.rev-card,.billing-banner,.am-card,.bp-shell,.doc-row,
+  .uploader,.dist-chip,.sp-rate,.da-input,.dp-pw,.ai-scope-opt,.drate-input,
+  .pkg-item,.dm-row,.settle-card,.stat-box){background:#F6FAF9}
+.cab .modal .box{background:#fff}
+.cab .cal-cell{background:#fff}
+.cab .cal-cell.dim{background:#F1F6F4}
+.cab :is(.chat-input,.chat textarea){background:#F5FAF8;color:var(--ink)}
+.cab .rev-count{color:var(--ink)}
+.cab .dp-open{background:#fff}
+
+/* In-app billing pricing cards → light */
+.cab .pricing-card{background:#fff}
+.cab .pricing-toggle{background:#EAF3F1}
+.cab .pricing-toggle button{color:var(--muted)}
+.cab .pricing-toggle button.on{color:#fff}
+.cab .pricing-drivers{color:var(--ink);background:#EAF3F1}
+.cab .pricing-feats li{color:var(--ink)}
+.cab .pricing-cta{background:#EAF3F1;color:var(--ink)}
+.cab .pricing-tagline,.cab .pricing-amount span{color:var(--muted)}
+
+/* Notifications + help + toast panels → light */
+.cab .help-panel{background:#fff;color:var(--ink);border-color:var(--line)}
+.cab .help-panel .help-title,.cab .help-panel .help-intro{color:var(--ink)}
+.cab .notif-menu,.cab .bell-menu{background:#fff;color:var(--ink)}
+
+/* Fresh: remaining white text → ink on light panels (skip on-color buttons) */
+.cab :is(.settle-name,.al-head h3,.cal-month,.cal-sched h3,.cal-sref,.cal-day,
+  .danger-zone h3,.drv-chip b,.ins-drv-name,.ins-section h3,.inv-doc-band,
+  .pkg-it-body b,.pkg-modal-title,.start-head h3,.start-steps li b,.addr-res,
+  .comm-pct .u-name){color:var(--ink)}
+.cab :is(.comm-pct input,.drate-input input,.sp-rate input,.cal-sdate input){background:#F5FAF8;color:var(--ink)}
+.cab .cal-nav button{color:var(--ink)}
+.cab .pricing-cta{color:var(--ink)}
+.cab .ins-bar .ib-val{color:var(--muted)}
+
+/* Load-card dates + driver-group total */
+.lc-dates{display:flex;align-items:center;gap:7px;font-family:Manrope;font-size:12px;color:var(--muted);margin-top:8px}
+.lc-dates svg{color:var(--sky);flex:none}
+.lc-dsep{color:var(--muted-2)}
+.dg-total{font-weight:800;color:var(--sky)}
+
+/* Load workspace loading skeleton */
+.ld-skel-wrap{padding-top:8px}
+.ld-skel-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-top:18px}
+.ld-skel-col{display:flex;flex-direction:column;gap:16px}
+.ld-skel{border-radius:14px;background:linear-gradient(100deg,var(--card-hi) 30%,rgba(148,170,205,.14) 50%,var(--card-hi) 70%);background-size:200% 100%;animation:ld-shimmer 1.3s ease-in-out infinite}
+.ld-skel-head{height:74px;max-width:360px}
+.ld-skel-map{height:300px}
+.ld-skel-card{height:210px}
+.ld-skel-card.sm{height:130px}
+@keyframes ld-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (max-width:860px){.ld-skel-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.ld-skel{animation:none}}
+
+/* Create-load step 1: clearer PDF-vs-manual fork + compact scope row */
+.ai-scope-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ai-scope-row .ai-scope-label{margin:0}
+.ai-scope-row .ai-scope-opt{flex:none;min-width:0;padding:6px 11px;font-size:12.5px;border-radius:8px}
+.cl-or{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted-2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.cl-or::before,.cl-or::after{content:"";flex:1;height:1px;background:var(--line)}
+/* Light theme: readable selected scope pill (dark-theme #fff would vanish) */
+.cab .ai-scope-opt.on{background:var(--accent-soft);border-color:var(--sky);color:var(--blue)}

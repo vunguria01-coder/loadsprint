@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, LayoutDashboard, Users, History, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { HelpWidget } from "@/components/help-widget";
@@ -35,6 +35,7 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
     { key: "dashboard", href: "/dashboard", label: "Home", icon: <LayoutDashboard size={18} /> },
     { key: "active", href: "/active-loads", label: "Active loads", icon: <Truck size={18} /> },
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
+    { key: "trucks", href: "/trucks", label: "Trucks", icon: <Container size={18} /> },
     { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} /> },
     { key: "calendar", href: "/calendar", label: "Calendar", icon: <CalendarDays size={18} /> },
     { key: "insights", href: "/insights", label: "Insights", icon: <BarChart3 size={18} /> },

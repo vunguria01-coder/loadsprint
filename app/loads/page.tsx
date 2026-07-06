@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { MapPin, ArrowRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, findByEmail } from "@/lib/auth";
+import { getInvitesByRole } from "@/lib/invites";
 import {
   getLoadsByDispatcher,
   getLoadsByBrokerEmail,
@@ -12,46 +12,34 @@ import {
   type Load,
 } from "@/lib/loads";
 import { CabinetServer } from "@/components/cabinet-server";
-import { StatusChip } from "@/components/status-chip";
+import { LoadBoard, type LoadSummary } from "@/components/load-board";
+import { NewLoadButton } from "@/components/new-load-button";
 
 export const metadata: Metadata = {
   title: "Loads — LoadSprint",
   robots: { index: false, follow: false },
 };
 
-function LoadCard({ load }: { load: Load }) {
-  const sharingLive = load.driverShareLocation !== false && !!load.driverPoint;
-  const sharingPaused = load.driverShareLocation === false;
-  return (
-    <Link href={`/loads/${load.id}`} className="load-card">
-      <div className="lc-top">
-        <span className="lc-ref">{load.ref}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {sharingLive && (
-            <span className="loc-chip loc-live" title="Driver is sharing live GPS">
-              📍 Live
-            </span>
-          )}
-          {sharingPaused && (
-            <span className="loc-chip loc-paused" title="Driver paused location sharing">
-              📍 Paused
-            </span>
-          )}
-          <StatusChip status={load.status} />
-        </div>
-      </div>
-      <div className="lc-route">
-        <MapPin /> {load.originName} <ArrowRight size={15} /> {load.destName}
-      </div>
-      <div className="lc-sub">
-        {load.documents.length} docs · {load.photos.length} photos ·{" "}
-        {load.messages.length} messages
-      </div>
-      {typeof load.loadRate === "number" && load.loadRate > 0 && (
-        <div className="lc-price">${load.loadRate.toLocaleString("en-US")}</div>
-      )}
-    </Link>
-  );
+function toSummary(l: Load): LoadSummary {
+  return {
+    id: l.id,
+    ref: l.ref,
+    originName: l.originName,
+    destName: l.destName,
+    status: l.status,
+    driverName: l.driverName || "Unassigned",
+    docs: l.documents.length,
+    photos: l.photos.length,
+    messages: l.messages.length,
+    loadRate: l.loadRate,
+    pickupDate: l.pickupDate,
+    deliveryDate: l.deliveryDate,
+    sharingLive: l.driverShareLocation !== false && !!l.driverPoint,
+    sharingPaused: l.driverShareLocation === false,
+    search: [l.ref, l.driverName, l.originName, l.destName, l.brokerName, l.brokerEmail, l.billTo || ""]
+      .join(" ")
+      .toLowerCase(),
+  };
 }
 
 export default async function LoadsPage() {
@@ -69,63 +57,52 @@ export default async function LoadsPage() {
   } else if (me.role === "driver") {
     loads = getLoadsByDriverEmail(me.email);
   } else {
-    // dispatcher: their own created loads
     loads = getLoadsByDispatcher(me.id);
   }
 
-  // group by driver
-  const groups = new Map<string, Load[]>();
-  for (const l of loads) {
-    const key = l.driverName || "Unassigned";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(l);
-  }
+  const summaries = loads.map(toSummary);
+
+  // Driver options for the "New load" picker (dispatchers only create loads).
+  const driverOpts =
+    me.role === "dispatcher"
+      ? Array.from(new Set(getInvitesByRole(me.id, "driver").map((i) => i.email.toLowerCase()))).map(
+          (email) => ({ email, name: findByEmail(email)?.name || email })
+        )
+      : [];
 
   return (
     <CabinetServer active="loads">
       <div className="wrap">
-          <h1 className="admin-h">Loads</h1>
-          <p className="admin-sub">
-            {me.role === "broker"
-              ? "Loads where you are the broker."
-              : "Open a driver, then open any load for full control."}
-          </p>
-
-          {loads.length === 0 && (
-            <div className="empty">No loads yet.</div>
-          )}
-
-          {me.role === "broker"
-            ? (
-              <div className="load-cards">
-                {loads.map((l) => (
-                  <LoadCard key={l.id} load={l} />
-                ))}
-              </div>
-            )
-            : (
-              [...groups.entries()].map(([driver, dloads]) => (
-                <div className="driver-group" key={driver}>
-                  <div className="dg-head">
-                    <div className="dg-av">
-                      {driver.split(" ").map((p) => p[0]).join("").slice(0, 2)}
-                    </div>
-                    <div>
-                      <div className="dg-name">{driver}</div>
-                      <div className="dg-meta">
-                        {dloads.length} active load{dloads.length === 1 ? "" : "s"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="load-cards">
-                    {dloads.map((l) => (
-                      <LoadCard key={l.id} load={l} />
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
+        <div
+          className="shead"
+          style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}
+        >
+          <div>
+            <h1 className="admin-h">Loads</h1>
+            <p className="admin-sub">
+              {me.role === "broker"
+                ? "Loads where you are the broker."
+                : "Search, filter and open any load for full control."}
+            </p>
+          </div>
+          {me.role === "dispatcher" && <NewLoadButton drivers={driverOpts} />}
         </div>
+
+        {summaries.length === 0 ? (
+          <div className="home-empty">
+            <p>
+              {me.role === "broker"
+                ? "No loads yet. They appear here once a dispatcher shares one with you."
+                : "No loads yet. Create your first load to get started."}
+            </p>
+            {me.role === "dispatcher" && (
+              <Link href="/drivers" className="home-empty-link">Go to drivers →</Link>
+            )}
+          </div>
+        ) : (
+          <LoadBoard loads={summaries} grouped={me.role !== "broker"} />
+        )}
+      </div>
     </CabinetServer>
   );
 }

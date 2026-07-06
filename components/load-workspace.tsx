@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
+import { useToast } from "@/components/toast";
 import { StatusChip } from "@/components/status-chip";
 import { LoadMap } from "@/components/load-map";
 import { LoadChat } from "@/components/load-chat";
@@ -18,6 +19,7 @@ import { DriverRate } from "@/components/driver-rate";
 export function LoadWorkspace({ loadId }: { loadId: string }) {
   const [load, setLoad] = useState<LoadView | null>(null);
   const readSent = useRef(false);
+  const toast = useToast();
 
   const fetchLoad = useCallback(
     async (advance: boolean) => {
@@ -37,6 +39,8 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
 
   const mutate = useCallback(
     async (body: Record<string, unknown>) => {
+      // "read" is a silent background call (mark chat read) — never toast on it.
+      const silent = body.action === "read";
       try {
         const res = await fetch(`/api/loads/${loadId}`, {
           method: "POST",
@@ -44,12 +48,16 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           body: JSON.stringify(body),
         });
         const data = await res.json();
-        if (data.ok) setLoad(data.load);
+        if (data.ok) {
+          setLoad(data.load);
+        } else if (!silent) {
+          toast("Couldn't save that", data.error || "Please try again.");
+        }
       } catch {
-        /* ignore */
+        if (!silent) toast("Network error", "Check your connection and try again.");
       }
     },
-    [loadId]
+    [loadId, toast]
   );
 
   useEffect(() => {
@@ -68,8 +76,18 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
 
   if (!load) {
     return (
-      <div className="wrap" style={{ padding: "60px 0", color: "var(--muted)" }}>
-        Loading load…
+      <div className="wrap ld-skel-wrap" aria-busy="true" aria-label="Loading load">
+        <div className="ld-skel ld-skel-head" />
+        <div className="ld-skel-grid">
+          <div className="ld-skel-col">
+            <div className="ld-skel ld-skel-map" />
+            <div className="ld-skel ld-skel-card" />
+          </div>
+          <div className="ld-skel-col">
+            <div className="ld-skel ld-skel-card" />
+            <div className="ld-skel ld-skel-card sm" />
+          </div>
+        </div>
       </div>
     );
   }

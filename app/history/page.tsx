@@ -19,6 +19,9 @@ export const metadata: Metadata = {
 export default async function HistoryPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
+  // Dispatchers have a single canonical completed-loads screen ("Completed" →
+  // /review). Send them there so History isn't a confusing duplicate.
+  if (me.role === "dispatcher") redirect("/review");
 
   let loads: Load[] = [];
   if (me.role === "admin") loads = getAllLoads();

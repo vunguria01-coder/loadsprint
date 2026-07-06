@@ -5,6 +5,7 @@ import { CabinetServer } from "@/components/cabinet-server";
 import { hasAccess, findByEmail } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher, currentPoint } from "@/lib/loads";
+import { getDriverGlobalLocation } from "@/lib/driver-location";
 import { DriverLoads } from "@/components/driver-loads";
 import { DriverMap } from "@/components/driver-map";
 import { CreateLoad } from "@/components/create-load";
@@ -38,12 +39,27 @@ export default async function DriverDetailPage({
     .filter((l) => l.driverEmail.toLowerCase() === email)
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
-  const points = loads
-    .filter((l) => l.status !== "Delivered" && l.status !== "Closed")
-    .map((l) => {
-      const p = currentPoint(l);
-      return { ref: l.ref, lat: p.lat, lng: p.lng, status: l.status };
-    });
+  const activePoints: { ref: string; lat: number; lng: number; status: string }[] =
+    loads
+      .filter((l) => l.status !== "Delivered" && l.status !== "Closed")
+      .map((l) => {
+        const p = currentPoint(l);
+        return { ref: l.ref, lat: p.lat, lng: p.lng, status: l.status };
+      });
+
+  // When the driver isn't on an active load, still show where they are: their
+  // last-known GPS (reported by the driver app independent of any load).
+  let points = activePoints;
+  let mapNote: string | undefined;
+  if (activePoints.length === 0) {
+    const last = getDriverGlobalLocation(email);
+    if (last) {
+      points = [{ ref: name, lat: last.lat, lng: last.lng, status: "Last known location" }];
+      mapNote = `Not on an active load — showing last known position (${new Date(
+        last.at
+      ).toLocaleString()}).`;
+    }
+  }
 
   const list = loads.map((l) => ({
     id: l.id,
@@ -84,14 +100,14 @@ export default async function DriverDetailPage({
             <DriverPanel name={name} email={email} stats={stats} history={history} />
           </div>
 
-          <DriverMap points={points} />
+          <DriverMap points={points} note={mapNote} />
 
           <div style={{ marginTop: 18 }}>
             <h3 style={{ marginBottom: 12 }}>Loads</h3>
             <DriverLoads loads={list} />
           </div>
 
-          <div style={{ marginTop: 18 }}>
+          <div id="new-load" style={{ marginTop: 18, scrollMarginTop: 90 }}>
             <CreateLoad driverName={name} driverEmail={email} />
           </div>
         </div>

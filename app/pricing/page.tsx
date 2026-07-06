@@ -98,6 +98,10 @@ export default async function PricingPage() {
                   </ul>
                   {current === tier ? (
                     <div className="current-tag">Your current plan</div>
+                  ) : signedIn && (me?.role === "dispatcher" || me?.role === "admin") ? (
+                    <Link href="/billing" className="btn btn-primary btn-block">
+                      Choose {tier}
+                    </Link>
                   ) : (
                     <div className="current-tag" style={{ color: "var(--muted-2)" }}>
                       Contact your administrator

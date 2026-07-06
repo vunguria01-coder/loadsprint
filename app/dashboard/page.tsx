@@ -3,12 +3,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Package, Users, PackageCheck, DollarSign, ArrowRight } from "lucide-react";
 import { currentUser } from "@/lib/guard";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, findByEmail } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
 import { CabinetServer } from "@/components/cabinet-server";
 import { ActiveLoads } from "@/components/active-loads";
 import { GettingStarted } from "@/components/getting-started";
+import { NewLoadButton } from "@/components/new-load-button";
 
 export const metadata: Metadata = {
   title: "Home — LoadSprint",
@@ -24,7 +25,9 @@ export default async function DashboardPage() {
 
   const invites = getInvitesByRole(me.id, "driver");
   const myLoads = getLoadsByDispatcher(me.id);
-  const driverCount = new Set(invites.map((i) => i.email.toLowerCase())).size;
+  const emails = Array.from(new Set(invites.map((i) => i.email.toLowerCase())));
+  const driverCount = emails.length;
+  const driverOpts = emails.map((email) => ({ email, name: findByEmail(email)?.name || email }));
 
   const active = myLoads.filter((l) => l.status !== "Delivered" && l.status !== "Closed");
   const completed = myLoads.filter((l) => l.status === "Delivered" || l.status === "Closed");
@@ -55,9 +58,12 @@ export default async function DashboardPage() {
             <h2 className="h2">Welcome back, {firstName}</h2>
             <p className="lead">Everything that needs your attention, in one place.</p>
           </div>
-          <Link href="/drivers" className="btn btn-primary home-cta">
-            <Users size={17} /> Manage drivers
-          </Link>
+          <div className="home-cta-row">
+            <NewLoadButton drivers={driverOpts} />
+            <Link href="/drivers" className="btn btn-ghost home-cta">
+              <Users size={17} /> Manage drivers
+            </Link>
+          </div>
         </div>
 
         <div className="home-stats">

@@ -34,7 +34,7 @@ function loadLeaflet(): Promise<any> {
   });
 }
 
-export function DriverMap({ points }: { points: Pt[] }) {
+export function DriverMap({ points, note }: { points: Pt[]; note?: string }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
 
@@ -56,14 +56,19 @@ export function DriverMap({ points }: { points: Pt[] }) {
         "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
         { maxZoom: 19, opacity: 0.9 }
       ).addTo(m);
-      const icon = L.divIcon({
-        className: "",
-        html: '<div style="width:16px;height:16px;border-radius:50%;background:#38BDF8;border:3px solid #0B1120;box-shadow:0 0 0 2px #38BDF8"></div>',
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
+      const mkIcon = (color: string) =>
+        L.divIcon({
+          className: "",
+          html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:3px solid #0B1120;box-shadow:0 0 0 2px ${color}"></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+      // Blue for a live load; gray when we're only showing the last-known point.
+      const liveIcon = mkIcon("#38BDF8");
+      const idleIcon = mkIcon("#94A3B8");
       const group: any[] = [];
       points.forEach((p) => {
+        const icon = p.status === "Last known location" ? idleIcon : liveIcon;
         const mk = L.marker([p.lat, p.lng], { icon }).addTo(m);
         mk.bindPopup(`<b>${p.ref}</b><br>${p.status}`);
         group.push(mk);
@@ -89,9 +94,12 @@ export function DriverMap({ points }: { points: Pt[] }) {
         <MapPin /> Driver location
       </h3>
       {points.length === 0 ? (
-        <p className="px">No active loads to show on the map.</p>
+        <p className="px">No location reported yet for this driver.</p>
       ) : (
-        <div ref={el} style={{ height: 320, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }} />
+        <>
+          {note && <p className="px" style={{ marginTop: -4 }}>{note}</p>}
+          <div ref={el} style={{ height: 320, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }} />
+        </>
       )}
     </div>
   );

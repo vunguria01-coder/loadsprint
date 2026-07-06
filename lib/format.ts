@@ -1,3 +1,7 @@
+// Shared money formatter used across financial screens (settlements, insights,
+// trucks). Rounds to whole dollars with thousands separators, e.g. $12,450.
+export const money = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
+
 export function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

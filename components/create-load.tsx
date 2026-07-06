@@ -323,45 +323,28 @@ export function CreateLoad({
         <div className={`wiz-step${step >= 3 ? " on" : ""}`}><span>3</span> Confirm</div>
       </div>
 
-      {/* STEP 1 — upload */}
+      {/* STEP 1 — choose how to start: import a PDF (AI) or enter manually */}
       {step === 1 && (
-        <div>
-          <div className="ai-scope">
-            <div className="ai-scope-label">What should the AI read?</div>
-            <div className="ai-scope-opts">
-              <button
-                type="button"
-                className={`ai-scope-opt${aiScope === "all" ? " on" : ""}`}
-                onClick={() => setAiScope("all")}
-              >
-                Everything
-              </button>
-              <button
-                type="button"
-                className={`ai-scope-opt${aiScope === "addresses_rate" ? " on" : ""}`}
-                onClick={() => setAiScope("addresses_rate")}
-              >
-                Addresses + rate
-              </button>
-              <button
-                type="button"
-                className={`ai-scope-opt${aiScope === "addresses" ? " on" : ""}`}
-                onClick={() => setAiScope("addresses")}
-              >
-                Addresses only
-              </button>
-            </div>
-          </div>
-          <label className="btn btn-ghost btn-block" style={{ marginBottom: 14, cursor: "pointer" }}>
+        <div className="cl-start">
+          <label className="btn btn-primary btn-block" style={{ cursor: "pointer" }}>
             <FileUp size={16} /> {reading ? "Reading PDF…" : "Import from rate confirmation (PDF)"}
             <input type="file" accept="application/pdf" hidden onChange={onConfirmation} disabled={reading} />
           </label>
-          <p className="px">
-            Upload the broker’s rate confirmation. The AI reads it and detects every
-            pickup and drop-off, so you just check the result on the next step.
+          <div className="ai-scope-row">
+            <span className="ai-scope-label">AI reads:</span>
+            <button type="button" className={`ai-scope-opt${aiScope === "all" ? " on" : ""}`} onClick={() => setAiScope("all")}>Everything</button>
+            <button type="button" className={`ai-scope-opt${aiScope === "addresses_rate" ? " on" : ""}`} onClick={() => setAiScope("addresses_rate")}>Addresses + rate</button>
+            <button type="button" className={`ai-scope-opt${aiScope === "addresses" ? " on" : ""}`} onClick={() => setAiScope("addresses")}>Addresses only</button>
+          </div>
+          <p className="px" style={{ marginTop: 12 }}>
+            Upload the broker’s rate confirmation — the AI detects every pickup and
+            drop-off, so you just check the result on the next step.
           </p>
-          <button className="btn btn-ghost btn-block" style={{ marginTop: 4 }} onClick={() => setStep(3)} disabled={reading}>
-            Skip — enter details manually
+
+          <div className="cl-or"><span>or</span></div>
+
+          <button className="btn btn-ghost btn-block" onClick={() => setStep(3)} disabled={reading}>
+            Enter details manually
           </button>
         </div>
       )}

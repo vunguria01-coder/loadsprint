@@ -59,6 +59,40 @@ function helpFor(path: string): Help {
         { name: "Live location", what: "The driver's real GPS position when they're sharing it.", how: "Watch the map; on a load you can freeze the marker with a privacy hold." },
       ],
     };
+  if (path.startsWith("/trucks/reports"))
+    return {
+      title: "Truck reports",
+      intro: "Cost, income and profit across your fleet — by month and year.",
+      items: [
+        { name: "Summary cards", what: "Invested (capital sunk into your trucks), operating cost, income, and net profit.", how: "Read them for a quick fleet health check. Invested is kept separate from profit." },
+        { name: "Cost — last 12 months", what: "Every logged expense grouped by the month it happened.", how: "Scan the bars to spot heavy-spend months (big repair, insurance renewal, etc.)." },
+        { name: "Spending by category", what: "All-time totals per expense type — fuel, repair, insurance, loan and so on.", how: "See where the money goes; the capital purchase price is excluded here." },
+        { name: "By year", what: "Cost vs income and the resulting profit, per year.", how: "Compare years to see if the fleet is trending up or down." },
+      ],
+    };
+  if (path.startsWith("/trucks/"))
+    return {
+      title: "Truck",
+      intro: "Everything for one truck — money, location, ELD and fuel cards.",
+      items: [
+        { name: "Money cards", what: "Invested (purchase price), repairs, fuel, other costs, income from its loads, and net profit.", how: "Read at a glance. Net = income − operating costs; the purchase price is shown as Invested, not a loss." },
+        { name: "Truck location", what: "Where the truck is — from the assigned driver's phone GPS, or a live ELD feed once connected.", how: "Assign a driver (below) to see the map. Connect an ELD for live truck tracking." },
+        { name: "Assigned driver", what: "The driver currently running this truck. Drives the map and the income figure.", how: "Pick a driver from the dropdown; the map and income update instantly." },
+        { name: "ELD provider + vehicle ID", what: "Links the truck to your ELD (Motive, Samsara, Geotab) so logbooks and live GPS can flow in.", how: "Pick your provider, then paste the truck's Vehicle ID from your ELD portal. See the “How do I connect my ELD?” note on the page for exact steps." },
+        { name: "Expenses", what: "A journal of every cost: purchase, repair, maintenance, fuel, insurance, loan, tolls, other.", how: "Choose a type, enter the amount and date, add a note, then Add expense. For fuel you can add gallons and pick the fuel card used." },
+        { name: "Fuel cards", what: "The cards (Comdata, EFS, WEX…) used to buy fuel for this truck.", how: "Add a card with its name and last 4; then attach it to fuel expenses. See the “How fuel cards work” note on the page." },
+      ],
+    };
+  if (path.startsWith("/trucks"))
+    return {
+      title: "Trucks",
+      intro: "Your fleet — what each truck costs, earns, and where it is.",
+      items: [
+        { name: "Fleet cards (top)", what: "Trucks count, total invested, repairs, fuel, and net profit across the fleet.", how: "A quick money overview. Tap “Monthly & yearly reports” for the full breakdown." },
+        { name: "Add truck", what: "Adds a truck with its details, purchase price, assigned driver, and ELD.", how: "Click “Add truck”, fill in the name/make/model, and optionally assign a driver and ELD provider." },
+        { name: "Truck card", what: "One truck with its status and a cost / income / net snapshot.", how: "Click a card to open the truck: expenses, fuel cards, location and settings." },
+      ],
+    };
   if (path.startsWith("/loads/"))
     return {
       title: "Load",
