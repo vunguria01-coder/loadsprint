@@ -30,6 +30,7 @@ export type User = {
   commissionPct?: number; // dispatcher's commission %, set by the owner (0..100)
   canFreezeLocation: boolean;
   freezeActive: boolean;
+  canConfirmationPdf?: boolean; // admin-granted: clean rate-confirmation PDF tool
   salt: string;
   hash: string;
   createdAt: string;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
+import { hasAccess } from "@/lib/auth";
 import { generateConfirmationPdf, type ConfirmationData, type ConfirmationStop } from "@/lib/confirmation-pdf";
 
 // POST /api/confirmation-pdf — build a clean rate-confirmation copy (PDF) from
@@ -7,9 +8,9 @@ import { generateConfirmationPdf, type ConfirmationData, type ConfirmationStop }
 export async function POST(req: Request) {
   const me = await currentUser();
   if (!me) return NextResponse.json({ ok: false, error: "Please sign in first." }, { status: 401 });
-  // Admin-only for now (clean-confirmation feature is gated).
-  if (me.role !== "admin")
-    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  // Gated feature: admins, or dispatchers the admin has granted it to.
+  const allowed = me.role === "admin" || (me.role === "dispatcher" && hasAccess(me) && !!me.canConfirmationPdf);
+  if (!allowed) return NextResponse.json({ ok: false, error: "Not enabled for your account." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
   const stops = (v: unknown): ConfirmationStop[] =>

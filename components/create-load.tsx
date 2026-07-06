@@ -166,11 +166,11 @@ type AiExtract = { ref?: string; rate?: number; billTo?: string; pickups: AiStop
 export function CreateLoad({
   driverName,
   driverEmail,
-  isAdmin = false,
+  canPdf = false,
 }: {
   driverName: string;
   driverEmail: string;
-  isAdmin?: boolean;
+  canPdf?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -431,7 +431,7 @@ export function CreateLoad({
             </div>
           )}
 
-          {isAdmin && (
+          {canPdf && (
           <CleanConfirmation
             driverName={driverName}
             originalPdfUrl={pdfUrl || undefined}

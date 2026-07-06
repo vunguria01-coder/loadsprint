@@ -7,9 +7,10 @@ import type { ConfirmationData } from "@/lib/confirmation-pdf";
 // edit to the confirmation copy's fields via Claude.
 export async function POST(req: Request) {
   const me = await currentUser();
-  // Admin-only for now (clean-confirmation feature is gated).
-  if (!me || me.role !== "admin") {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  // Gated feature: admins, or dispatchers the admin has granted it to.
+  const allowed = me && (me.role === "admin" || (me.role === "dispatcher" && me.canConfirmationPdf));
+  if (!allowed) {
+    return NextResponse.json({ ok: false, error: "Not enabled for your account." }, { status: 401 });
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(

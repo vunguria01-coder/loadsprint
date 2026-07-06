@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
-  const { userId, tier, days, planId, canFreezeLocation } = parsed.data;
+  const { userId, tier, days, planId, canFreezeLocation, canConfirmationPdf } = parsed.data;
   const patch: Record<string, unknown> = {};
   if (tier !== undefined) {
     patch.tier = tier;
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
         : undefined;
   }
   if (canFreezeLocation !== undefined) patch.canFreezeLocation = canFreezeLocation;
+  if (canConfirmationPdf !== undefined) patch.canConfirmationPdf = canConfirmationPdf;
   const updated = updateUser(userId, patch);
   if (!updated) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });

@@ -30,7 +30,7 @@ export function AdminAccounts({ users }: { users: SafeUser[] }) {
 
   async function patch(
     userId: string,
-    body: { tier?: AccountTier; days?: number; canFreezeLocation?: boolean },
+    body: { tier?: AccountTier; days?: number; canFreezeLocation?: boolean; canConfirmationPdf?: boolean },
     successMsg: string
   ) {
     setBusy(userId);
@@ -63,6 +63,7 @@ export function AdminAccounts({ users }: { users: SafeUser[] }) {
             <th>Current plan</th>
             <th>Grant / extend</th>
             <th>Location freeze</th>
+            <th>Confirmation PDF</th>
           </tr>
         </thead>
         <tbody>
@@ -148,6 +149,28 @@ export function AdminAccounts({ users }: { users: SafeUser[] }) {
                     <span className="track" />
                     <span className="sw-lbl">{u.canFreezeLocation ? "Granted" : "Off"}</span>
                   </label>
+                </td>
+                <td>
+                  {u.role === "dispatcher" || u.role === "admin" ? (
+                    <label className="sw">
+                      <input
+                        type="checkbox"
+                        checked={!!u.canConfirmationPdf}
+                        disabled={busy === u.id}
+                        onChange={(e) =>
+                          patch(
+                            u.id,
+                            { canConfirmationPdf: e.target.checked },
+                            e.target.checked ? `Confirmation PDF granted to ${u.name}.` : `Revoked from ${u.name}.`
+                          )
+                        }
+                      />
+                      <span className="track" />
+                      <span className="sw-lbl">{u.canConfirmationPdf ? "Granted" : "Off"}</span>
+                    </label>
+                  ) : (
+                    <span className="u-mail">—</span>
+                  )}
                 </td>
               </tr>
             );
