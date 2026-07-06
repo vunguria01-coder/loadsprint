@@ -259,17 +259,27 @@ export async function truckRoute(
 
     // Despike: HERE occasionally returns a section whose anchor coordinate is
     // corrupt (e.g. a flipped-sign longitude), throwing a run of points into
-    // the wrong hemisphere — a line across the ocean. Drop any vertex that
-    // teleports implausibly far from the last kept one; no real road step
-    // between polyline vertices is hundreds of km. distance/duration come from
-    // HERE's summary, so they stay correct regardless.
+    // the wrong hemisphere — a line across the ocean. Drop any vertex outside
+    // the waypoints' box (+ margin) or that teleports from the last kept one.
     const clean = despike(points, [origin, dest, ...(opts.via || [])], 5, 300);
+
+    // If the whole polyline was corrupt, fall back to a straight land segment
+    // between the real endpoints — never to the raw (ocean) points. Otherwise
+    // make sure the line reaches both endpoints (HERE can truncate a section).
+    let line: GeoPoint[];
+    if (clean.length < 2) {
+      line = [origin, dest];
+    } else {
+      line = clean;
+      if (haversineKm(line[0], origin) > 50) line = [origin, ...line];
+      if (haversineKm(line[line.length - 1], dest) > 50) line = [...line, dest];
+    }
 
     return {
       distanceMeters,
       durationSeconds,
       steps,
-      points: clean.length >= 2 ? clean : points,
+      points: line,
     };
   } catch {
     return null;
