@@ -129,7 +129,10 @@ export async function truckRoute(
   const key = process.env.HERE_API_KEY;
   if (!key) return null;
 
-  const ret = opts.withSteps ? "summary,polyline,actions" : "summary";
+  // Always request the polyline — the callers draw the route line and
+  // truckRoute() returns null when it decodes zero points. "summary" alone has
+  // no geometry, so a summary-only request would always yield null.
+  const ret = opts.withSteps ? "summary,polyline,actions" : "summary,polyline";
   const t = opts.truck || {};
   const rig = {
     height: t.height && t.height > 0 ? t.height : TRUCK.height,
