@@ -5,7 +5,7 @@ import { hasAccess, billingUser } from "@/lib/auth";
 import { createInvite, getInvitesByRole, deleteInvite } from "@/lib/invites";
 import { getLimits } from "@/lib/settings";
 import { driverAllowance } from "@/lib/billing-plans";
-import { sendEmail, driverInviteEmail } from "@/lib/email";
+import { sendEmail, driverInviteEmail, gmailBlocked, GMAIL_BLOCKED_MESSAGE } from "@/lib/email";
 
 const APP_BASE = process.env.DRIVER_APP_URL || "https://loadsprint.app/driver";
 // Apple App Store page for the LoadSprint Driver app. Overridable via env.
@@ -33,6 +33,14 @@ export async function POST(req: Request) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
+
+  if (gmailBlocked(email)) {
+    return NextResponse.json(
+      { ok: false, error: GMAIL_BLOCKED_MESSAGE },
+      { status: 400 }
+    );
+  }
+
   const existingEmails = new Set(
     getInvitesByRole(me.id, "driver").map((i) => i.email.toLowerCase())
   );

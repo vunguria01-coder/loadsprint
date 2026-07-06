@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { registerSchema } from "@/lib/schemas";
+import { gmailBlocked, GMAIL_BLOCKED_MESSAGE } from "@/lib/email";
 import {
   addUser,
   createSession,
@@ -21,6 +22,13 @@ export async function POST(req: Request) {
     }
     const { role, name, company, email, password } = parsed.data;
     const normEmail = email.trim().toLowerCase();
+
+    if (gmailBlocked(normEmail)) {
+      return NextResponse.json(
+        { ok: false, error: GMAIL_BLOCKED_MESSAGE },
+        { status: 400 }
+      );
+    }
 
     if (findByEmail(normEmail)) {
       return NextResponse.json(

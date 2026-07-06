@@ -5,6 +5,21 @@
 
 const FROM = process.env.EMAIL_FROM || "LoadSprint <onboarding@resend.dev>";
 
+// While the sending domain warms up, Gmail hard-blocks our mail — so onboarding
+// a Gmail user means they never get their code and every send bounces (which
+// hurts the domain's reputation further). Set BLOCK_GMAIL=true to temporarily
+// reject Gmail addresses at registration / driver invite. Remove the flag once
+// the domain is warmed up and Gmail delivers.
+export function gmailBlocked(email: string): boolean {
+  if (process.env.BLOCK_GMAIL !== "true") return false;
+  const e = (email || "").trim().toLowerCase();
+  return e.endsWith("@gmail.com") || e.endsWith("@googlemail.com");
+}
+
+export const GMAIL_BLOCKED_MESSAGE =
+  "Gmail isn't supported yet while we finish email setup. Please use an Outlook, " +
+  "Yahoo, or company email instead.";
+
 export async function sendEmail(opts: {
   to: string;
   subject: string;
