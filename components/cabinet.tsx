@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, LayoutDashboard, Users, History, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container, TrendingUp, BellRing,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { HelpWidget } from "@/components/help-widget";
@@ -36,9 +36,11 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
     { key: "active", href: "/active-loads", label: "Active loads", icon: <Truck size={18} /> },
     { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
     { key: "trucks", href: "/trucks", label: "Trucks", icon: <Container size={18} /> },
+    { key: "reminders", href: "/reminders", label: "Reminders", icon: <BellRing size={18} /> },
     { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} /> },
     { key: "calendar", href: "/calendar", label: "Calendar", icon: <CalendarDays size={18} /> },
     { key: "insights", href: "/insights", label: "Insights", icon: <BarChart3 size={18} /> },
+    { key: "profit", href: "/profit", label: "Profit", icon: <TrendingUp size={18} /> },
     { key: "settlements", href: "/settlements", label: "Settlements", icon: <Wallet size={18} /> },
     // Team (additional dispatcher seats) — owners only.
     ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} /> }] : []),

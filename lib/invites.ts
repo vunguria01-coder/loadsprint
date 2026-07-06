@@ -13,6 +13,7 @@ export type DriverInvite = {
   createdByName: string;
   role: "driver" | "dispatcher"; // what the invitee becomes when they register
   status: "pending" | "claimed";
+  demo?: boolean; // sample data, removable via "Remove demo data"
   createdAt: string;
 };
 
@@ -50,7 +51,8 @@ export function createInvite(
   email: string,
   createdBy: string,
   createdByName: string,
-  role: "driver" | "dispatcher" = "driver"
+  role: "driver" | "dispatcher" = "driver",
+  demo = false
 ): DriverInvite {
   const invites = getInvites();
   const invite: DriverInvite = {
@@ -61,6 +63,7 @@ export function createInvite(
     createdByName,
     role,
     status: "pending",
+    demo: demo || undefined,
     createdAt: new Date().toISOString(),
   };
   invites.push(invite);
@@ -112,6 +115,15 @@ export function deleteInvite(id: string, userId: string, isAdmin = false): boole
   if (!isAdmin && inv.createdBy !== userId) return false;
   save(invites.filter((i) => i.id !== id));
   return true;
+}
+
+// Remove all demo-flagged invites created by a user (used by "Remove demo data").
+export function deleteDemoInvites(userId: string): number {
+  const invites = getInvites();
+  const kept = invites.filter((i) => !(i.demo && i.createdBy === userId));
+  const removed = invites.length - kept.length;
+  if (removed > 0) save(kept);
+  return removed;
 }
 
 // Remove every invite tied to an email address (used when a driver deletes

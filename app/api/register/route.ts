@@ -9,6 +9,7 @@ import {
   newId,
   SESSION_COOKIE,
 } from "@/lib/auth";
+import { ensureDispatcherDemo } from "@/lib/demo";
 
 export async function POST(req: Request) {
   try {
@@ -52,6 +53,9 @@ export async function POST(req: Request) {
       hash,
       createdAt: new Date().toISOString(),
     });
+
+    // New dispatcher → seed removable sample data so the app isn't empty.
+    if (role === "dispatcher") ensureDispatcherDemo({ id, name });
 
     const token = createSession({ id, name, email: normEmail, role });
     const res = NextResponse.json({ ok: true, role });

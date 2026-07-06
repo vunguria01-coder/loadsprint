@@ -130,6 +130,10 @@ export type Load = {
   brokerPublishedAt?: string;
   pickupDate?: string; // YYYY-MM-DD — scheduled pickup day (for the calendar)
   deliveryDate?: string; // YYYY-MM-DD — scheduled delivery day (for the calendar)
+  deliveredAt?: string; // ISO — when the load was first marked Delivered/Closed
+  brokerPaid?: boolean; // dispatcher marked the broker's payment received (A/R)
+  brokerPaidAt?: string; // ISO — when payment was recorded
+  demo?: boolean; // sample data, removable via "Remove demo data"
   createdAt: string;
 };
 
@@ -656,9 +660,30 @@ export function setStatus(loadId: string, status: LoadStatus, actorId: string) {
   const i = loads.findIndex((l) => l.id === loadId);
   if (i === -1) return undefined;
   loads[i].status = status;
-  if (status === "Delivered" || status === "Closed") loads[i].progress = 1;
+  if (status === "Delivered" || status === "Closed") {
+    loads[i].progress = 1;
+    if (!loads[i].deliveredAt) loads[i].deliveredAt = new Date().toISOString();
+  }
   writeLoads(loads);
   notifyParties(loads[i], actorId, `Status updated to "${status}"`);
+  return loads[i];
+}
+
+// Record (or clear) that the broker has paid for a delivered load — drives the
+// receivables / accounts-receivable view.
+export function setBrokerPaid(
+  loadId: string,
+  paid: boolean,
+  requesterId: string,
+  isAdmin: boolean
+): Load | undefined {
+  const loads = readLoads();
+  const i = loads.findIndex((l) => l.id === loadId);
+  if (i === -1) return undefined;
+  if (!isAdmin && loads[i].dispatcherId !== requesterId) return undefined;
+  loads[i].brokerPaid = paid;
+  loads[i].brokerPaidAt = paid ? new Date().toISOString() : undefined;
+  writeLoads(loads);
   return loads[i];
 }
 
@@ -954,6 +979,7 @@ export function createLoad(input: {
   rate?: number;
   stops?: Stop[];
   billTo?: string;
+  demo?: boolean;
 }): Load {
   const now = new Date().toISOString();
   const ref =
@@ -985,6 +1011,7 @@ export function createLoad(input: {
     loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
     stops: input.stops && input.stops.length > 0 ? input.stops : undefined,
     billTo: input.billTo?.trim() || undefined,
+    demo: input.demo || undefined,
     createdAt: now,
   };
   const loads = readLoads();
@@ -999,6 +1026,15 @@ export function createLoad(input: {
       load
     );
   return load;
+}
+
+// Remove all demo-flagged loads for a dispatcher (used by "Remove demo data").
+export function deleteDemoLoads(dispatcherId: string): number {
+  const loads = readLoads();
+  const kept = loads.filter((l) => !(l.demo && l.dispatcherId === dispatcherId));
+  const removed = loads.length - kept.length;
+  if (removed > 0) writeLoads(kept);
+  return removed;
 }
 
 export function deleteLoad(

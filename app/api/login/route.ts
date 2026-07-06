@@ -11,6 +11,7 @@ import {
 import { sendEmail, twoFactorEmail } from "@/lib/email";
 import { genCode, makeChallenge, makeTrust, verifyTrust, TWOFA_COOKIE, TRUST_COOKIE } from "@/lib/twofa";
 import { ensureDemo } from "@/lib/seed-demo";
+import { ensureDispatcherDemo } from "@/lib/demo";
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +33,10 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
+
+    // Seed sample data for a new dispatcher before their first page loads, so
+    // nothing looks empty. Idempotent + one-shot (skips accounts with real data).
+    if (user.role === "dispatcher") ensureDispatcherDemo(user);
 
     // 2FA is gated by an env flag so it can be turned on/off without a code change.
     // While the sending domain warms up, leave TWOFA_ENABLED unset to skip codes.

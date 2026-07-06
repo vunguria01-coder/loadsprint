@@ -108,7 +108,7 @@ export default async function DriverDetailPage({
           </div>
 
           <div id="new-load" style={{ marginTop: 18, scrollMarginTop: 90 }}>
-            <CreateLoad driverName={name} driverEmail={email} />
+            <CreateLoad driverName={name} driverEmail={email} isAdmin={me.role === "admin"} />
           </div>
         </div>
       </CabinetServer>

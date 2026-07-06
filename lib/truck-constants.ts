@@ -35,6 +35,30 @@ export const ELD_LABELS: Record<EldProvider, string> = {
   other: "Other",
 };
 
+// Compliance documents that expire (drive the Reminders page).
+export const DOC_KINDS = ["insurance", "registration", "ifta", "inspection", "permit", "other"] as const;
+export type DocKind = (typeof DOC_KINDS)[number];
+export const DOC_LABELS: Record<DocKind, string> = {
+  insurance: "Insurance",
+  registration: "Registration",
+  ifta: "IFTA",
+  inspection: "Annual inspection",
+  permit: "Permit",
+  other: "Other document",
+};
+
+// Mileage-based maintenance schedules.
+export const MAINT_KINDS = ["oil", "tires", "brakes", "pm", "dot", "other"] as const;
+export type MaintKind = (typeof MAINT_KINDS)[number];
+export const MAINT_LABELS: Record<MaintKind, string> = {
+  oil: "Oil change",
+  tires: "Tires",
+  brakes: "Brakes",
+  pm: "PM service",
+  dot: "DOT inspection",
+  other: "Other",
+};
+
 export const TRUCK_STATUSES = ["active", "in_shop", "parked", "sold"] as const;
 export type TruckStatus = (typeof TRUCK_STATUSES)[number];
 

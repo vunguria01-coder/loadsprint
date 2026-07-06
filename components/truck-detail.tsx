@@ -13,8 +13,22 @@ import {
   ELD_LABELS,
   TRUCK_STATUSES,
   STATUS_LABELS,
+  DOC_KINDS,
+  DOC_LABELS,
+  MAINT_KINDS,
+  MAINT_LABELS,
   type ExpenseKind,
+  type DocKind,
+  type MaintKind,
 } from "@/lib/truck-constants";
+
+function daysUntil(ymd: string): number {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  const exp = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(ymd);
+  const now = new Date();
+  const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.round((exp.getTime() - t0) / 86_400_000);
+}
 
 type DriverOpt = { email: string; name: string };
 
@@ -45,6 +59,18 @@ export function TruckDetail({
   });
   // Fuel card form
   const [fc, setFc] = useState({ label: "", provider: "", last4: "", note: "" });
+  // Compliance document form
+  const [doc, setDoc] = useState({ kind: "insurance" as DocKind, expiryDate: "", note: "" });
+  // Maintenance schedule form
+  const [mnt, setMnt] = useState({
+    kind: "oil" as MaintKind,
+    intervalMiles: "",
+    lastServiceMiles: "",
+    lastServiceDate: "",
+    note: "",
+  });
+
+  const odometer = truck.expenses.reduce((m, e) => Math.max(m, e.odometer || 0), 0);
 
   async function post(url: string, method: string, body: object, ok: string) {
     setBusy(true);
@@ -91,6 +117,24 @@ export function TruckDetail({
 
   async function patch(body: object, ok: string) {
     await post(`/api/trucks/${truck.id}`, "PATCH", body, ok);
+  }
+
+  async function addDoc() {
+    if (!doc.expiryDate) {
+      toast("Add an expiry date", "When does this document expire?");
+      return;
+    }
+    const ok = await post(`/api/trucks/${truck.id}/doc`, "POST", doc, "Document added");
+    if (ok) setDoc({ kind: doc.kind, expiryDate: "", note: "" });
+  }
+
+  async function addMaint() {
+    if (!mnt.intervalMiles || Number(mnt.intervalMiles) <= 0) {
+      toast("Set an interval", "e.g. every 25,000 miles.");
+      return;
+    }
+    const ok = await post(`/api/trucks/${truck.id}/maintenance`, "POST", mnt, "Schedule added");
+    if (ok) setMnt({ kind: mnt.kind, intervalMiles: "", lastServiceMiles: "", lastServiceDate: "", note: "" });
   }
 
   async function removeTruck() {
@@ -322,6 +366,121 @@ export function TruckDetail({
                 </button>
               </div>
             ))
+          )}
+        </div>
+      </div>
+
+      {/* Compliance documents */}
+      <div className="panel" style={{ marginTop: 18 }}>
+        <h3>Compliance &amp; documents</h3>
+        <p className="px">Insurance, registration, IFTA, inspections — get reminded before they expire.</p>
+        <div className="fgrid tx-form">
+          <div className="field">
+            <label>Document</label>
+            <select value={doc.kind} onChange={(e) => setDoc((s) => ({ ...s, kind: e.target.value as DocKind }))}>
+              {DOC_KINDS.map((k) => <option key={k} value={k}>{DOC_LABELS[k]}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Expires</label>
+            <input type="date" value={doc.expiryDate} onChange={(e) => setDoc((s) => ({ ...s, expiryDate: e.target.value }))} />
+          </div>
+          <div className="field full">
+            <label>Note</label>
+            <input value={doc.note} onChange={(e) => setDoc((s) => ({ ...s, note: e.target.value }))} placeholder="Policy #, carrier, etc." />
+          </div>
+        </div>
+        <div className="tx-add">
+          <button className="btn btn-primary btn-sm" onClick={addDoc} disabled={busy}><Plus size={15} /> Add document</button>
+        </div>
+        <div className="tx-list">
+          {truck.docs.length === 0 ? (
+            <div className="tx-empty">No documents tracked yet.</div>
+          ) : (
+            [...truck.docs].sort((a, b) => (a.expiryDate < b.expiryDate ? -1 : 1)).map((d) => {
+              const dl = daysUntil(d.expiryDate);
+              const cls = dl < 0 ? "bad" : dl <= 30 ? "warn" : "";
+              return (
+                <div className="tx-row" key={d.id}>
+                  <span className="tx-tag k-other">{DOC_LABELS[d.kind]}</span>
+                  <div className="tx-mid">
+                    <div className="tx-note">{d.note || DOC_LABELS[d.kind]}</div>
+                    <div className="tx-meta">Expires {d.expiryDate}</div>
+                  </div>
+                  <span className={`ar-days ${cls}`}>
+                    {dl < 0 ? `${Math.abs(dl)}d overdue` : dl === 0 ? "today" : `${dl}d left`}
+                  </span>
+                  <button className="tx-del" title="Remove" disabled={busy}
+                    onClick={() => post(`/api/trucks/${truck.id}/doc`, "DELETE", { docId: d.id }, "Removed")}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Maintenance schedule */}
+      <div className="panel" style={{ marginTop: 18 }}>
+        <h3>Maintenance schedule</h3>
+        <p className="px">
+          Mileage-based service. Current odometer: <b>{odometer > 0 ? odometer.toLocaleString("en-US") + " mi" : "—"}</b>
+          {odometer === 0 && " (add an odometer on a fuel/repair expense to enable due-by-miles)"}.
+        </p>
+        <div className="fgrid tx-form">
+          <div className="field">
+            <label>Service</label>
+            <select value={mnt.kind} onChange={(e) => setMnt((s) => ({ ...s, kind: e.target.value as MaintKind }))}>
+              {MAINT_KINDS.map((k) => <option key={k} value={k}>{MAINT_LABELS[k]}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Every (miles)</label>
+            <input value={mnt.intervalMiles} onChange={(e) => setMnt((s) => ({ ...s, intervalMiles: e.target.value }))} inputMode="numeric" placeholder="25000" />
+          </div>
+          <div className="field">
+            <label>Last service odometer</label>
+            <input value={mnt.lastServiceMiles} onChange={(e) => setMnt((s) => ({ ...s, lastServiceMiles: e.target.value }))} inputMode="numeric" placeholder="500000" />
+          </div>
+          <div className="field">
+            <label>Last service date</label>
+            <input type="date" value={mnt.lastServiceDate} onChange={(e) => setMnt((s) => ({ ...s, lastServiceDate: e.target.value }))} />
+          </div>
+        </div>
+        <div className="tx-add">
+          <button className="btn btn-primary btn-sm" onClick={addMaint} disabled={busy}><Plus size={15} /> Add schedule</button>
+        </div>
+        <div className="tx-list">
+          {truck.maintenance.length === 0 ? (
+            <div className="tx-empty">No maintenance schedules yet.</div>
+          ) : (
+            truck.maintenance.map((m) => {
+              const has = m.intervalMiles && m.lastServiceMiles != null && odometer > 0;
+              const milesLeft = has ? m.intervalMiles! - (odometer - m.lastServiceMiles!) : null;
+              const cls = milesLeft == null ? "" : milesLeft <= 0 ? "bad" : milesLeft <= 1500 ? "warn" : "";
+              return (
+                <div className="tx-row" key={m.id}>
+                  <span className="tx-tag k-maintenance">{MAINT_LABELS[m.kind]}</span>
+                  <div className="tx-mid">
+                    <div className="tx-note">Every {m.intervalMiles?.toLocaleString("en-US")} mi{m.note ? ` · ${m.note}` : ""}</div>
+                    <div className="tx-meta">
+                      {m.lastServiceMiles != null ? `Last @ ${m.lastServiceMiles.toLocaleString("en-US")} mi` : "No last service"}
+                      {m.lastServiceDate ? ` · ${m.lastServiceDate}` : ""}
+                    </div>
+                  </div>
+                  {milesLeft != null && (
+                    <span className={`ar-days ${cls}`}>
+                      {milesLeft <= 0 ? `${Math.abs(milesLeft).toLocaleString("en-US")} mi over` : `${milesLeft.toLocaleString("en-US")} mi`}
+                    </span>
+                  )}
+                  <button className="tx-del" title="Remove" disabled={busy}
+                    onClick={() => post(`/api/trucks/${truck.id}/maintenance`, "DELETE", { itemId: m.id }, "Removed")}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

@@ -31,6 +31,16 @@ export function getDriverPayMap(ownerId: string): Record<string, DriverPay> {
   return readAll()[ownerId] || {};
 }
 
+// Remove a single driver's pay entry for an owner (used by "Remove demo data").
+export function deleteDriverPay(ownerId: string, email: string) {
+  const s = readAll();
+  const key = email.trim().toLowerCase();
+  if (s[ownerId] && s[ownerId][key]) {
+    delete s[ownerId][key];
+    writeAll(s);
+  }
+}
+
 export function setDriverPay(
   ownerId: string,
   email: string,

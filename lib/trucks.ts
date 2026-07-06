@@ -6,9 +6,13 @@ import {
   EXPENSE_KINDS,
   ELD_PROVIDERS,
   TRUCK_STATUSES,
+  DOC_LABELS,
+  MAINT_LABELS,
   type ExpenseKind,
   type EldProvider,
   type TruckStatus,
+  type DocKind,
+  type MaintKind,
 } from "@/lib/truck-constants";
 
 // Trucks: a dispatcher/owner's fleet. Each truck tracks its financials
@@ -27,8 +31,30 @@ export {
   EXPENSE_LABELS,
   ELD_PROVIDERS,
   TRUCK_STATUSES,
+  DOC_KINDS,
+  DOC_LABELS,
+  MAINT_KINDS,
+  MAINT_LABELS,
 } from "@/lib/truck-constants";
-export type { ExpenseKind, EldProvider, TruckStatus } from "@/lib/truck-constants";
+export type { ExpenseKind, EldProvider, TruckStatus, DocKind, MaintKind } from "@/lib/truck-constants";
+
+export type TruckDoc = {
+  id: string;
+  kind: DocKind;
+  expiryDate: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: string;
+};
+
+export type MaintItem = {
+  id: string;
+  kind: MaintKind;
+  intervalMiles?: number; // service every N miles
+  lastServiceMiles?: number; // odometer at last service
+  lastServiceDate?: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: string;
+};
 
 export type TruckExpense = {
   id: string;
@@ -77,6 +103,9 @@ export type Truck = {
   eld: EldLink;
   fuelCards: FuelCard[];
   expenses: TruckExpense[];
+  docs: TruckDoc[]; // expiring compliance documents
+  maintenance: MaintItem[]; // mileage-based service schedules
+  demo?: boolean; // sample data, removable via "Remove demo data"
   createdAt: string;
 };
 
@@ -97,6 +126,8 @@ function readTrucks(): Truck[] {
       eld: t.eld || { provider: "none", connected: false },
       fuelCards: t.fuelCards || [],
       expenses: t.expenses || [],
+      docs: t.docs || [],
+      maintenance: t.maintenance || [],
     }));
   } catch {
     return [];
@@ -139,6 +170,7 @@ export function createTruck(input: {
   purchaseDate?: string;
   eldProvider?: EldProvider;
   eldVehicleId?: string;
+  demo?: boolean;
 }): Truck {
   const now = new Date().toISOString();
   const truck: Truck = {
@@ -163,6 +195,9 @@ export function createTruck(input: {
     },
     fuelCards: [],
     expenses: [],
+    docs: [],
+    maintenance: [],
+    demo: input.demo || undefined,
     createdAt: now,
   };
   const trucks = readTrucks();
@@ -216,6 +251,15 @@ export function updateTruck(
     t.eld = { ...t.eld, vehicleId: patch.eldVehicleId.trim() || undefined };
   writeTrucks(trucks);
   return t;
+}
+
+// Remove all demo-flagged trucks for an owner (used by "Remove demo data").
+export function deleteDemoTrucks(ownerId: string): number {
+  const trucks = readTrucks();
+  const kept = trucks.filter((t) => !(t.demo && t.ownerId === ownerId));
+  const removed = trucks.length - kept.length;
+  if (removed > 0) writeTrucks(kept);
+  return removed;
 }
 
 export function deleteTruck(id: string, requesterId: string, isAdmin = false): boolean {
@@ -307,6 +351,157 @@ export function removeFuelCard(
   trucks[i].fuelCards = trucks[i].fuelCards.filter((c) => c.id !== cardId);
   writeTrucks(trucks);
   return trucks[i];
+}
+
+/* ---------- compliance docs + maintenance ---------- */
+export function addTruckDoc(
+  id: string,
+  requesterId: string,
+  isAdmin: boolean,
+  doc: { kind: DocKind; expiryDate: string; note?: string }
+): Truck | undefined {
+  const trucks = readTrucks();
+  const i = trucks.findIndex((t) => t.id === id);
+  if (i === -1 || !owned(trucks[i], requesterId, isAdmin)) return undefined;
+  trucks[i].docs.push({
+    id: crypto.randomUUID(),
+    kind: doc.kind,
+    expiryDate: doc.expiryDate.trim(),
+    note: (doc.note || "").slice(0, 120) || undefined,
+    createdAt: new Date().toISOString(),
+  });
+  writeTrucks(trucks);
+  return trucks[i];
+}
+
+export function removeTruckDoc(
+  id: string,
+  requesterId: string,
+  isAdmin: boolean,
+  docId: string
+): Truck | undefined {
+  const trucks = readTrucks();
+  const i = trucks.findIndex((t) => t.id === id);
+  if (i === -1 || !owned(trucks[i], requesterId, isAdmin)) return undefined;
+  trucks[i].docs = trucks[i].docs.filter((d) => d.id !== docId);
+  writeTrucks(trucks);
+  return trucks[i];
+}
+
+export function addMaintenance(
+  id: string,
+  requesterId: string,
+  isAdmin: boolean,
+  m: {
+    kind: MaintKind;
+    intervalMiles?: number;
+    lastServiceMiles?: number;
+    lastServiceDate?: string;
+    note?: string;
+  }
+): Truck | undefined {
+  const trucks = readTrucks();
+  const i = trucks.findIndex((t) => t.id === id);
+  if (i === -1 || !owned(trucks[i], requesterId, isAdmin)) return undefined;
+  trucks[i].maintenance.push({
+    id: crypto.randomUUID(),
+    kind: m.kind,
+    intervalMiles: m.intervalMiles && m.intervalMiles > 0 ? m.intervalMiles : undefined,
+    lastServiceMiles: m.lastServiceMiles && m.lastServiceMiles >= 0 ? m.lastServiceMiles : undefined,
+    lastServiceDate: m.lastServiceDate?.trim() || undefined,
+    note: (m.note || "").slice(0, 120) || undefined,
+    createdAt: new Date().toISOString(),
+  });
+  writeTrucks(trucks);
+  return trucks[i];
+}
+
+export function removeMaintenance(
+  id: string,
+  requesterId: string,
+  isAdmin: boolean,
+  itemId: string
+): Truck | undefined {
+  const trucks = readTrucks();
+  const i = trucks.findIndex((t) => t.id === id);
+  if (i === -1 || !owned(trucks[i], requesterId, isAdmin)) return undefined;
+  trucks[i].maintenance = trucks[i].maintenance.filter((x) => x.id !== itemId);
+  writeTrucks(trucks);
+  return trucks[i];
+}
+
+// Best-known current odometer for a truck: the highest odometer recorded on any
+// expense (fuel/repair entries carry it). 0 if none recorded.
+export function currentOdometer(truck: Truck): number {
+  return truck.expenses.reduce((m, e) => Math.max(m, e.odometer || 0), 0);
+}
+
+export type Reminder = {
+  truckId: string;
+  truckName: string;
+  type: "doc" | "maintenance";
+  label: string;
+  status: "overdue" | "soon" | "ok";
+  detail: string; // human summary, e.g. "expires in 12 days" or "due in 800 mi"
+  sortKey: number; // smaller = more urgent (days or miles left; negative = overdue)
+};
+
+const DUE_SOON_DAYS = 30;
+const DUE_SOON_MILES = 1500;
+
+function ymdToLocal(s: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(s);
+}
+
+// Compute all reminders across a fleet. `now` is passed in (no Date.now in libs
+// that must stay deterministic; the page provides it).
+export function computeReminders(trucks: Truck[], now: Date): Reminder[] {
+  const out: Reminder[] = [];
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  for (const t of trucks) {
+    // Documents by expiry date.
+    for (const d of t.docs) {
+      const exp = ymdToLocal(d.expiryDate).getTime();
+      const daysLeft = Math.round((exp - startOfToday) / 86_400_000);
+      const status = daysLeft < 0 ? "overdue" : daysLeft <= DUE_SOON_DAYS ? "soon" : "ok";
+      out.push({
+        truckId: t.id,
+        truckName: t.name,
+        type: "doc",
+        label: DOC_LABELS[d.kind] || d.kind,
+        status,
+        detail:
+          daysLeft < 0
+            ? `expired ${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? "" : "s"} ago`
+            : daysLeft === 0
+            ? "expires today"
+            : `expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+        sortKey: daysLeft,
+      });
+    }
+    // Maintenance by mileage interval.
+    const odo = currentOdometer(t);
+    for (const m of t.maintenance) {
+      if (!m.intervalMiles || m.lastServiceMiles == null || odo <= 0) continue;
+      const milesLeft = m.intervalMiles - (odo - m.lastServiceMiles);
+      const status = milesLeft <= 0 ? "overdue" : milesLeft <= DUE_SOON_MILES ? "soon" : "ok";
+      out.push({
+        truckId: t.id,
+        truckName: t.name,
+        type: "maintenance",
+        label: MAINT_LABELS[m.kind] || m.kind,
+        status,
+        detail:
+          milesLeft <= 0
+            ? `overdue by ${Math.abs(milesLeft).toLocaleString("en-US")} mi`
+            : `due in ${milesLeft.toLocaleString("en-US")} mi`,
+        sortKey: milesLeft, // miles and days share a scale only loosely; fine for ranking within type
+      });
+    }
+  }
+  return out.sort((a, b) => a.sortKey - b.sortKey);
 }
 
 /* ---------- aggregation / reports ---------- */

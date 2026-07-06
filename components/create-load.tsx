@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FileUp, Plus } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { PdfPicker } from "@/components/pdf-picker";
+import { CleanConfirmation } from "@/components/clean-confirmation";
 
 declare global {
   interface Window {
@@ -165,9 +166,11 @@ type AiExtract = { ref?: string; rate?: number; billTo?: string; pickups: AiStop
 export function CreateLoad({
   driverName,
   driverEmail,
+  isAdmin = false,
 }: {
   driverName: string;
   driverEmail: string;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -426,6 +429,24 @@ export function CreateLoad({
                 This PDF is saved to the load automatically — the driver can open and download it.
               </p>
             </div>
+          )}
+
+          {isAdmin && (
+          <CleanConfirmation
+            driverName={driverName}
+            originalPdfUrl={pdfUrl || undefined}
+            seed={{
+              ref,
+              rate,
+              billTo: ai?.billTo,
+              pickups: ai
+                ? ai.pickups.map((p) => ({ address: p.address || p.city, time: p.time }))
+                : (stops?.pickups || []).map((a) => ({ address: a })),
+              dropoffs: ai
+                ? ai.dropoffs.map((p) => ({ address: p.address || p.city, time: p.time }))
+                : (stops?.deliveries || []).map((a) => ({ address: a })),
+            }}
+          />
           )}
 
           <div className="wiz-nav">
