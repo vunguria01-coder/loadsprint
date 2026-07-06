@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
-import { getLoadById } from "@/lib/loads";
+import { getLoadById, currentPoint } from "@/lib/loads";
 import { truckRoute, geocodeHere } from "@/lib/here";
+
+export const dynamic = "force-dynamic";
 
 function canAccess(me: { id: string; email: string; role: string }, load: any) {
   return (
@@ -24,8 +26,9 @@ export async function GET(
   if (!load) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   if (!canAccess(me, load)) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
 
-  const from = load.driverPoint;
-  if (!from) return NextResponse.json({ ok: true, hasGps: false });
+  // Use the driver's best-known position — the same point the map marker and the
+  // "to delivery" figure use — so the check works from live GPS or last-known.
+  const from = currentPoint(load);
 
   const [toPickup, toDelivery] = await Promise.all([
     truckRoute(from, load.origin, {}),
@@ -59,8 +62,9 @@ export async function POST(
   const address = String(body.address || "").trim();
   if (!address) return NextResponse.json({ ok: false, error: "Address required" }, { status: 400 });
 
-  const from = load.driverPoint;
-  if (!from) return NextResponse.json({ ok: true, hasGps: false });
+  // Use the driver's best-known position — the same point the map marker and the
+  // "to delivery" figure use — so the check works from live GPS or last-known.
+  const from = currentPoint(load);
 
   const point = await geocodeHere(address);
   if (!point) return NextResponse.json({ ok: false, error: "Address not found" }, { status: 422 });
