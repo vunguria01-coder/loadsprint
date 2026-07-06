@@ -1882,3 +1882,6 @@ table.acc select option{background:#0b1120}
 .cl-or::before,.cl-or::after{content:"";flex:1;height:1px;background:var(--line)}
 /* Light theme: readable selected scope pill (dark-theme #fff would vanish) */
 .cab .ai-scope-opt.on{background:var(--accent-soft);border-color:var(--sky);color:var(--blue)}
+
+/* Driver-location empty state — reads as intentional, not broken */
+.dloc-empty{border:1px dashed var(--line);border-radius:12px;padding:18px;margin-top:4px}

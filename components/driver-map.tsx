@@ -94,7 +94,14 @@ export function DriverMap({ points, note }: { points: Pt[]; note?: string }) {
         <MapPin /> Driver location
       </h3>
       {points.length === 0 ? (
-        <p className="px">No location reported yet for this driver.</p>
+        <div className="dloc-empty">
+          <p className="px" style={{ margin: 0, fontWeight: 600 }}>No location yet</p>
+          <p className="px" style={{ margin: "6px 0 0" }}>
+            This driver&apos;s position shows here once they share GPS from the LoadSprint
+            driver app, or once they&apos;re assigned an active load. Ask them to open the app
+            and turn on location sharing.
+          </p>
+        </div>
       ) : (
         <>
           {note && <p className="px" style={{ marginTop: -4 }}>{note}</p>}
