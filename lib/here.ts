@@ -109,6 +109,27 @@ export async function geocodeHere(address: string): Promise<GeoPoint | null> {
   }
 }
 
+// Great-circle distance in km between two lat/lng points.
+function haversineKm(a: GeoPoint, b: GeoPoint): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// Drop vertices that jump more than maxStepKm from the last kept vertex.
+function despike(points: GeoPoint[], maxStepKm: number): GeoPoint[] {
+  const out: GeoPoint[] = [];
+  for (const p of points) {
+    if (out.length === 0 || haversineKm(out[out.length - 1], p) <= maxStepKm) out.push(p);
+  }
+  return out;
+}
+
 export type TruckRoute = {
   distanceMeters: number;
   durationSeconds: number;
@@ -208,11 +229,19 @@ export async function truckRoute(
 
     if (points.length === 0) return null;
 
+    // Despike: HERE occasionally returns a section whose anchor coordinate is
+    // corrupt (e.g. a flipped-sign longitude), throwing a run of points into
+    // the wrong hemisphere — a line across the ocean. Drop any vertex that
+    // teleports implausibly far from the last kept one; no real road step
+    // between polyline vertices is hundreds of km. distance/duration come from
+    // HERE's summary, so they stay correct regardless.
+    const clean = despike(points, 400);
+
     return {
       distanceMeters,
       durationSeconds,
       steps,
-      points,
+      points: clean.length >= 2 ? clean : points,
     };
   } catch {
     return null;

@@ -69,7 +69,6 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
-    build: "dec-v2",
     waypoints,
     origin, // where the nav line starts (the driver)
     points: r?.points ?? null,
