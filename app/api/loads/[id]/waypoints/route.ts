@@ -4,6 +4,10 @@ import { getLoadById, currentPoint } from "@/lib/loads";
 import { truckRoute } from "@/lib/here";
 import { ensureStopsGeocoded } from "@/lib/geocode-stops";
 
+// Never cache: the route depends on the driver's live position.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/loads/[id]/waypoints
 // Returns the ordered stops (pickup → drops → delivery) with coordinates, and a
 // truck route that threads through every stop in order. Used to draw the real
@@ -65,6 +69,7 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
+    build: "dec-v2",
     waypoints,
     origin, // where the nav line starts (the driver)
     points: r?.points ?? null,

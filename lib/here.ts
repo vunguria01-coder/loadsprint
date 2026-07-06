@@ -167,7 +167,7 @@ export async function truckRoute(
     `&apikey=${key}`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     const data = await res.json();
     const sections = data?.routes?.[0]?.sections;
