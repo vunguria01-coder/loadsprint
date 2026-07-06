@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
-import { getLoadById } from "@/lib/loads";
+import { getLoadById, currentPoint } from "@/lib/loads";
 import { truckRoute } from "@/lib/here";
 import { ensureStopsGeocoded } from "@/lib/geocode-stops";
 
@@ -48,19 +48,27 @@ export async function GET(
     ];
   }
 
-  const first = waypoints[0];
+  // Navigation goes FROM the driver's current position, through the stops they
+  // haven't completed yet, to the final delivery. So the drawn line + the
+  // distance/time are "what's left from where the driver is now".
   const last = waypoints[waypoints.length - 1];
-  const mids = waypoints.slice(1, -1).map((w) => ({ lat: w.lat, lng: w.lng }));
-  const r = await truckRoute(
-    { lat: first.lat, lng: first.lng },
-    { lat: last.lat, lng: last.lng },
-    { via: mids }
-  );
+  const remaining =
+    load.stops && load.stops.length > 0
+      ? load.stops.filter((s) => s.point && !s.done).map((s) => ({ lat: s.point!.lat, lng: s.point!.lng }))
+      : [];
+  // If no multi-stop list (or all done), just head to the delivery point.
+  const navTargets = remaining.length > 0 ? remaining : [{ lat: last.lat, lng: last.lng }];
+  const origin = currentPoint(load); // driver's live position (or best-known)
+  const dest = navTargets[navTargets.length - 1];
+  const via = navTargets.slice(0, -1);
+  const r = await truckRoute(origin, dest, { via });
 
   return NextResponse.json({
     ok: true,
     waypoints,
+    origin, // where the nav line starts (the driver)
     points: r?.points ?? null,
     distanceMeters: r?.distanceMeters ?? null,
+    durationSeconds: r?.durationSeconds ?? null,
   });
 }

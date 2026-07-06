@@ -60,6 +60,7 @@ export function LoadMap({
   const [copiedCity, setCopiedCity] = useState("");
   const [driverCity, setDriverCity] = useState("");
   const [routeMiles, setRouteMiles] = useState<number | null>(null);
+  const [routeSeconds, setRouteSeconds] = useState<number | null>(null);
   const [driverEta, setDriverEta] = useState<{
     hasGps: boolean;
     toPickup?: { miles: number; etaSeconds: number } | null;
@@ -132,6 +133,14 @@ export function LoadMap({
 
   const fmtEta = (sec: number) =>
     new Date(Date.now() + sec * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  // Driving time as "Yh Zm" (or "Zm" under an hour).
+  const humanDur = (sec: number) => {
+    const m = Math.max(0, Math.round(sec / 60));
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return h > 0 ? `${h}h ${mm}m` : `${mm}m`;
+  };
 
   function recenterDriver() {
     if (map.current) {
@@ -305,13 +314,18 @@ export function LoadMap({
             return;
           }
           if (typeof d.distanceMeters === "number") setRouteMiles(d.distanceMeters / 1609.34);
+          if (typeof d.durationSeconds === "number") setRouteSeconds(d.durationSeconds);
 
-          // The line the driver follows: real road route through every stop, or
-          // a clean connector through the stops in order if routing is offline.
+          // The line the driver follows: real road route from the driver's
+          // position through the remaining stops (HERE), or — if routing is
+          // offline — a clean connector that still starts at the driver.
           const linePts: [number, number][] =
             Array.isArray(d.points) && d.points.length >= 2
               ? d.points.map((p: { lat: number; lng: number }) => [p.lat, p.lng])
-              : wps.map((w) => [w.lat, w.lng] as [number, number]);
+              : [
+                  [pointRef.current.lat, pointRef.current.lng] as [number, number],
+                  ...wps.map((w) => [w.lat, w.lng] as [number, number]),
+                ];
           routeLine.current = L.polyline(linePts, {
             color: "#38BDF8",
             weight: 4,
@@ -534,20 +548,19 @@ export function LoadMap({
         load.status !== "Delivered" &&
         load.status !== "Closed" && (
           <div className="eta-row">
-            🚛 {(load.remainingMeters / 1609.34).toFixed(0)} mi left · ETA ~
-            {new Date(Date.now() + load.etaSeconds * 1000).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            🚛 {(load.remainingMeters / 1609.34).toFixed(0)} mi · {humanDur(load.etaSeconds)} to
+            delivery · ETA ~{fmtEta(load.etaSeconds)}
           </div>
         )}
 
       {/* Trip summary: total route distance + the driver's current city. */}
       <div className="trip-strip">
         <div className="track-cell">
-          <span className="track-label">Total route</span>
+          <span className="track-label">To delivery (from driver)</span>
           <b className="track-val track-dist">
-            {routeMiles != null ? `${routeMiles.toFixed(0)} mi` : "…"}
+            {routeMiles != null
+              ? `${routeMiles.toFixed(0)} mi${routeSeconds != null ? ` · ${humanDur(routeSeconds)}` : ""}`
+              : "…"}
           </b>
         </div>
         <div className="track-cell trip-right">
@@ -564,13 +577,19 @@ export function LoadMap({
           {driverEta.toPickup && (
             <div className="dist-chip">
               <span>To pickup</span>
-              <b>{driverEta.toPickup.miles.toFixed(0)} mi · ETA {fmtEta(driverEta.toPickup.etaSeconds)}</b>
+              <b>
+                {driverEta.toPickup.miles.toFixed(0)} mi · {humanDur(driverEta.toPickup.etaSeconds)} ·
+                ETA {fmtEta(driverEta.toPickup.etaSeconds)}
+              </b>
             </div>
           )}
           {driverEta.toDelivery && (
             <div className="dist-chip">
               <span>To delivery</span>
-              <b>{driverEta.toDelivery.miles.toFixed(0)} mi · ETA {fmtEta(driverEta.toDelivery.etaSeconds)}</b>
+              <b>
+                {driverEta.toDelivery.miles.toFixed(0)} mi · {humanDur(driverEta.toDelivery.etaSeconds)} ·
+                ETA {fmtEta(driverEta.toDelivery.etaSeconds)}
+              </b>
             </div>
           )}
         </div>
