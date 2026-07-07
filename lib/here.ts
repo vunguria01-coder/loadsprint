@@ -121,12 +121,30 @@ function haversineKm(a: GeoPoint, b: GeoPoint): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+// Deep-interior open water of the Great Lakes: [minLat, maxLat, minLng, maxLng].
+// Kept narrow (well off every shoreline) so coastal roads are never touched —
+// only genuine mid-lake crossings (e.g. the Lake Michigan car ferry) fall in.
+const GREAT_LAKES_WATER: [number, number, number, number][] = [
+  [42.8, 45.3, -87.5, -86.5], // Lake Michigan interior
+  [43.6, 45.4, -83.2, -82.0], // Lake Huron interior
+  [41.8, 42.4, -82.2, -80.4], // Lake Erie interior
+  [43.5, 43.85, -78.3, -77.0], // Lake Ontario interior
+  [47.3, 48.3, -89.0, -86.8], // Lake Superior interior
+];
+function inGreatLakesWater(p: GeoPoint): boolean {
+  for (const [a, b, c, d] of GREAT_LAKES_WATER) {
+    if (p.lat >= a && p.lat <= b && p.lng >= c && p.lng <= d) return true;
+  }
+  return false;
+}
+
 // Drop bogus vertices from a HERE polyline. A real route point sits inside the
 // bounding box of the actual waypoints (origin/via/dest) plus a road-detour
 // margin, or within a short step of the previous kept point. Corrupt points
 // (e.g. a flipped-sign longitude in the wrong hemisphere) fail both and are
 // dropped — without cascading over the legitimate gaps HERE leaves between
-// route sections.
+// route sections. Points in deep Great-Lakes open water are always dropped
+// (HERE can route a truck onto a car ferry across a lake).
 function despike(
   points: GeoPoint[],
   anchors: GeoPoint[],
@@ -151,6 +169,7 @@ function despike(
     p.lng <= maxLo + marginDeg;
   const out: GeoPoint[] = [];
   for (const p of points) {
+    if (inGreatLakesWater(p)) continue; // never draw a line across open lake water
     if (inBox(p) || (out.length > 0 && haversineKm(out[out.length - 1], p) <= maxStepKm)) {
       out.push(p);
     }

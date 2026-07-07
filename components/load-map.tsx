@@ -326,7 +326,29 @@ export function LoadMap({
                   [pointRef.current.lat, pointRef.current.lng] as [number, number],
                   ...wps.map((w) => [w.lat, w.lng] as [number, number]),
                 ];
-          routeLine.current = L.polyline(linePts, {
+          // Split the line at big gaps (e.g. where an open-water lake crossing
+          // was removed) so Leaflet doesn't draw a straight line across them.
+          const kmBetween = (a: [number, number], b: [number, number]) => {
+            const R = 6371;
+            const dLa = ((b[0] - a[0]) * Math.PI) / 180;
+            const dLo = ((b[1] - a[1]) * Math.PI) / 180;
+            const la1 = (a[0] * Math.PI) / 180;
+            const la2 = (b[0] * Math.PI) / 180;
+            const h =
+              Math.sin(dLa / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLo / 2) ** 2;
+            return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+          };
+          const segments: [number, number][][] = [];
+          let seg: [number, number][] = [];
+          for (let i = 0; i < linePts.length; i++) {
+            if (i > 0 && kmBetween(linePts[i - 1], linePts[i]) > 25) {
+              if (seg.length > 1) segments.push(seg);
+              seg = [];
+            }
+            seg.push(linePts[i]);
+          }
+          if (seg.length > 1) segments.push(seg);
+          routeLine.current = L.polyline(segments.length > 0 ? segments : linePts, {
             color: "#38BDF8",
             weight: 4,
             opacity: 0.9,
