@@ -65,6 +65,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       notices: j?.notices || j?.routes?.[0]?.sections?.map((x: { notices?: unknown }) => x.notices).flat().filter(Boolean),
     };
   };
+  const combos = [
+    "",
+    "&avoid[features]=ferry",
+    "&avoid[features]=carShuttleTrain",
+    "&avoid[features]=ferry,carShuttleTrain",
+    "&avoid[features]=ferry,carShuttleTrain,tunnel,dirtRoad,seasonalClosure",
+  ];
+  const comboResults: Record<string, unknown> = {};
+  await Promise.all(
+    combos.map(async (c, i) => {
+      comboResults[`combo${i}:${c || "(none)"}`] = await rawAvocaWA(c);
+    })
+  );
   const [waNoAvoid, waAvoid] = await Promise.all([rawAvocaWA(""), rawAvocaWA("&avoid[features]=ferry")]);
 
   return NextResponse.json({
