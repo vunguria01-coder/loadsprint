@@ -48,12 +48,33 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     for (const p of leg.points)
       if (p.lat >= 43.7 && p.lat <= 44.4 && p.lng >= -87.5 && p.lng <= -86.5) legLakePts++;
 
+  // Raw Avoca->WA with avoid ferry — inspect HERE's sections + notices.
+  const rawAvocaWA = async (extra: string) => {
+    const url =
+      `https://router.hereapi.com/v8/routes?transportMode=truck&routingMode=fast` +
+      `&origin=41.331,-75.74&destination=46.319,-119.284&return=summary&units=imperial` +
+      `&truck[height]=411&truck[width]=260&truck[length]=2200&truck[grossWeight]=15876&truck[axleCount]=5` +
+      `${extra}&apikey=${key}`;
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+    const j = await res.json();
+    const s = j?.routes?.[0]?.sections || [];
+    return {
+      status: res.status,
+      sectionTypes: s.map((x: { type?: string }) => x.type),
+      miles: Math.round(s.reduce((a: number, x: { summary?: { length?: number } }) => a + (x.summary?.length || 0), 0) / 1609.34),
+      notices: j?.notices || j?.routes?.[0]?.sections?.map((x: { notices?: unknown }) => x.notices).flat().filter(Boolean),
+    };
+  };
+  const [waNoAvoid, waAvoid] = await Promise.all([rawAvocaWA(""), rawAvocaWA("&avoid[features]=ferry")]);
+
   return NextResponse.json({
     ok: true,
-    marker: "ferry-test-3",
+    marker: "ferry-test-4",
     plain,
     avoidFerry,
     libTruckRouteMiles: libMiles,
     legAvocaToWA: { miles: legMiles, lakeCorridorPts: legLakePts, points: leg ? leg.points.length : 0 },
+    rawWaNoAvoid: waNoAvoid,
+    rawWaAvoid: waAvoid,
   });
 }
