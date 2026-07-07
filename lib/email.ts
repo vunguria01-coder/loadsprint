@@ -229,3 +229,46 @@ export function passwordResetEmail(code: string): { subject: string; html: strin
 function escapeAttr(s: string) {
   return s.replace(/"/g, "%22");
 }
+
+// Admin notification when a dispatcher submits a support ticket, including
+// Claude's triage (category, severity, internal report, draft reply) and a
+// link to the admin inbox to review and reply.
+export function supportTicketEmail(opts: {
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  subject: string;
+  message: string;
+  category?: string;
+  severity?: string;
+  report?: string;
+  draftReply?: string;
+  adminUrl: string;
+}): { subject: string; html: string; text: string } {
+  const sev = opts.severity ? ` [${opts.severity.toUpperCase()}]` : "";
+  const cat = opts.category ? ` · ${opts.category}` : "";
+  const subject = `New support ticket${sev}: ${opts.subject}`;
+  const text =
+    `New support ticket from ${opts.userName} (${opts.userEmail}, ${opts.userRole})${cat}\n\n` +
+    `Subject: ${opts.subject}\n\n` +
+    `Message:\n${opts.message}\n\n` +
+    (opts.report ? `AI report (what's likely wrong + suggested fix):\n${opts.report}\n\n` : "") +
+    (opts.draftReply ? `Suggested reply to send:\n${opts.draftReply}\n\n` : "") +
+    `Review and reply in the inbox:\n${opts.adminUrl}\n`;
+  const block = (label: string, body: string) =>
+    `<div style="margin:0 0 16px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0d9488;margin-bottom:4px">${escapeHtml(label)}</div><div style="font-size:14px;line-height:1.6;color:#0e1d1b;white-space:pre-wrap">${escapeHtml(body)}</div></div>`;
+  const html = `<!doctype html><html><body style="margin:0;padding:0;background:#edf3f1;font-family:Arial,Helvetica,sans-serif">
+    <div style="max-width:560px;margin:0 auto;padding:28px 24px">
+      <div style="background:#fff;border:1px solid #dbe7e3;border-radius:16px;padding:24px">
+        <div style="font-size:18px;font-weight:800;color:#0e1d1b;margin:0 0 4px">New support ticket${escapeHtml(sev)}</div>
+        <div style="font-size:13px;color:#5a6e69;margin:0 0 18px">${escapeHtml(opts.userName)} · ${escapeHtml(opts.userEmail)} · ${escapeHtml(opts.userRole)}${escapeHtml(cat)}</div>
+        ${block("Subject", opts.subject)}
+        ${block("Message", opts.message)}
+        ${opts.report ? block("AI report", opts.report) : ""}
+        ${opts.draftReply ? block("Suggested reply", opts.draftReply) : ""}
+        <a href="${escapeAttr(opts.adminUrl)}" style="display:inline-block;background:#0d9488;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:11px;font-size:14px">Open support inbox</a>
+      </div>
+    </div>
+  </body></html>`;
+  return { subject, html, text };
+}
