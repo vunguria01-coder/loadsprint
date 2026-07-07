@@ -1947,7 +1947,8 @@ table.acc select option{background:#0b1120}
 .bc-call{white-space:nowrap;flex:none}
 
 /* Register — feature showcase split */
-.reg-split{width:min(1040px,94vw);display:grid;grid-template-columns:1.02fr .98fr;gap:36px;align-items:start}
+.reg-split{width:min(1040px,94vw);display:grid;grid-template-columns:1.02fr .98fr;gap:36px;align-items:center}
+.auth.fresh .auth-main{padding:44px 20px}
 .reg-features{padding-top:6px}
 .rf-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sky)}
 .rf-title{font-family:Poppins;font-weight:700;font-size:29px;line-height:1.16;letter-spacing:-.02em;margin:12px 0 8px;color:#fff}
