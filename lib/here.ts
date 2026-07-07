@@ -208,6 +208,9 @@ export async function truckRoute(
     `&destination=${dest.lat},${dest.lng}` +
     `&return=${ret}` +
     `&units=imperial` +
+    // Trucks drive — don't route across water on car ferries (e.g. the
+    // Lake Michigan ferry), which otherwise draws a line over the lake.
+    `&avoid[features]=ferry` +
     `&truck[height]=${rig.height}` +
     `&truck[width]=${rig.width}` +
     `&truck[length]=${rig.length}` +
