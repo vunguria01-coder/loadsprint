@@ -2009,3 +2009,81 @@ table.acc select option{background:#0b1120}
 .auth.fresh .rf-ic{background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.28);color:var(--sky)}
 .auth.fresh .rf-list li div b{color:var(--ink)}
 .auth.fresh .rf-list li div span{color:var(--muted)}
+
+/* =====================================================================
+   FRESH light theme for the public landing page (scoped to .site-fresh)
+   Mint-white ground, teal accent, ink text — matches the app.
+   ===================================================================== */
+.site-fresh{
+  --navy:#0E1D1B; --navy-900:#EDF3F1; --navy-800:#EAF3F1;
+  --blue:#0F766E; --sky:#0D9488;
+  --ink:#0E1D1B; --muted:#5A6E69; --muted-2:#8B9C97;
+  --line:#DBE7E3; --line-2:#E9F0ED;
+  --card:#FFFFFF; --card-hi:#F4FAF8;
+  --grad:linear-gradient(120deg,#0D9488,#14B8A6);
+  background:#EDF3F1; color:var(--ink); min-height:100vh;
+}
+.site-fresh :is(h1,h2,h3,h4){color:var(--ink)}
+
+/* buttons */
+.site-fresh .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.site-fresh .btn-ghost:hover{background:var(--card-hi);border-color:rgba(13,148,136,.4)}
+.site-fresh .btn-signin{background:rgba(13,148,136,.1);color:var(--blue);border-color:rgba(13,148,136,.45)}
+.site-fresh .btn-signin:hover{background:rgba(13,148,136,.18);border-color:var(--sky)}
+
+/* nav */
+.site-fresh .nav.scrolled{background:rgba(255,255,255,.85);border-bottom-color:var(--line)}
+.site-fresh .nav-links a:hover{color:var(--blue)}
+.site-fresh .burger{border-color:var(--line)}
+.site-fresh .burger span{background:var(--ink)}
+.site-fresh .mobile-menu{background:rgba(255,255,255,.98)}
+.site-fresh .mobile-menu a{color:var(--ink);border-bottom-color:var(--line)}
+
+/* hero */
+.site-fresh .hero::before{background:
+  radial-gradient(680px 420px at 80% 0%,rgba(13,148,136,.12),transparent 60%),
+  radial-gradient(520px 360px at 5% 8%,rgba(20,184,166,.08),transparent 55%);}
+.site-fresh .pill{background:rgba(13,148,136,.09);border-color:rgba(13,148,136,.28);color:var(--blue)}
+.site-fresh .dispatch{background:#fff;border-color:var(--line);box-shadow:0 40px 90px -50px rgba(16,40,36,.3)}
+.site-fresh .map-card{background:#F4FAF8;border-color:var(--line)}
+.site-fresh .route-bg{stroke:rgba(13,148,136,.2)}
+.site-fresh .truck-dot{fill:#0D9488}
+.site-fresh .pin-o{fill:rgba(13,148,136,.28)}
+.site-fresh .pin{fill:#0D9488}
+.site-fresh .tele .t{background:#F4FAF8;border-color:var(--line)}
+.site-fresh .tele .t .v{color:var(--ink)}
+.site-fresh .dispatch-foot{border-top-color:var(--line);color:var(--muted)}
+.site-fresh .dispatch-foot b{color:var(--ink)}
+
+/* stats */
+.site-fresh .stats{background:linear-gradient(180deg,rgba(13,148,136,.05),transparent);border-block-color:var(--line)}
+
+/* services */
+.site-fresh .card{background:#fff;border-color:var(--line)}
+.site-fresh .card:hover{background:#fff;border-color:rgba(13,148,136,.35)}
+.site-fresh .card::after{background:linear-gradient(130deg,rgba(13,148,136,.4),transparent 45%)}
+.site-fresh .card .ico{background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.28);color:var(--sky)}
+
+/* how it works */
+.site-fresh .step .num{color:var(--muted);background:#fff;border-color:rgba(13,148,136,.4)}
+.site-fresh .step.lit .num{color:#fff;background:var(--grad);border-color:transparent}
+
+/* pricing */
+.site-fresh .plan-card{background:#fff;border-color:var(--line)}
+.site-fresh .plan-name,.site-fresh .plan-price{color:var(--ink)}
+.site-fresh .lp-plans .plan-card{background:#fff}
+.site-fresh .plan-btn{color:#fff}
+
+/* testimonials */
+.site-fresh .quote{background:#fff;border-color:var(--line)}
+.site-fresh .quote .who .nm{color:var(--ink)}
+
+/* final cta */
+.site-fresh .final-cta{background:linear-gradient(135deg,rgba(13,148,136,.1),rgba(20,184,166,.06));border-color:rgba(13,148,136,.25)}
+
+/* footer */
+.site-fresh footer{background:#E6F1ED;border-top-color:var(--line)}
+.site-fresh .foot-col h5{color:var(--ink)}
+.site-fresh .foot-bottom{border-top-color:var(--line)}
+.site-fresh .foot-bottom .socials a{border-color:var(--line);color:var(--muted)}
+.site-fresh .foot-bottom .socials a:hover{color:var(--blue);border-color:var(--sky);background:rgba(13,148,136,.08)}

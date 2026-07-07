@@ -81,8 +81,8 @@ export function Hero() {
             <svg viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden>
               <defs>
                 <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stopColor="#2563EB" />
-                  <stop offset="1" stopColor="#38BDF8" />
+                  <stop offset="0" stopColor="#0D9488" />
+                  <stop offset="1" stopColor="#14B8A6" />
                 </linearGradient>
               </defs>
               <path className="route-bg" d={routeD} />

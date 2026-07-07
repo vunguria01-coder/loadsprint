@@ -12,7 +12,7 @@ import { Footer } from "@/components/footer";
 export default async function Home() {
   const me = await currentUser();
   return (
-    <>
+    <div className="site-fresh">
       <Nav authed={!!me} />
       <main id="home">
         <Hero />
@@ -24,6 +24,6 @@ export default async function Home() {
         <FinalCta />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
