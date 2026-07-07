@@ -4,28 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Briefcase,
-  Headset,
-  Eye,
-  EyeOff,
-  AlertCircle,
-  ArrowRight,
-} from "lucide-react";
-import {
-  registerSchema,
-  type RegisterValues,
-  type Role,
-} from "@/lib/schemas";
-
-const roles: {
-  value: Role;
-  name: string;
-  desc: string;
-  Icon: typeof Briefcase;
-}[] = [
-  { value: "dispatcher", name: "Dispatcher", desc: "Coordinate loads & carriers", Icon: Headset },
-];
+import { Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
+import { registerSchema, type RegisterValues } from "@/lib/schemas";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -35,15 +15,11 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { role: "dispatcher", agree: false },
   });
-
-  const role = watch("role");
 
   const onSubmit = async (values: RegisterValues) => {
     setFormError(null);
@@ -79,29 +55,6 @@ export function RegisterForm() {
         </div>
       )}
 
-      <div className="role-tabs" role="tablist" aria-label="Account type">
-        {roles.map((r) => {
-          const Icon = r.Icon;
-          return (
-            <button
-              key={r.value}
-              type="button"
-              role="tab"
-              aria-selected={role === r.value}
-              className={`role-tab${role === r.value ? " active" : ""}`}
-              onClick={() =>
-                setValue("role", r.value, { shouldValidate: true })
-              }
-            >
-              <span className="rt-name">
-                <Icon /> {r.name}
-              </span>
-              <span className="rt-desc">{r.desc}</span>
-            </button>
-          );
-        })}
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="fgrid">
           <div className={`field full${errors.name ? " err" : ""}`}>
@@ -110,7 +63,7 @@ export function RegisterForm() {
             <span className="msg">{errors.name?.message}</span>
           </div>
           <div className="field full">
-            <label>Company {role === "broker" ? "(brokerage)" : "(dispatch)"} — optional</label>
+            <label>Company (dispatch) — optional</label>
             <input placeholder="Company name" {...register("company")} />
           </div>
           <div className={`field full${errors.email ? " err" : ""}`}>

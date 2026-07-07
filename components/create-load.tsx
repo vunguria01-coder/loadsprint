@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Plus } from "lucide-react";
+import { FileUp, Plus, Phone, Mail } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { PdfPicker } from "@/components/pdf-picker";
 import { CleanConfirmation } from "@/components/clean-confirmation";
@@ -186,6 +186,7 @@ export function CreateLoad({
   const [reading, setReading] = useState(false);
   const [step, setStep] = useState(1);
   const [aiScope, setAiScope] = useState<"all" | "addresses_rate" | "addresses">("all");
+  const [broker, setBroker] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
 
   function copyText(t: string) {
     navigator.clipboard?.writeText(t);
@@ -212,6 +213,9 @@ export function CreateLoad({
       else if (p.dest) setDest(p.dest);
       if (p.rate) setRate(String(p.rate));
       setStops({ pickups: p.pickups, deliveries: p.deliveries });
+      // Keep the broker's contact so the dispatcher can call them right away.
+      if (p.brokerName || p.brokerEmail || p.brokerPhone)
+        setBroker({ name: p.brokerName, email: p.brokerEmail, phone: p.brokerPhone });
 
       // Then ask the AI to read it precisely (server-side, needs ANTHROPIC_API_KEY).
       try {
@@ -355,6 +359,24 @@ export function CreateLoad({
       {/* STEP 2 — verify */}
       {step === 2 && (
         <div>
+          {broker && (broker.name || broker.phone || broker.email) && (
+            <div className="broker-card">
+              <div className="bc-info">
+                <span className="bc-label">Broker · call before you book</span>
+                <div className="bc-name">{broker.name || "Broker on the rate con"}</div>
+                {broker.email && (
+                  <a className="bc-email" href={`mailto:${broker.email}`}>
+                    <Mail size={13} /> {broker.email}
+                  </a>
+                )}
+              </div>
+              {broker.phone && (
+                <a className="btn btn-primary bc-call" href={`tel:${broker.phone.replace(/[^\d+]/g, "")}`}>
+                  <Phone size={16} /> Call {broker.phone}
+                </a>
+              )}
+            </div>
+          )}
           {ai ? (
             <div className="ai-card">
               <div className="ai-head">
