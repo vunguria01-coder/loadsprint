@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
 import { getLoadById } from "@/lib/loads";
+import { truckRoute } from "@/lib/here";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return { status: res.status, sections: Array.isArray(s) ? s.length : 0, miles: miles ? Math.round(miles) : null, notices: j?.routes?.[0]?.sections?.[0]?.summary ? undefined : (j?.notices || j?.title) };
   };
 
-  const [plain, avoidFerry, avoidBoth] = await Promise.all([
+  const [plain, avoidFerry] = await Promise.all([
     call(""),
     call("&avoid[features]=ferry"),
-    call("&avoid[features]=ferry,carShuttleTrain"),
   ]);
-  return NextResponse.json({ ok: true, marker: "ferry-test-1", plain, avoidFerry, avoidBoth });
+  // The deployed library function — does IT avoid the ferry?
+  const lib = await truckRoute({ lat: 42.963, lng: -85.668 }, { lat: 44.089, lng: -87.658 }, {});
+  const libMiles = lib ? Math.round(lib.distanceMeters / 1609.34) : null;
+  return NextResponse.json({ ok: true, marker: "ferry-test-2", plain, avoidFerry, libTruckRouteMiles: libMiles });
 }
