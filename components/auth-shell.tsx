@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
-export function AuthShell({ children }: { children: ReactNode }) {
+export function AuthShell({ children, fresh = false }: { children: ReactNode; fresh?: boolean }) {
   return (
-    <div className="auth">
+    <div className={`auth${fresh ? " fresh" : ""}`}>
       <div className="auth-top">
         <Link href="/" aria-label="LoadSprint home">
           <Image

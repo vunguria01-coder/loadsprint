@@ -1964,3 +1964,47 @@ table.acc select option{background:#0b1120}
   .reg-features{order:2}
   .rf-title{font-size:24px}
 }
+
+/* =====================================================================
+   FRESH light theme for the register page (.auth.fresh) — mint-white
+   ground + teal accent, matching the dispatcher app.
+   ===================================================================== */
+.auth.fresh{
+  --card:#FFFFFF; --line:#DBE7E3; --sky:#0D9488; --blue:#0F766E;
+  --grad:linear-gradient(120deg,#0D9488,#14B8A6);
+  --ink:#0E1D1B; --muted:#5A6E69; --muted-2:#8B9C97; --accent-soft:rgba(13,148,136,.12);
+  background:#EDF3F1; color:var(--ink);
+}
+.auth.fresh::before{
+  background:
+    radial-gradient(720px 440px at 82% -4%,rgba(13,148,136,.10),transparent 60%),
+    radial-gradient(560px 380px at 4% 8%,rgba(20,184,166,.08),transparent 55%);
+}
+.auth.fresh .auth-top a.back{color:var(--muted)}
+.auth.fresh .auth-top a.back:hover{color:var(--blue)}
+/* logo is dark-mark on transparent — good on light; nudge contrast slightly */
+.auth.fresh .auth-card{
+  background:#fff;border-color:var(--line);
+  box-shadow:0 30px 70px -40px rgba(16,40,36,.28);
+}
+.auth.fresh .auth-card h1{color:var(--ink)}
+.auth.fresh .ah-sub{color:var(--muted)}
+.auth.fresh .field label{color:var(--muted)}
+.auth.fresh :is(.field input,.field select,.field textarea){
+  background:#F4FAF8;color:var(--ink);border-color:var(--line);
+}
+.auth.fresh :is(.field input,.field textarea)::placeholder{color:var(--muted-2)}
+.auth.fresh .field input:focus{box-shadow:0 0 0 3px rgba(13,148,136,.15);background:#fff}
+.auth.fresh .pw .toggle:hover{color:var(--blue)}
+.auth.fresh .checkrow{color:var(--muted)}
+.auth.fresh .checkrow a{color:var(--sky)}
+.auth.fresh .auth-alt{color:var(--muted)}
+.auth.fresh .auth-alt a{color:var(--sky)}
+.auth.fresh .btn-primary{background:var(--grad);border:0;color:#fff}
+/* feature showcase → ink text on light */
+.auth.fresh .rf-eyebrow{color:var(--sky)}
+.auth.fresh .rf-title{color:var(--ink)}
+.auth.fresh .rf-lead{color:var(--muted)}
+.auth.fresh .rf-ic{background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.28);color:var(--sky)}
+.auth.fresh .rf-list li b{color:var(--ink)}
+.auth.fresh .rf-list li span{color:var(--muted)}

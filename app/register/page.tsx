@@ -62,7 +62,7 @@ const features = [
 
 export default function RegisterPage() {
   return (
-    <AuthShell>
+    <AuthShell fresh>
       <div className="reg-split">
         <aside className="reg-features">
           <span className="rf-eyebrow">Everything a dispatch needs</span>
