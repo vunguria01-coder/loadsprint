@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight } from "lucide-react";
 
@@ -8,6 +8,19 @@ export function DriverGate() {
   const router = useRouter();
   const [mode, setMode] = useState<"claim" | "login">("claim");
   const [code, setCode] = useState("");
+
+  // Prefill the invite code when the driver opens a shared /driver?code=… link.
+  useEffect(() => {
+    try {
+      const c = new URLSearchParams(window.location.search).get("code");
+      if (c) {
+        setCode(c.trim().toUpperCase());
+        setMode("claim");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +47,7 @@ export function DriverGate() {
       if (!res.ok || !data.ok) {
         setErr(data.error || "Something went wrong.");
       } else {
-        router.push("/loads");
+        router.push("/driver");
         router.refresh();
       }
     } catch {

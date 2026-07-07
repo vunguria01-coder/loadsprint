@@ -54,17 +54,21 @@ export async function POST(req: Request) {
 
   const invite = createInvite(email, me.id, me.name);
   const appLink = `${APP_BASE}?code=${invite.code}`;
+  // Website link the driver can open in any phone browser — works without the
+  // native app and is the reliable path while email is still warming up.
+  const siteLink = `${new URL(req.url).origin}/driver?code=${invite.code}`;
 
   // Email the join code to the driver as PLAIN TEXT only (no HTML) — reads as a
   // personal note, which tends to clear Gmail's spam/"unsolicited" filter better
   // than a styled marketing-looking email. Skipped silently if email isn't set up.
-  const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appStoreUrl: APP_STORE_URL });
+  const mail = driverInviteEmail({ dispatcherName: me.name, code: invite.code, appStoreUrl: APP_STORE_URL, siteLink });
   const sent = await sendEmail({ to: email, subject: mail.subject, text: mail.text });
 
   return NextResponse.json({
     ok: true,
     invite,
     appLink,
+    siteLink,
     limit,
     used: position,
     extra,

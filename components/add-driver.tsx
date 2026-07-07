@@ -58,21 +58,31 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
     process.env.NEXT_PUBLIC_IOS_APP_STORE_URL ||
     "https://apps.apple.com/app/id6785073294";
 
+  const siteLink = (code: string) =>
+    typeof window !== "undefined" ? `${window.location.origin}/driver?code=${code}` : `/driver?code=${code}`;
+
   // A ready-to-send message the dispatcher can paste into WhatsApp/SMS/etc.
-  // This is the reliable way to onboard a driver without depending on email
-  // being delivered to their inbox.
+  // Leads with the website link (works in any phone browser, no app needed) so
+  // onboarding never depends on email being delivered.
   function copyInvite(code: string) {
     const msg =
-      `You're invited to LoadSprint as a driver.\n` +
-      `Get the app: ${appStoreUrl}\n` +
+      `You're invited to LoadSprint as a driver.\n\n` +
+      `Open this link on your phone, register with the code, then tap "Share":\n` +
+      `${siteLink(code)}\n\n` +
+      `Prefer the app? ${appStoreUrl}\n` +
       `Your join code: ${code}`;
     navigator.clipboard?.writeText(msg);
     toast("Invite copied", "Paste it to your driver in WhatsApp, SMS or any chat.");
   }
 
+  function copySite(code: string) {
+    navigator.clipboard?.writeText(siteLink(code));
+    toast("Website link copied", "Send it — your driver opens it in any phone browser.");
+  }
+
   function copyCode(code: string) {
     navigator.clipboard?.writeText(code);
-    toast("Code copied", "Send this code to your driver — they enter it in the app.");
+    toast("Code copied", "Send this code to your driver — they enter it on the site or app.");
   }
 
   return (
@@ -82,10 +92,12 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
         Add a driver
       </h3>
       <p className="sx">
-        Enter the driver&apos;s email to generate a join code. We&apos;ll email it,
-        but you can also tap &ldquo;Copy invite&rdquo; and send the app link + code
-        yourself (WhatsApp, SMS…). The driver enters the code in the LoadSprint
-        driver app under &ldquo;Register with code.&rdquo;
+        Enter the driver&apos;s email to generate a join code. We&apos;ll email it —
+        but while email is still warming up, the reliable way is to tap
+        &ldquo;Copy invite&rdquo; (or &ldquo;Site link&rdquo;) and send it yourself
+        (WhatsApp, SMS…). Your driver opens the <b>website link on their phone</b>,
+        registers with the code, and taps &ldquo;Share&rdquo; to send their
+        location — no app install needed. They can also use the driver app.
       </p>
       <div className="row">
         <input
@@ -106,9 +118,12 @@ export function AddDriver({ invites }: { invites: DriverInvite[] }) {
             <div className="invite" key={iv.id}>
               <span className="ie">{iv.email}</span>
               <span className="ic">{iv.code}</span>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button className="copy-link" onClick={() => copyInvite(iv.code)}>
                   Copy invite
+                </button>
+                <button className="copy-link" onClick={() => copySite(iv.code)}>
+                  Site link
                 </button>
                 <button className="copy-link" onClick={() => copyCode(iv.code)}>
                   Copy code

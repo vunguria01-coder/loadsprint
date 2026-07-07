@@ -93,12 +93,84 @@ function navigateTruck(address: string) {
   }, 1200);
 }
 
+// Persistent location sharing for the web driver app. Once the driver turns it
+// on, the consent is saved so it auto-resumes every time they open the app —
+// their dispatcher always sees where they are. Uses the phone's GPS via
+// watchPosition and reports to /api/driver/location.
+const LS_SHARE = "ls_share_location";
+function useLocationShare() {
+  const [sharing, setSharing] = useState(false);
+  const [err, setErr] = useState("");
+  const [lastAt, setLastAt] = useState<number | null>(null);
+  const watchId = useRef<number | null>(null);
+  const lastSent = useRef(0);
+
+  const send = useCallback((lat: number, lng: number) => {
+    const now = Date.now();
+    if (now - lastSent.current < 15000) return; // report at most every ~15s
+    lastSent.current = now;
+    fetch("/api/driver/location", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat, lng }),
+    })
+      .then(() => setLastAt(Date.now()))
+      .catch(() => {});
+  }, []);
+
+  const start = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setErr("This device can't share location.");
+      return;
+    }
+    setSharing(true);
+    try { localStorage.setItem(LS_SHARE, "1"); } catch {}
+    if (watchId.current !== null) return;
+    watchId.current = navigator.geolocation.watchPosition(
+      (pos) => { setErr(""); send(pos.coords.latitude, pos.coords.longitude); },
+      (e) => {
+        setErr(
+          e.code === 1
+            ? "Location is blocked. Allow location for this site in your browser, then tap again."
+            : "Couldn't get your location — check that GPS is on."
+        );
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 25000 }
+    );
+  }, [send]);
+
+  const stop = useCallback(() => {
+    if (watchId.current !== null && typeof navigator !== "undefined") {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    setSharing(false);
+    try { localStorage.setItem(LS_SHARE, "0"); } catch {}
+  }, []);
+
+  // Auto-resume if the driver enabled it before.
+  useEffect(() => {
+    let consent = "0";
+    try { consent = localStorage.getItem(LS_SHARE) || "0"; } catch {}
+    if (consent === "1") start();
+    return () => {
+      if (watchId.current !== null && typeof navigator !== "undefined") {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return { sharing, err, lastAt, start, stop };
+}
+
 type Notif = { id: string; text: string; loadRef: string; createdAt: string; read: boolean };
 
 export function DriverApp({ name }: { name: string }) {
   const [list, setList] = useState<ListItem[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [notifs, setNotifs] = useState<Notif[]>([]);
+  const loc = useLocationShare();
 
   const fetchList = useCallback(async () => {
     try {
@@ -173,6 +245,52 @@ export function DriverApp({ name }: { name: string }) {
       </div>
       <div style={{ color: C.muted, fontSize: 14, marginBottom: 16 }}>
         Hi {name?.split(" ")[0] || "driver"} — your loads
+      </div>
+
+      {/* Location sharing — persists once turned on, so the dispatcher can
+          always see where you are. */}
+      <div
+        style={{
+          background: loc.sharing ? "rgba(22,163,74,0.10)" : C.card,
+          border: `1px solid ${loc.sharing ? C.green : C.line}`,
+          borderRadius: 14,
+          padding: 14,
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: loc.sharing ? "#4ade80" : C.text }}>
+            {loc.sharing ? "📍 Sharing your location" : "📍 Location off"}
+          </div>
+          <div style={{ color: C.muted, fontSize: 12.5, marginTop: 3, lineHeight: 1.4 }}>
+            {loc.err
+              ? loc.err
+              : loc.sharing
+              ? loc.lastAt
+                ? `Your dispatcher sees where you are. Updated ${new Date(loc.lastAt).toLocaleTimeString()}.`
+                : "Getting your position…"
+              : "Turn on so your dispatcher can track this load. It stays on for next time."}
+          </div>
+        </div>
+        <button
+          onClick={loc.sharing ? loc.stop : loc.start}
+          style={{
+            flex: "none",
+            padding: "10px 16px",
+            borderRadius: 11,
+            fontWeight: 700,
+            fontSize: 14,
+            border: "none",
+            color: "#fff",
+            background: loc.sharing ? "#334155" : C.green,
+          }}
+        >
+          {loc.sharing ? "Stop" : "Share"}
+        </button>
       </div>
 
       {unread.length > 0 && (

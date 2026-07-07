@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, X, Copy, Trash2, Link2 } from "lucide-react";
+import { UserPlus, X, Copy, Trash2, Link2, Globe } from "lucide-react";
 import { useToast } from "@/components/toast";
 import type { DriverInvite } from "@/lib/invites";
 
@@ -15,6 +15,8 @@ export function DriverManager({ invites }: { invites: DriverInvite[] }) {
 
   const appBase =
     process.env.NEXT_PUBLIC_DRIVER_APP_URL || "https://loadsprint.app/driver";
+  const appStore =
+    process.env.NEXT_PUBLIC_IOS_APP_STORE_URL || "https://apps.apple.com/app/id6785073294";
 
   async function invite() {
     const value = email.trim();
@@ -66,13 +68,27 @@ export function DriverManager({ invites }: { invites: DriverInvite[] }) {
     }
   }
 
+  const siteBase = typeof window !== "undefined" ? window.location.origin : "";
   function copyCode(code: string) {
     navigator.clipboard?.writeText(code);
-    toast("Code copied", "Send this code to your driver for the app.");
+    toast("Code copied", "Send this code to your driver.");
+  }
+  // Website link — opens in any phone browser, no app needed. The reliable way
+  // to onboard a driver without depending on email. Copies a full paste-ready
+  // message (site link + app link + code) for WhatsApp/SMS.
+  function copySite(code: string) {
+    const msg =
+      `You're invited to LoadSprint as a driver.\n\n` +
+      `Open this on your phone, register with the code, then tap "Share":\n` +
+      `${siteBase}/driver?code=${code}\n\n` +
+      `Prefer the app? ${appStore}\n` +
+      `Your join code: ${code}`;
+    navigator.clipboard?.writeText(msg);
+    toast("Invite copied", "Paste it to your driver (WhatsApp, SMS…). Website link works with no app.");
   }
   function copyLink(code: string) {
     navigator.clipboard?.writeText(`${appBase}?code=${code}`);
-    toast("Link copied", "App invite link is on your clipboard.");
+    toast("App link copied", "The driver-app invite link is on your clipboard.");
   }
 
   return (
@@ -93,8 +109,11 @@ export function DriverManager({ invites }: { invites: DriverInvite[] }) {
 
             <div className="dm-body">
               <p className="dm-sx">
-                Enter a driver&apos;s email to invite them. Give them the join code —
-                they enter it in the LoadSprint driver app under “Register with code.”
+                Enter a driver&apos;s email to invite them. We&apos;ll email a join code —
+                but the reliable way (while email warms up) is the <b>website link</b>:
+                tap the globe icon to copy an invite, send it (WhatsApp, SMS…), and your
+                driver opens it on their phone, registers with the code, and taps
+                &ldquo;Share&rdquo; to send their location — no app needed.
               </p>
 
               <div className="dm-add">
@@ -124,6 +143,9 @@ export function DriverManager({ invites }: { invites: DriverInvite[] }) {
                         {iv.status === "claimed" ? "✓ registered" : "pending"}
                       </span>
                       <div className="dm-actions">
+                        <button title="Copy website invite (no app needed)" onClick={() => copySite(iv.code)}>
+                          <Globe size={15} />
+                        </button>
                         <button title="Copy code" onClick={() => copyCode(iv.code)}>
                           <Copy size={15} />
                         </button>
