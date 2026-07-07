@@ -39,5 +39,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   // The deployed library function — does IT avoid the ferry?
   const lib = await truckRoute({ lat: 42.963, lng: -85.668 }, { lat: 44.089, lng: -87.658 }, {});
   const libMiles = lib ? Math.round(lib.distanceMeters / 1609.34) : null;
-  return NextResponse.json({ ok: true, marker: "ferry-test-2", plain, avoidFerry, libTruckRouteMiles: libMiles });
+
+  // The actual leg the map builds: driver (Avoca PA) -> Richland WA.
+  const leg = await truckRoute({ lat: 41.331, lng: -75.74 }, { lat: 46.319, lng: -119.284 }, {});
+  const legMiles = leg ? Math.round(leg.distanceMeters / 1609.34) : null;
+  let legLakePts = 0;
+  if (leg)
+    for (const p of leg.points)
+      if (p.lat >= 43.7 && p.lat <= 44.4 && p.lng >= -87.5 && p.lng <= -86.5) legLakePts++;
+
+  return NextResponse.json({
+    ok: true,
+    marker: "ferry-test-3",
+    plain,
+    avoidFerry,
+    libTruckRouteMiles: libMiles,
+    legAvocaToWA: { miles: legMiles, lakeCorridorPts: legLakePts, points: leg ? leg.points.length : 0 },
+  });
 }
