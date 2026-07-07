@@ -1956,8 +1956,8 @@ table.acc select option{background:#0b1120}
 .rf-list{display:flex;flex-direction:column;gap:15px}
 .rf-list li{display:flex;gap:13px;align-items:center}
 .rf-ic{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.32);color:var(--sky)}
-.rf-list li b{display:block;font-family:Poppins;font-weight:600;font-size:14.5px;color:#fff}
-.rf-list li span{display:block;font-size:12.7px;color:var(--muted);margin-top:2px;line-height:1.5}
+.rf-list li div b{display:block;font-family:Poppins;font-weight:600;font-size:14.5px;color:#fff}
+.rf-list li div span{display:block;font-size:12.7px;color:var(--muted);margin-top:2px;line-height:1.5}
 .reg-formcol{min-width:0}
 .reg-formcol .auth-card.wide{max-width:none}
 @media(max-width:900px){
@@ -2007,5 +2007,5 @@ table.acc select option{background:#0b1120}
 .auth.fresh .rf-title{color:var(--ink)}
 .auth.fresh .rf-lead{color:var(--muted)}
 .auth.fresh .rf-ic{background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.28);color:var(--sky)}
-.auth.fresh .rf-list li b{color:var(--ink)}
-.auth.fresh .rf-list li span{color:var(--muted)}
+.auth.fresh .rf-list li div b{color:var(--ink)}
+.auth.fresh .rf-list li div span{color:var(--muted)}
