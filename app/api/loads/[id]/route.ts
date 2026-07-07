@@ -105,15 +105,16 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders();
   const me = await requestUser(req);
-  if (!me) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  if (!me) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401, headers: cors });
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   if (searchParams.get("advance") === "1") advanceLocation(id);
   const load = getLoadById(id);
-  if (!load) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  if (!canAccess(load, me)) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-  return NextResponse.json({ ok: true, load: serialize(load, me) });
+  if (!load) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404, headers: cors });
+  if (!canAccess(load, me)) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403, headers: cors });
+  return NextResponse.json({ ok: true, load: serialize(load, me) }, { headers: cors });
 }
 
 export async function POST(
