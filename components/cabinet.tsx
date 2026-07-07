@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutGrid, LayoutDashboard, Users, History, Shield, LogOut, Menu, X,
-  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container, TrendingUp, BellRing,
+  Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container, TrendingUp, BellRing, LifeBuoy,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { HelpWidget } from "@/components/help-widget";
@@ -22,12 +22,14 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
       { key: "dispatchers", href: "/admin/dispatchers", label: "Dispatchers", icon: <Users size={18} /> },
       { key: "drivers", href: "/admin/drivers", label: "Drivers", icon: <Truck size={18} /> },
       { key: "admin", href: "/admin", label: "Admin", icon: <Shield size={18} /> },
+      { key: "support", href: "/admin/support", label: "Support", icon: <LifeBuoy size={18} /> },
       { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     ];
   }
   if (role === "broker") {
     return [
       { key: "loads", href: "/loads", label: "Loadboard", icon: <LayoutGrid size={18} /> },
+      { key: "support", href: "/support", label: "Support", icon: <LifeBuoy size={18} /> },
       { key: "history", href: "/history", label: "History", icon: <History size={18} /> },
     ];
   }
@@ -45,6 +47,7 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
     // Team (additional dispatcher seats) — owners only.
     ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} /> }] : []),
     { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
+    { key: "support", href: "/support", label: "Support", icon: <LifeBuoy size={18} /> },
   ];
 }
 

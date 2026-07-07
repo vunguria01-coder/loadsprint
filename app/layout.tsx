@@ -3,6 +3,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PWARegister } from "@/components/pwa-register";
 import { VoiceAssistant } from "@/components/voice-assistant";
+import { currentUser } from "@/lib/guard";
 
 export const viewport: Viewport = {
   themeColor: "#0F172A",
@@ -56,11 +57,12 @@ const schema = {
   email: "dispatch@loadsprint.com",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const me = await currentUser();
   return (
     <html lang="en">
       <head>
@@ -82,7 +84,7 @@ export default function RootLayout({
       <body>
         <PWARegister />
         <ToastProvider>{children}</ToastProvider>
-        <VoiceAssistant />
+        {me && <VoiceAssistant />}
       </body>
     </html>
   );
