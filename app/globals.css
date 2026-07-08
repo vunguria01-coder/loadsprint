@@ -2002,6 +2002,10 @@ table.acc select option{background:#0b1120}
 .auth.fresh .auth-alt{color:var(--muted)}
 .auth.fresh .auth-alt a{color:var(--sky)}
 .auth.fresh .btn-primary{background:var(--grad);border:0;color:#fff}
+.auth.fresh .link-btn{color:var(--sky)}
+/* error / info boxes: readable on the light card */
+.auth.fresh .auth-error{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.3);color:#b91c1c}
+.auth.fresh .auth-note{background:rgba(13,148,136,.09);border-color:rgba(13,148,136,.3);color:#0f766e}
 /* feature showcase → ink text on light */
 .auth.fresh .rf-eyebrow{color:var(--sky)}
 .auth.fresh .rf-title{color:var(--ink)}
