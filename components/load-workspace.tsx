@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Phone, Mail } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import { useToast } from "@/components/toast";
 import { StatusChip } from "@/components/status-chip";
@@ -120,6 +120,29 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           <StatusChip status={load.status} />
         </div>
       </div>
+
+      {(load.youRole === "dispatcher" || load.youRole === "admin") &&
+        (load.brokerContactName || load.brokerContactEmail || load.brokerContactPhone) && (
+          <div className="broker-card" style={{ marginBottom: 16 }}>
+            <div>
+              <span className="bc-label">Broker · contact to book</span>
+              <div className="bc-name">{load.brokerContactName || "Broker on the rate con"}</div>
+              {load.brokerContactEmail && (
+                <a className="bc-email" href={`mailto:${load.brokerContactEmail}`}>
+                  <Mail size={13} /> {load.brokerContactEmail}
+                </a>
+              )}
+            </div>
+            {load.brokerContactPhone && (
+              <a
+                className="btn btn-primary bc-call"
+                href={`tel:${load.brokerContactPhone.replace(/[^\d+]/g, "")}`}
+              >
+                <Phone size={16} /> Call {load.brokerContactPhone}
+              </a>
+            )}
+          </div>
+        )}
 
       <div className="ld-grid">
         {load.status === "Closed" ? (

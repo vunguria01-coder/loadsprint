@@ -283,6 +283,11 @@ export function CreateLoad({
           rate: Number(rate) > 0 ? Number(rate) : undefined,
           stops,
           billTo: ai?.billTo,
+          // Save the broker's contact from the rate con so the dispatcher always
+          // sees who to call/email for this load.
+          brokerContactName: broker?.name,
+          brokerContactEmail: broker?.email,
+          brokerContactPhone: broker?.phone,
         }),
       });
       const data = await res.json();

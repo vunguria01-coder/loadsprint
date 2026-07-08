@@ -88,6 +88,12 @@ export type Load = {
   brokerEmail: string;
   brokerPhone: string;
   hasBroker: boolean; // true only when a broker exists in the system for this load
+  // Broker contact pulled from the rate confirmation — who the dispatcher calls
+  // or emails to book. Kept separate from brokerEmail (a registered broker user
+  // for sharing/access control), so the dispatcher always sees this on the load.
+  brokerContactName?: string;
+  brokerContactEmail?: string;
+  brokerContactPhone?: string;
   shareLocationWithBroker: boolean; // dispatcher-controlled
   sharePausedPoint?: GeoPoint;
   sharePausedAt?: string;
@@ -976,6 +982,9 @@ export function createLoad(input: {
   brokerName?: string;
   brokerEmail?: string;
   brokerPhone?: string;
+  brokerContactName?: string;
+  brokerContactEmail?: string;
+  brokerContactPhone?: string;
   rate?: number;
   stops?: Stop[];
   billTo?: string;
@@ -995,6 +1004,9 @@ export function createLoad(input: {
     brokerName: input.brokerName || "",
     brokerEmail: (input.brokerEmail || "").trim().toLowerCase(),
     brokerPhone: input.brokerPhone || "",
+    brokerContactName: input.brokerContactName?.trim() || undefined,
+    brokerContactEmail: input.brokerContactEmail?.trim() || undefined,
+    brokerContactPhone: input.brokerContactPhone?.trim() || undefined,
     hasBroker: false,
     shareLocationWithBroker: true,
     originName: input.originName,

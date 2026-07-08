@@ -61,6 +61,9 @@ export async function POST(req: Request) {
     rate: Number(body.rate) > 0 ? Number(body.rate) : undefined,
     stops,
     billTo: body.billTo ? String(body.billTo) : undefined,
+    brokerContactName: body.brokerContactName ? String(body.brokerContactName) : undefined,
+    brokerContactEmail: body.brokerContactEmail ? String(body.brokerContactEmail) : undefined,
+    brokerContactPhone: body.brokerContactPhone ? String(body.brokerContactPhone) : undefined,
   });
   return NextResponse.json({ ok: true, load: { id: load.id, ref: load.ref } });
 }
