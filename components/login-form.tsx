@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, KeyRound } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, KeyRound, Mail, Lock } from "lucide-react";
 import { loginSchema, type LoginValues } from "@/lib/schemas";
 
 export function LoginForm() {
@@ -380,7 +380,10 @@ export function LoginForm() {
         <div className="fgrid">
           <div className={`field full${errors.email ? " err" : ""}`}>
             <label>Email</label>
-            <input type="email" placeholder="you@company.com" {...register("email")} />
+            <div className="input-ic">
+              <Mail className="ic" size={18} />
+              <input type="email" placeholder="you@company.com" {...register("email")} />
+            </div>
             <span className="msg">{errors.email?.message}</span>
           </div>
           <div className={`field full${errors.password ? " err" : ""}`}>
@@ -390,7 +393,8 @@ export function LoginForm() {
                 Forgot password?
               </button>
             </div>
-            <div className="pw">
+            <div className="pw input-ic">
+              <Lock className="ic" size={18} />
               <input
                 type={showPw ? "text" : "password"}
                 placeholder="Your password"

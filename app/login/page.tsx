@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthShell fresh>
+    <AuthShell premium>
       <LoginForm />
     </AuthShell>
   );
