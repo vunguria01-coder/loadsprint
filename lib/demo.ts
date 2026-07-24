@@ -13,6 +13,7 @@ import {
 import {
   createLoad,
   setStatus,
+  setLoadEta,
   getLoadsByDispatcher,
   deleteDemoLoads,
 } from "@/lib/loads";
@@ -49,15 +50,26 @@ function setState(ownerId: string, patch: { seeded?: boolean; removed?: boolean 
 
 type Dispatcher = { id: string; name?: string; ownerId?: string };
 
-// A readable, per-owner demo driver email (unique so GPS/pay don't collide).
+// Readable, per-owner demo driver emails (unique so GPS/pay don't collide).
 function demoDriverEmail(ownerId: string): string {
   return `alex.demo.${ownerId.slice(0, 8)}@sample.loadsprint`;
+}
+function demoDriverEmail2(ownerId: string): string {
+  return `maria.demo.${ownerId.slice(0, 8)}@sample.loadsprint`;
 }
 
 function ymd(offsetDays: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// ISO timestamp `hours` from now (negative = in the past) — for live-feeling
+// appointment countdowns on the demo board.
+function isoIn(hours: number): string {
+  const d = new Date();
+  d.setTime(d.getTime() + hours * 3600 * 1000);
+  return d.toISOString();
 }
 
 export function hasDispatcherDemo(me: Dispatcher): boolean {
@@ -85,9 +97,12 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
 
     const email = demoDriverEmail(ownerId);
     const driverName = "Alex Rivera (demo)";
+    const email2 = demoDriverEmail2(ownerId);
+    const driverName2 = "Maria Chen (demo)";
 
-    // Driver invite (no login needed — it's just sample data).
+    // Driver invites (no login needed — it's just sample data).
     createInvite(email, me.id, me.name || "You", "driver", true);
+    createInvite(email2, me.id, me.name || "You", "driver", true);
 
     // A truck with real-looking financials, a fuel card, docs and maintenance.
     const truck = createTruck({
@@ -128,7 +143,13 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
     addMaintenance(truck.id, ownerId, false, { kind: "oil", intervalMiles: 10000, lastServiceMiles: 500000, lastServiceDate: ymd(-60) });
     addMaintenance(truck.id, ownerId, false, { kind: "brakes", intervalMiles: 13000, lastServiceMiles: 500000, lastServiceDate: ymd(-60) });
 
-    // Two loads: one delivered (drives Profit/Receivables), one in transit.
+    // Trucks/trailers running the sample loads (unit 118 is the truck seeded above).
+    const T1 = { truck: "118", trailer: "53-5521" };
+    const T2 = { truck: "204", trailer: "53-7730" };
+
+    // A full operational board: every status represented, with truck/trailer,
+    // appointment windows and live ETA so the dashboard reads like a real TMS.
+    // One delivered load drives Profit/Receivables; the rest are in motion.
     const delivered = createLoad({
       dispatcherId: me.id,
       ref: "DEMO-4471",
@@ -138,9 +159,13 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
       destName: "Atlanta, GA",
       brokerName: "Ace Freight Brokers",
       rate: 2450,
+      truckNumber: T1.truck,
+      trailerNumber: T1.trailer,
+      deliveryApptAt: isoIn(-20),
       demo: true,
     });
     setStatus(delivered.id, "Delivered", me.id);
+
     const moving = createLoad({
       dispatcherId: me.id,
       ref: "DEMO-4488",
@@ -150,13 +175,92 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
       destName: "Denver, CO",
       brokerName: "Ace Freight Brokers",
       rate: 1980,
+      truckNumber: T1.truck,
+      trailerNumber: T1.trailer,
+      pickupApptAt: isoIn(-6),
+      deliveryApptAt: isoIn(7),
       demo: true,
     });
     setStatus(moving.id, "In Transit", me.id);
+    setLoadEta(moving.id, 918000, 32400); // ~570 mi, ~9h
 
-    // Driver pay rule (25%) so profit margins are real, and a GPS position.
+    const assigned = createLoad({
+      dispatcherId: me.id,
+      ref: "DEMO-4502",
+      driverName: driverName2,
+      driverEmail: email2,
+      originName: "Denver, CO",
+      destName: "Dallas, TX",
+      brokerName: "Summit Logistics",
+      rate: 2100,
+      truckNumber: T2.truck,
+      trailerNumber: T2.trailer,
+      pickupApptAt: isoIn(4),
+      deliveryApptAt: isoIn(28),
+      demo: true,
+    });
+    setStatus(assigned.id, "Assigned", me.id);
+
+    const picked = createLoad({
+      dispatcherId: me.id,
+      ref: "DEMO-4515",
+      driverName: driverName2,
+      driverEmail: email2,
+      originName: "Kansas City, MO",
+      destName: "Memphis, TN",
+      brokerName: "Summit Logistics",
+      rate: 1450,
+      truckNumber: T2.truck,
+      trailerNumber: T2.trailer,
+      pickupApptAt: isoIn(-2),
+      deliveryApptAt: isoIn(9),
+      demo: true,
+    });
+    setStatus(picked.id, "Picked Up", me.id);
+    setLoadEta(picked.id, 645000, 23400); // ~400 mi, ~6.5h
+
+    const atDelivery = createLoad({
+      dispatcherId: me.id,
+      ref: "DEMO-4523",
+      driverName,
+      driverEmail: email,
+      originName: "Memphis, TN",
+      destName: "Nashville, TN",
+      brokerName: "Ace Freight Brokers",
+      rate: 900,
+      truckNumber: T1.truck,
+      trailerNumber: T1.trailer,
+      pickupApptAt: isoIn(-5),
+      deliveryApptAt: isoIn(1), // within 2h → "Appt Soon"
+      demo: true,
+    });
+    setStatus(atDelivery.id, "At Delivery", me.id);
+    setLoadEta(atDelivery.id, 32000, 2400); // ~20 mi, ~40m
+
+    const delayed = createLoad({
+      dispatcherId: me.id,
+      ref: "DEMO-4531",
+      driverName: driverName2,
+      driverEmail: email2,
+      originName: "Houston, TX",
+      destName: "San Antonio, TX",
+      brokerName: "Summit Logistics",
+      rate: 780,
+      truckNumber: T2.truck,
+      trailerNumber: T2.trailer,
+      pickupApptAt: isoIn(-9),
+      deliveryApptAt: isoIn(-1.5), // appointment already passed → "Delayed"
+      demo: true,
+    });
+    setStatus(delayed.id, "In Transit", me.id);
+    setLoadEta(delayed.id, 64000, 3600); // ~40 mi, ~1h out
+
+    // Driver pay rules (25%) so profit margins are real, plus fresh GPS pings so
+    // both drivers read as "online" and trigger check-in alerts.
     setDriverPay(ownerId, email, "pct", 25);
-    setDriverGlobalLocation(email, 41.8781, -87.6298); // Chicago
+    setDriverPay(ownerId, email2, "pct", 25);
+    setDriverGlobalLocation(email, 39.9, -101.5, moving.id); // en route Chicago→Denver
+    setDriverGlobalLocation(email2, 33.2, -95.6, picked.id); // en route KC→Memphis
 
     setState(ownerId, { seeded: true });
   } catch {
@@ -168,10 +272,13 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
 export function removeDispatcherDemo(me: Dispatcher): void {
   const ownerId = me.ownerId || me.id;
   const email = demoDriverEmail(ownerId);
+  const email2 = demoDriverEmail2(ownerId);
   deleteDemoTrucks(ownerId);
   deleteDemoLoads(me.id);
   deleteDemoInvites(me.id);
   deleteDriverPay(ownerId, email);
+  deleteDriverPay(ownerId, email2);
   deleteDriverGlobalLocation(email);
+  deleteDriverGlobalLocation(email2);
   setState(ownerId, { removed: true, seeded: true });
 }

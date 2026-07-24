@@ -136,6 +136,10 @@ export type Load = {
   brokerPublishedAt?: string;
   pickupDate?: string; // YYYY-MM-DD — scheduled pickup day (for the calendar)
   deliveryDate?: string; // YYYY-MM-DD — scheduled delivery day (for the calendar)
+  pickupApptAt?: string; // ISO — precise pickup appointment (for countdowns/late detection)
+  deliveryApptAt?: string; // ISO — precise delivery appointment (for countdowns/late detection)
+  truckNumber?: string; // unit # of the truck running this load
+  trailerNumber?: string; // trailer # on this load
   deliveredAt?: string; // ISO — when the load was first marked Delivered/Closed
   brokerPaid?: boolean; // dispatcher marked the broker's payment received (A/R)
   brokerPaidAt?: string; // ISO — when payment was recorded
@@ -988,6 +992,10 @@ export function createLoad(input: {
   rate?: number;
   stops?: Stop[];
   billTo?: string;
+  pickupApptAt?: string;
+  deliveryApptAt?: string;
+  truckNumber?: string;
+  trailerNumber?: string;
   demo?: boolean;
 }): Load {
   const now = new Date().toISOString();
@@ -1023,6 +1031,10 @@ export function createLoad(input: {
     loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
     stops: input.stops && input.stops.length > 0 ? input.stops : undefined,
     billTo: input.billTo?.trim() || undefined,
+    pickupApptAt: input.pickupApptAt || undefined,
+    deliveryApptAt: input.deliveryApptAt || undefined,
+    truckNumber: input.truckNumber?.trim() || undefined,
+    trailerNumber: input.trailerNumber?.trim() || undefined,
     demo: input.demo || undefined,
     createdAt: now,
   };
