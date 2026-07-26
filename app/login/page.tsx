@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthShell premium>
+      <p className="auth-eyebrow">Вход для перевозчиков</p>
       <LoginForm />
     </AuthShell>
   );
