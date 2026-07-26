@@ -166,6 +166,9 @@ function useLocationShare() {
 
 type Notif = { id: string; text: string; loadRef: string; createdAt: string; read: boolean };
 
+// Keeps the currently open load across a page reload / app restart.
+const OPEN_LOAD_KEY = "driver:openLoadId";
+
 export function DriverApp({ name }: { name: string }) {
   const [list, setList] = useState<ListItem[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -206,9 +209,21 @@ export function DriverApp({ name }: { name: string }) {
 
   // Make the phone's hardware/browser Back button close an open load and return
   // to the list, instead of leaving the app and forcing a fresh sign-in.
+  // Restore the load that was open before the app was closed/reloaded, and push
+  // a history entry so Back still returns to the list instead of leaving.
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = sessionStorage.getItem(OPEN_LOAD_KEY); } catch {}
+    if (saved) {
+      window.history.pushState({ load: saved }, "");
+      setOpenId(saved);
+    }
+  }, []);
+
   useEffect(() => {
     function onPop() {
       setOpenId(null);
+      try { sessionStorage.removeItem(OPEN_LOAD_KEY); } catch {}
       fetchList();
     }
     window.addEventListener("popstate", onPop);
@@ -218,6 +233,7 @@ export function DriverApp({ name }: { name: string }) {
   function openLoad(id: string) {
     // Add a history entry so Back pops back to the list rather than the site.
     window.history.pushState({ load: id }, "");
+    try { sessionStorage.setItem(OPEN_LOAD_KEY, id); } catch {}
     setOpenId(id);
   }
 
