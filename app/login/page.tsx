@@ -3,7 +3,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in — LoadSprint",
+  title: "LoadSprint — Вход",
   description: "Sign in to your LoadSprint account.",
 };
 
