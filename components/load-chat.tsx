@@ -7,6 +7,9 @@ import { fileToDataUrl, clockTime } from "@/lib/format";
 
 type Pending = { name: string; dataUrl: string; kind: "image" | "pdf" | "file" };
 
+// Keeps an unsent message across a page reload, per load.
+const draftKey = (loadId: string) => `chatDraft:${loadId}`;
+
 export function LoadChat({
   load,
   mutate,
@@ -24,6 +27,21 @@ export function LoadChat({
     const el = streamRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [load.messages.length]);
+
+  // Restore the draft written before the last reload.
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(draftKey(load.id)); } catch {}
+    if (saved) setText(saved);
+  }, [load.id]);
+
+  function editText(v: string) {
+    setText(v);
+    try {
+      if (v) localStorage.setItem(draftKey(load.id), v);
+      else localStorage.removeItem(draftKey(load.id));
+    } catch {}
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -47,7 +65,7 @@ export function LoadChat({
         text: text.trim(),
         attachments: pending ? [pending] : [],
       });
-      setText("");
+      editText("");
       setPending(null);
     } finally {
       setSending(false);
@@ -136,7 +154,7 @@ export function LoadChat({
             type="text"
             placeholder="Type a message…"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => editText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !sending && send()}
           />
           <button className="send" onClick={send} disabled={sending} aria-label="Send">

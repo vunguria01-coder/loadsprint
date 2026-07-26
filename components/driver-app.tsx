@@ -169,6 +169,9 @@ type Notif = { id: string; text: string; loadRef: string; createdAt: string; rea
 // Keeps the currently open load across a page reload / app restart.
 const OPEN_LOAD_KEY = "driver:openLoadId";
 
+// Keeps an unsent chat message across a page reload / app restart, per load.
+const chatDraftKey = (loadId: string) => `driver:chatDraft:${loadId}`;
+
 export function DriverApp({ name }: { name: string }) {
   const [list, setList] = useState<ListItem[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -388,6 +391,21 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
     return () => clearInterval(t);
   }, [fetchLoad]);
 
+  // Restore the message typed before the last reload.
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(chatDraftKey(loadId)); } catch {}
+    if (saved) setMsg(saved);
+  }, [loadId]);
+
+  function editMsg(v: string) {
+    setMsg(v);
+    try {
+      if (v) localStorage.setItem(chatDraftKey(loadId), v);
+      else localStorage.removeItem(chatDraftKey(loadId));
+    } catch {}
+  }
+
   async function act(body: Record<string, unknown>) {
     setBusy(true);
     try {
@@ -568,13 +586,13 @@ function DriverLoad({ loadId, onBack }: { loadId: string; onBack: () => void }) 
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
         <input
           value={msg}
-          onChange={(e) => setMsg(e.target.value)}
+          onChange={(e) => editMsg(e.target.value)}
           placeholder="Message…"
           style={{ flex: 1, padding: 14, borderRadius: 12, border: `1px solid ${C.line}`, background: "#0a1424", color: "#fff", fontSize: 15 }}
         />
         <button
           disabled={busy || !msg.trim()}
-          onClick={async () => { const t = msg.trim(); if (!t) return; setMsg(""); await act({ action: "message", text: t }); }}
+          onClick={async () => { const t = msg.trim(); if (!t) return; editMsg(""); await act({ action: "message", text: t }); }}
           style={{ padding: "0 18px", borderRadius: 12, border: "none", background: C.blue, color: "#fff", fontWeight: 700 }}
         >
           Send
