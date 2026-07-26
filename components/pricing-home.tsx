@@ -50,7 +50,7 @@ export function PricingHome() {
                   ))}
                 </ul>
                 <a href="/register" className="plan-btn lp-plan-btn">
-                  Get started
+                  Registration
                 </a>
               </div>
             );

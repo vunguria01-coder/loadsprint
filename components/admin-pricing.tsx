@@ -42,9 +42,7 @@ export function AdminPricing({ pricing }: { pricing: PricingValues }) {
       <div className="price-edit">
         {(["silver", "gold", "platinum"] as const).map((t) => (
           <div className="pe" key={t}>
-            <div className={`pt tier-${t}`} style={{ color: "var(--ink)" }}>
-              {t}
-            </div>
+            <div className={`pt tier-${t}`}>{t}</div>
             <input
               type="number"
               min={0}

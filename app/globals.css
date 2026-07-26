@@ -17,6 +17,10 @@
   --card:rgba(148,170,205,.05);
   --card-hi:rgba(148,170,205,.08);
   --grad:linear-gradient(120deg,var(--blue),var(--sky));
+  /* Account status + plan-tier accents. One place to retune every admin badge,
+     stripe, avatar and price card. Re-tuned for the light cabinet in `.cab`. */
+  --am-active:#34D399; --am-soon:#FBBF24; --am-expired:#F87171;
+  --am-silver:#94A3B8; --am-gold:#F59E0B; --am-platinum:#A78BFA;
   --r:16px;
   --maxw:1180px;
   --pad-section:clamp(72px,9vw,128px);
@@ -421,9 +425,54 @@ footer{border-top:1px solid var(--line-2);padding:60px 0 36px;background:var(--n
 .admin-body{padding-block:42px}
 .admin-h{font-size:clamp(24px,3.4vw,34px);font-weight:700;margin-bottom:4px}
 .admin-sub{color:var(--muted);font-size:15px;margin-bottom:30px}
-.admin-section{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:26px;margin-bottom:22px}
-.admin-section h2{font-size:19px;font-weight:600;margin-bottom:4px}
-.admin-section .sx{color:var(--muted);font-size:13.5px;margin-bottom:20px}
+.admin-section{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:22px;margin-bottom:16px;scroll-margin-top:84px}
+.admin-section h2{font-size:17px;font-weight:600;margin-bottom:4px}
+.admin-section .sx{color:var(--muted);font-size:13px;margin-bottom:16px}
+
+/* ---- admin shell: compact header + sticky section rail ---- */
+.adm-shell{display:grid;grid-template-columns:206px minmax(0,1fr);gap:24px;align-items:start}
+.adm-main{min-width:0}
+.adm-rail{
+  position:sticky;top:74px;display:flex;flex-direction:column;gap:2px;padding:10px 8px;
+  border:1px solid var(--line);border-radius:16px;background:var(--card);
+}
+.adm-rail-cap{
+  font-family:Manrope,sans-serif;font-weight:800;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted-2);padding:8px 10px 6px;
+}
+.adm-rail-cap + .adm-rail-anchor{margin-top:0}
+.adm-rail-link{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;
+  color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px;transition:background .15s ease,color .15s ease;
+}
+.adm-rail-link svg{color:var(--muted-2);flex:0 0 auto}
+.adm-rail-link:hover{background:var(--accent-soft,rgba(56,189,248,.08));color:var(--ink)}
+.adm-rail-link.active{background:var(--accent-soft,rgba(37,99,235,.16));color:var(--blue,#38bdf8)}
+.adm-rail-link.active svg{color:var(--sky)}
+.adm-rail-anchor{
+  display:block;margin-left:12px;padding:7px 10px;border-left:1px solid var(--line);
+  color:var(--muted);text-decoration:none;font-size:12.5px;transition:color .15s ease,border-color .15s ease;
+}
+.adm-rail-anchor:hover{color:var(--sky);border-left-color:var(--sky)}
+.adm-head{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--line-2);
+}
+.adm-head-text{min-width:0}
+.adm-title{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.adm-subtitle{color:var(--muted);font-size:13px;line-height:1.5;margin-top:3px;max-width:80ch}
+.adm-badge{
+  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-family:Manrope,sans-serif;font-weight:700;
+  font-size:11.5px;color:var(--blue,#38bdf8);background:var(--accent-soft,rgba(56,189,248,.1));
+  border:1px solid var(--line);padding:5px 11px;border-radius:999px;white-space:nowrap;
+}
+.adm-badge svg{flex:0 0 auto}
+@media(max-width:980px){
+  .adm-shell{grid-template-columns:1fr;gap:14px}
+  .adm-rail{position:static;flex-direction:row;align-items:center;gap:6px;padding:8px;overflow-x:auto}
+  .adm-rail-cap,.adm-rail-anchor{display:none}
+  .adm-rail-link{flex:0 0 auto;white-space:nowrap}
+}
 
 .table-wrap{overflow-x:auto;border:1px solid var(--line-2);border-radius:12px}
 table.acc{width:100%;border-collapse:collapse;min-width:720px}
@@ -448,7 +497,12 @@ table.acc select option{background:#0b1120}
 /* pricing editor */
 .price-edit{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .price-edit .pe{border:1px solid var(--line-2);border-radius:12px;padding:16px;background:rgba(8,14,28,.4)}
-.price-edit .pe .pt{font-family:Manrope;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+/* Tier name carries its plan colour so the three cards read apart at a glance. */
+.price-edit .pe .pt{
+  font-family:Manrope;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--am-tier,var(--muted))
+}
+.price-edit .pe .pt::before{content:"";width:8px;height:8px;border-radius:3px;background:currentColor;flex:0 0 auto}
 .price-edit input{width:100%;font-family:Poppins;font-weight:600;font-size:20px;color:#fff;background:rgba(8,14,28,.8);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .meta-row{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
 .meta-row .field{max-width:160px}
@@ -981,23 +1035,163 @@ table.acc select option{background:#0b1120}
   .cab-acc-name { display: none; }
 }
 
-/* --- admin user manager cards --- */
-.am-list { display: flex; flex-direction: column; gap: 12px; }
-.am-card { background: var(--card, #0f1729); border: 1px solid var(--line, #22304a); border-radius: 14px; padding: 16px; }
-.am-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.am-name { font-weight: 700; font-size: 16px; }
-.am-mail { color: var(--muted, #93a4be); font-size: 13px; word-break: break-all; }
-.am-extra { color: var(--muted, #93a4be); font-size: 12.5px; margin-top: 3px; }
-.am-plan { text-align: right; }
-.am-tier { display: block; font-weight: 700; text-transform: capitalize; }
-.am-sub { display: block; color: var(--muted, #93a4be); font-size: 12.5px; }
-.am-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line, #22304a); }
-.am-controls select, .am-controls input { padding: 8px 10px; background: #1b2740; color: #fff; border: 1px solid var(--line, #22304a); border-radius: 8px; }
-.am-controls select option { background: #1b2740; color: #fff; }
-.am-controls select:focus, .am-controls input:focus { outline: none; border-color: var(--sky, #38bdf8); }
-@media (max-width: 560px) {
-  .am-plan { text-align: left; }
-  .am-controls { gap: 6px; }
+/* ================= admin account manager ================= */
+.am{--am-tier:var(--muted-2)}
+.am-flabel{font-family:Manrope,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+
+/* --- toolbar: search + status chips + sort --- */
+/* Search spans its own line; the status chips and the sort share the next one. */
+.am-bar{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;margin-bottom:14px}
+.am-search{flex:1 1 100%;min-width:0;margin:0}
+.am-filters{display:flex;gap:6px;flex-wrap:wrap}
+.am-chip{
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  font-family:Manrope,sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);
+  padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;transition:.16s ease;
+}
+.am-chip:hover{color:var(--ink);border-color:var(--muted-2)}
+.am-chip.on{color:var(--blue);border-color:transparent;background:var(--accent-soft,rgba(56,189,248,.14))}
+.am-chip-n{font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px;background:var(--card-hi);color:inherit}
+.am-sort{display:flex;align-items:center;gap:8px;margin-left:auto}
+.am-sort select{
+  padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+  background:var(--card-hi);color:var(--ink);font-size:13px;cursor:pointer;
+}
+.am-sort select:focus{outline:none;border-color:var(--sky)}
+.am-empty{color:var(--muted);padding:28px 4px;text-align:center;font-size:14px}
+
+/* --- one account card --- */
+.am-list{display:flex;flex-direction:column;gap:13px}
+/* separator between accounts — inset hairline, so it reads as a list rule
+   rather than a third border next to the two card edges */
+.am-div{
+  flex:0 0 auto;height:1px;margin:0 14px;
+  background:linear-gradient(90deg,transparent,var(--muted-2) 18%,var(--muted-2) 82%,transparent);
+  opacity:.42;
+}
+.am-card{
+  position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;transition:border-color .16s ease,box-shadow .16s ease,opacity .16s ease;
+}
+/* status stripe down the left edge — the card's state, readable at a glance */
+.am-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--am-st)}
+.am-card.st-active{--am-st:var(--am-active)}
+.am-card.st-soon{--am-st:var(--am-soon)}
+.am-card.st-expired{--am-st:var(--am-expired)}
+.am-card.st-free{--am-st:var(--line)}
+.am-card:hover{border-color:var(--muted-2)}
+.am-card.open{border-color:var(--sky);box-shadow:0 10px 34px -22px rgba(0,0,0,.55)}
+.am-card.busy{opacity:.6;pointer-events:none}
+
+.am-head{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+  padding:14px 16px 14px 19px;background:none;border:0;color:inherit;font:inherit;
+}
+.am-head:hover{background:var(--card-hi)}
+.am-head:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.am-av{
+  flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  font-family:Manrope,sans-serif;font-weight:800;font-size:13px;letter-spacing:.02em;
+  color:var(--am-tier);background:color-mix(in srgb,var(--am-tier) 14%,transparent);
+  border:1px solid color-mix(in srgb,var(--am-tier) 30%,transparent);
+}
+.tier-silver{--am-tier:var(--am-silver)}
+.tier-gold{--am-tier:var(--am-gold)}
+.tier-platinum{--am-tier:var(--am-platinum)}
+.am-id{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px}
+.am-name{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:var(--ink)}
+.am-mail{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.am-extra{color:var(--muted-2);font-size:12.5px}
+.am-plan{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}
+.am-status{
+  display:inline-flex;align-items:center;gap:6px;font-family:Manrope,sans-serif;font-weight:700;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;color:var(--am-st);
+  background:color-mix(in srgb,var(--am-st) 13%,transparent);
+}
+.am-status.st-active{--am-st:var(--am-active)}
+.am-status.st-soon{--am-st:var(--am-soon)}
+.am-status.st-expired{--am-st:var(--am-expired)}
+.am-status.st-free{--am-st:var(--muted-2)}
+.am-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.am-status.st-soon .am-dot,.am-status.st-expired .am-dot{animation:am-pulse 1.8s ease-in-out infinite}
+@keyframes am-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.am-status .am-dot{animation:none}}
+.am-tier{font-weight:800;font-size:14px;color:var(--am-tier)}
+.am-tier.tier-none{color:var(--muted)}
+.am-sub{color:var(--muted);font-size:12px}
+.am-caret{flex:0 0 auto;color:var(--muted-2);transition:transform .2s ease}
+.am-card.open .am-caret{transform:rotate(180deg)}
+
+/* --- quick row actions (no need to expand) --- */
+.am-quick{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 12px 19px}
+.am-qbtn{
+  display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  font-family:Manrope,sans-serif;font-weight:700;font-size:12px;color:var(--muted);
+  padding:5px 10px;border-radius:9px;border:1px solid var(--line);background:transparent;transition:.16s ease;
+}
+.am-qbtn:hover:not(:disabled){color:var(--blue);border-color:var(--sky);background:var(--accent-soft,rgba(56,189,248,.1))}
+.am-qbtn.danger:hover:not(:disabled){color:var(--am-expired);border-color:var(--am-expired);background:rgba(248,113,113,.1)}
+.am-qbtn:disabled{opacity:.45;cursor:default}
+
+/* --- expanded editor --- */
+.am-panel{
+  display:flex;flex-direction:column;gap:14px;
+  padding:16px 16px 16px 19px;border-top:1px solid var(--line);background:var(--card-hi);
+  animation:am-open .18s ease;
+}
+@keyframes am-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.am-panel{animation:none}}
+.am-group{display:flex;flex-direction:column;gap:8px}
+.am-opts{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.am-opt{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:Manrope,sans-serif;font-weight:700;font-size:13px;color:var(--muted);
+  padding:8px 13px;border-radius:10px;border:1px solid var(--line);background:var(--card);transition:.16s ease;
+}
+.am-opt:hover:not(:disabled){color:var(--ink);border-color:var(--muted-2)}
+.am-opt.on{
+  color:var(--am-tier);border-color:color-mix(in srgb,var(--am-tier) 55%,transparent);
+  background:color-mix(in srgb,var(--am-tier) 12%,transparent);
+}
+.am-opt.tier-none.on{--am-tier:var(--sky)}
+.am-opt:not([class*="tier-"]).on{--am-tier:var(--sky)}
+.am-opt:disabled{opacity:.5;cursor:default}
+.am-opt-n{font-weight:600;font-size:11px;opacity:.75}
+.am-days{
+  width:92px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font-size:13px;
+}
+.am-days:focus{outline:none;border-color:var(--sky)}
+
+/* Apply + the restricted-tool switches belong to this one account: one framed
+   band, so the admin never hunts for which row an action applies to. */
+.am-bottom{
+  display:flex;flex-direction:column;gap:12px;padding:12px;
+  border:1px solid var(--line);border-radius:12px;background:var(--card);
+}
+.am-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.am-preview{
+  display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);
+  padding:8px 12px;border-radius:10px;border:1px dashed var(--line);background:var(--card);
+}
+.am-preview b{color:var(--ink);font-weight:700}
+.am-preview svg{flex:0 0 auto;color:var(--muted-2)}
+/* A staged change reads as a promise, not a status: solid edge + accent. */
+.am-preview.staged{border-style:solid;border-color:var(--sky);background:var(--accent-soft,rgba(56,189,248,.1));color:var(--ink)}
+.am-preview.staged svg{color:var(--sky)}
+.am-actions{display:flex;align-items:center;gap:8px}
+.am-actions .btn-sm{flex:0 0 auto}
+.am-actions .btn:disabled{opacity:.45;cursor:default}
+.am-tools{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line-2)}
+
+@media (max-width:640px){
+  .am-sort{margin-left:0}
+  .am-head{flex-wrap:wrap;gap:10px}
+  .am-plan{align-items:flex-start;text-align:left;flex-direction:row;flex-wrap:wrap;gap:8px;width:100%;padding-left:52px}
+  .am-caret{position:absolute;top:20px;right:14px}
+  .am-foot{align-items:stretch}
+  .am-actions{justify-content:flex-end}
 }
 
 /* prominent driver name in dispatcher's drivers list */
@@ -1773,6 +1967,24 @@ table.acc select option{background:#0b1120}
   background:#F4FAF8;color:var(--ink);border-color:var(--line);
 }
 .cab :is(.field option,.lb-status option,.acc select option){background:#fff;color:var(--ink)}
+/* Admin account manager on the light theme: deepen the status/tier hues so the
+   badges keep AA contrast against white cards. */
+.cab{
+  --am-active:#0F9D6B; --am-soon:#C2740A; --am-expired:#DC2626;
+  --am-silver:#64748B; --am-gold:#B45309; --am-platinum:#7C3AED;
+}
+.cab :is(.am-sort select,.am-days,.am-opt,.am-preview){background:#F6FAF9;color:var(--ink);border-color:var(--line)}
+.cab .am-sort select option{background:#fff;color:var(--ink)}
+.cab .am-card{background:#fff}
+.cab .am-panel{background:#F6FAF9}
+/* Price / driver-limit editors were dark-fill panels; lift them onto the light theme. */
+.cab .price-edit .pe{background:#F6FAF9;border-color:var(--line)}
+.cab .price-edit input{background:#fff;color:var(--ink);border-color:var(--line)}
+.cab .am-bottom{background:#fff}
+/* Pricing / driver-limit editors still carried the dark-theme fill, which read
+   as flat grey blocks on the light cabinet. */
+.cab .price-edit .pe{background:#F6FAF9;border-color:var(--line)}
+.cab .price-edit .pe .pt{background:none;border-color:transparent}
 .cab .driver-search input{background:none}
 .cab .driver-search{background:#F4FAF8;border-color:var(--line)}
 .cab :is(.field input,.field textarea)::placeholder{color:var(--muted-2)}
@@ -1820,7 +2032,7 @@ table.acc select option{background:#0b1120}
 .cab .collapsible{background:#F5FAF8}
 
 /* Fresh: lighten remaining dark sub-panels across the deeper app screens */
-.cab :is(.plan-card,.rev-card,.billing-banner,.am-card,.bp-shell,.doc-row,
+.cab :is(.plan-card,.rev-card,.billing-banner,.bp-shell,.doc-row,
   .uploader,.dist-chip,.sp-rate,.da-input,.dp-pw,.ai-scope-opt,.drate-input,
   .pkg-item,.dm-row,.settle-card,.stat-box){background:#F6FAF9}
 .cab .modal .box{background:#fff}
@@ -2381,3 +2593,11 @@ table.acc select option{background:#0b1120}
   .dstat,.dl-card,.alert,.fpill{transition:none}
   .dl-card{animation:none}
 }
+
+/* Scroll progress indicator in the nav (landing.css restyles it for .site-fresh). */
+.nav-progress{
+  position:absolute;left:0;bottom:0;height:2px;width:100%;
+  transform:scaleX(0);transform-origin:0 50%;background:var(--grad);
+  opacity:0;transition:opacity .25s ease;pointer-events:none;
+}
+.nav.scrolled .nav-progress{opacity:1}

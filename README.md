@@ -59,6 +59,30 @@ npm run start        # serves the production build (PORT defaults to 8080)
 > Note: do **not** add a `babel.config.js` — it breaks the Next.js build. The project
 > uses the default SWC compiler.
 
+### Live sync overlay (dev only)
+
+`npm run dev` shows a **Live sync** panel in the bottom-left corner. It streams every
+file change from the dev server over SSE (`/api/dev/live`, watching `app/`, `components/`,
+`lib/`, `data/`, `public/` plus the root config files) and shows what changed, when, and
+in which category. A hairline at the top of the viewport flashes whenever an update lands,
+so you can see the page took the change without hunting for it.
+
+What it does per category:
+
+| Scope    | Source                              | Action                                       |
+| -------- | ----------------------------------- | -------------------------------------------- |
+| `hot`    | `app/`, `components/`, `lib/`       | left to Fast Refresh, only logged            |
+| `data`   | `data/`                             | debounced `router.refresh()` (no page reload) |
+| `asset`  | `public/`                           | matching `<img>`/`<link>` re-pointed in place |
+| `config` | `next.config.mjs`, `.env.local`, …  | waits for the dev-server restart, then reloads |
+
+Click the bar or press **Alt+L** to expand/collapse (the state is remembered). Untick
+*Auto-refresh* to stop it refreshing on its own and drive it with the buttons instead.
+
+Nothing here reaches production: the route 404s when `NODE_ENV=production`, and the
+overlay sits behind a build-time branch in `app/layout.tsx` with a lazy import, so it is
+never fetched by a production client.
+
 ---
 
 ## Environment variables
@@ -163,9 +187,27 @@ Sign in with the admin account (from `ADMIN_*`). From there the admin can manage
 account, **grant a plan** (set days; `0` = no expiry), **edit the public prices**, and
 grant the per-account **location-freeze** tool.
 
-Demo accounts (created automatically unless `SEED_DEMO=false`):
-- Driver: `demo.driver@loadsprint.us.com`
-- Dispatcher: `demo.dispatch@loadsprint.us.com`
+---
+
+## Demo accounts
+
+Created (and repaired) automatically on any sign-in, unless `SEED_DEMO=false` —
+so they survive a disk reset on Railway. Both are on the **platinum** plan.
+
+| Role | Email | Password | Where to sign in |
+| --- | --- | --- | --- |
+| Dispatcher | `demo.dispatch@loadsprint.us.com` | `Demo-Dispatch-2026` | `/login` → `/dashboard` |
+| Driver | `demo.driver@loadsprint.us.com` | `Demo-Driver-2026` | `/driver` and the mobile app (`POST /api/driver/login`) |
+
+The dispatcher lands on a full sample board: 6 loads (one in every status, with
+appointment windows and live ETA), 2 sample drivers with 25% pay rules and GPS
+pings, and a truck with expenses, a fuel card, docs and maintenance — plus the
+2 driver-facing loads (`LS-50321`, `LS-50488`) the driver app shows. **Remove
+demo data** wipes it; the next sign-in seeds it again (demo account only — a real
+dispatcher's wipe is permanent).
+
+Change the credentials in `lib/seed-demo.ts`; the dispatcher's sample board lives
+in `lib/demo.ts`.
 
 ---
 

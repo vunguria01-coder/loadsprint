@@ -2,7 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
-import { ArrowRight, CheckCircle2, Clock, Boxes } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Boxes,
+  Sparkles,
+  FileCheck2,
+  ShieldCheck,
+} from "lucide-react";
 
 export function Hero() {
   const pathRef = useRef<SVGPathElement>(null);
@@ -34,6 +42,11 @@ export function Hero() {
 
   return (
     <section className="hero">
+      <div className="hero-aurora" aria-hidden>
+        <span className="blob b1" />
+        <span className="blob b2" />
+      </div>
+
       <div className="wrap hero-grid">
         <div className="hero-copy">
           <span className="pill">
@@ -51,12 +64,15 @@ export function Hero() {
           </p>
           <div className="hero-cta">
             <a href="/register" className="btn btn-primary">
-              Get started <ArrowRight size={17} />
+              Registration <ArrowRight size={17} />
             </a>
             <a href="#how" className="btn btn-ghost">
               See how it works
             </a>
           </div>
+          <p className="hero-note">
+            <ShieldCheck size={15} /> No setup fees · cancel anytime
+          </p>
           <div className="hero-trust">
             <span className="i">
               <CheckCircle2 size={16} /> <b>AI</b> rate-con import
@@ -70,59 +86,77 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="dispatch" aria-label="Live shipment tracking preview">
-          <div className="dispatch-top">
-            <span className="live">
-              <span className="dot" /> Live Tracking
-            </span>
-            <span className="ref">LOAD #LS-48217</span>
-          </div>
-          <div className="map-card">
-            <svg viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden>
-              <defs>
-                <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stopColor="#0D9488" />
-                  <stop offset="1" stopColor="#14B8A6" />
-                </linearGradient>
-              </defs>
-              <path className="route-bg" d={routeD} />
-              <path ref={pathRef} className="route-line" d={routeD} />
-              <g transform="translate(36,138)">
-                <circle className="pin-o" r="9" />
-                <circle className="pin" r="5" />
-              </g>
-              <g transform="translate(364,40)">
-                <circle className="pin-o" r="9" />
-                <circle className="pin" r="5" />
-              </g>
-              <circle ref={truckRef} className="truck-dot" r="6" cx="36" cy="138" />
-            </svg>
-          </div>
-          <div className="tele">
-            <div className="t">
-              <div className="k">Origin</div>
-              <div className="v" style={{ fontSize: 16 }}>
-                Dallas, TX
+        <div className="hero-visual">
+          <span className="float-chip chip-ai" aria-hidden>
+            <Sparkles size={15} /> Rate con parsed in <b>8s</b>
+          </span>
+          <span className="float-chip chip-pod" aria-hidden>
+            <FileCheck2 size={15} /> Broker packet <b>ready</b>
+          </span>
+
+          <div className="dispatch" aria-label="Live shipment tracking preview">
+            <div className="dispatch-top">
+              <span className="live">
+                <span className="dot" /> Live Tracking
+              </span>
+              <span className="ref">LOAD #LS-48217</span>
+            </div>
+            <div className="map-card">
+              <svg viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden>
+                <defs>
+                  <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stopColor="#0D9488" />
+                    <stop offset="1" stopColor="#14B8A6" />
+                  </linearGradient>
+                </defs>
+                <path className="route-bg" d={routeD} />
+                <path ref={pathRef} className="route-line" d={routeD} />
+                <g transform="translate(36,138)">
+                  <circle className="pin-o" r="9" />
+                  <circle className="pin" r="5" />
+                </g>
+                <g transform="translate(364,40)">
+                  <circle className="pin-o" r="9" />
+                  <circle className="pin" r="5" />
+                </g>
+                <circle ref={truckRef} className="truck-dot" r="6" cx="36" cy="138" />
+              </svg>
+            </div>
+            <div className="tele">
+              <div className="t">
+                <div className="k">Origin</div>
+                <div className="v" style={{ fontSize: 16 }}>
+                  Dallas, TX
+                </div>
+              </div>
+              <div className="t">
+                <div className="k">Distance</div>
+                <div className="v">
+                  642 <small>mi</small>
+                </div>
+              </div>
+              <div className="t">
+                <div className="k">Destination</div>
+                <div className="v" style={{ fontSize: 16 }}>
+                  Atlanta, GA
+                </div>
               </div>
             </div>
-            <div className="t">
-              <div className="k">Distance</div>
-              <div className="v">
-                642 <small>mi</small>
+            <div className="tele-progress">
+              <div className="tp-head">
+                <span>Delivery progress</span>
+                <b>68%</b>
+              </div>
+              <div className="tp-track">
+                <span className="tp-fill" style={{ width: "68%" }} />
               </div>
             </div>
-            <div className="t">
-              <div className="k">Destination</div>
-              <div className="v" style={{ fontSize: 16 }}>
-                Atlanta, GA
-              </div>
+            <div className="dispatch-foot">
+              <span>
+                Carrier: <b>Sprint Logistics LLC</b> · 53′ Dry Van
+              </span>
+              <span className="eta-badge">ETA on time</span>
             </div>
-          </div>
-          <div className="dispatch-foot">
-            <span>
-              Carrier: <b>Sprint Logistics LLC</b> · 53′ Dry Van
-            </span>
-            <span className="eta-badge">ETA on time</span>
           </div>
         </div>
       </div>

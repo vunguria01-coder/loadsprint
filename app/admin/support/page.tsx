@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
+import { AdminShell } from "@/components/admin-shell";
 import { getAllTickets } from "@/lib/support";
 import { AdminSupport } from "@/components/admin-support";
 
@@ -21,15 +22,14 @@ export default async function AdminSupportPage() {
   return (
     <CabinetServer active="support">
       <div className="wrap">
-        <div className="shead" style={{ marginBottom: 20 }}>
-          <span className="eyebrow">Support</span>
-          <h2 className="h2">Support inbox</h2>
-          <p className="lead">
-            {tickets.length} ticket{tickets.length === 1 ? "" : "s"} · {open} open. AI triages each one
-            with a category, severity, an internal report and a draft reply — you review and send.
-          </p>
-        </div>
-        <AdminSupport tickets={tickets} />
+        <AdminShell
+          active="support"
+          title="Support inbox"
+          subtitle={`${tickets.length} ticket${tickets.length === 1 ? "" : "s"} · ${open} open. AI triages each one with a category, severity, an internal report and a draft reply — you review and send.`}
+          adminName={me.name}
+        >
+          <AdminSupport tickets={tickets} />
+        </AdminShell>
       </div>
     </CabinetServer>
   );

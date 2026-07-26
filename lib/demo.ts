@@ -81,18 +81,26 @@ export function hasDispatcherDemo(me: Dispatcher): boolean {
 }
 
 // Seed the demo set for an empty account. Idempotent + one-shot via demo-state.
-export function ensureDispatcherDemo(me: Dispatcher): void {
+// `force` is for the built-in demo.dispatch account (see lib/seed-demo.ts): it
+// ignores the one-shot state and the "account already has data" guard, so the
+// showcase board is always there — even after a disk reset or a demo wipe. It
+// still no-ops while the demo records exist, so it stays safe on every request.
+export function ensureDispatcherDemo(me: Dispatcher, opts: { force?: boolean } = {}): void {
   const ownerId = me.ownerId || me.id;
   try {
-    const st = readState()[ownerId];
-    if (st?.seeded || st?.removed) return;
+    if (opts.force) {
+      if (hasDispatcherDemo(me)) return;
+    } else {
+      const st = readState()[ownerId];
+      if (st?.seeded || st?.removed) return;
 
-    // Skip real accounts that already have their own data.
-    const realTrucks = getTrucksByOwner(ownerId).some((t) => !t.demo);
-    const realLoads = getLoadsByDispatcher(me.id).some((l) => !l.demo);
-    if (realTrucks || realLoads) {
-      setState(ownerId, { seeded: true });
-      return;
+      // Skip real accounts that already have their own data.
+      const realTrucks = getTrucksByOwner(ownerId).some((t) => !t.demo);
+      const realLoads = getLoadsByDispatcher(me.id).some((l) => !l.demo);
+      if (realTrucks || realLoads) {
+        setState(ownerId, { seeded: true });
+        return;
+      }
     }
 
     const email = demoDriverEmail(ownerId);
@@ -262,7 +270,7 @@ export function ensureDispatcherDemo(me: Dispatcher): void {
     setDriverGlobalLocation(email, 39.9, -101.5, moving.id); // en route Chicago→Denver
     setDriverGlobalLocation(email2, 33.2, -95.6, picked.id); // en route KC→Memphis
 
-    setState(ownerId, { seeded: true });
+    setState(ownerId, { seeded: true, removed: false });
   } catch {
     // Demo seeding must never break a page load.
   }

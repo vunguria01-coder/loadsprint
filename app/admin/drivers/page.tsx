@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
+import { AdminShell } from "@/components/admin-shell";
 import { getUsers, toSafe, getUserById } from "@/lib/auth";
 import { getAllLoads } from "@/lib/loads";
 import { getInvites } from "@/lib/invites";
@@ -31,12 +32,14 @@ export default async function AdminDriversPage() {
   return (
     <CabinetServer active="drivers">
       <div className="wrap">
-        <div className="shead" style={{ marginBottom: 20 }}>
-          <span className="eyebrow">Accounts</span>
-          <h2 className="h2">Drivers</h2>
-          <p className="lead">{users.length} registered.</p>
-        </div>
-        <AdminUserManager users={users} extras={extras} />
+        <AdminShell
+          active="drivers"
+          title="Drivers"
+          subtitle={`${users.length} registered.`}
+          adminName={me.name}
+        >
+          <AdminUserManager users={users} extras={extras} />
+        </AdminShell>
       </div>
     </CabinetServer>
   );

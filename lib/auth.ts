@@ -2,6 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import type { Role, AccountTier } from "@/lib/schemas";
+import { readJson, writeJsonAtomic } from "@/lib/json-store";
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
@@ -73,17 +74,13 @@ function normalize(u: Partial<User>): User {
 
 export function getUsers(): User[] {
   ensureStore();
-  try {
-    const raw = JSON.parse(fs.readFileSync(USERS_FILE, "utf8")) as Partial<User>[];
-    return raw.map(normalize);
-  } catch {
-    return [];
-  }
+  const raw = readJson<Partial<User>[]>(USERS_FILE, []);
+  return Array.isArray(raw) ? raw.map(normalize) : [];
 }
 
 function saveUsers(users: User[]) {
   ensureStore();
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf8");
+  writeJsonAtomic(USERS_FILE, users);
 }
 
 export function toSafe(u: User): SafeUser {
@@ -152,8 +149,39 @@ export function hasAccess(user: User): boolean {
 // Keeps the admin account in sync with ADMIN_EMAIL / ADMIN_PASSWORD on every
 // start: creates it if missing, otherwise updates the password/role so you can
 // always sign in with the credentials set in the environment.
+/**
+ * Email is the login key, so two rows sharing one is never valid — a duplicate
+ * is always the residue of a torn read (see lib/json-store). Keep the oldest
+ * row, since that is the one sessions and invites already point at, and fold in
+ * any plan the newer rows picked up.
+ */
+function dedupeByEmail(): void {
+  const users = getUsers();
+  const byEmail = new Map<string, User>();
+  let dupes = 0;
+  for (const u of users) {
+    const kept = byEmail.get(u.email);
+    if (!kept) {
+      byEmail.set(u.email, u);
+      continue;
+    }
+    dupes++;
+    const older = kept.createdAt <= u.createdAt ? kept : u;
+    const newer = older === kept ? u : kept;
+    // Never let the dedupe downgrade a paid account.
+    byEmail.set(u.email, {
+      ...older,
+      tier: older.tier !== "none" ? older.tier : newer.tier,
+      tierExpiresAt: older.tier !== "none" ? older.tierExpiresAt : newer.tierExpiresAt,
+      planId: older.planId ?? newer.planId,
+    });
+  }
+  if (dupes > 0) saveUsers([...byEmail.values()]);
+}
+
 export function ensureSeed() {
   const { salt, hash } = hashPassword(ADMIN_PASSWORD);
+  dedupeByEmail();
   const existing = findByEmail(ADMIN_EMAIL);
   if (!existing) {
     addUser({

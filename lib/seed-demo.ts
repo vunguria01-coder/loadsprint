@@ -7,6 +7,7 @@ import {
   type User,
 } from "./auth";
 import { createLoad, getLoadsByDriverEmail, type Stop } from "./loads";
+import { ensureDispatcherDemo } from "./demo";
 
 // Demo accounts for the App Store reviewer (and quick demos). Idempotent:
 // safe to call on every request; only creates what's missing. Because Railway
@@ -63,6 +64,12 @@ export function ensureDemo() {
       password: DEMO_DRIVER_PASSWORD,
       role: "driver",
     });
+
+    // Give the demo dispatcher the full showcase board (trucks, costs, drivers,
+    // a load in every status). Forced, because the sample driver loads below
+    // count as "real" data and would otherwise make the normal one-shot seeder
+    // skip this account forever.
+    ensureDispatcherDemo(dispatcher, { force: true });
 
     // Only create sample loads if this demo driver has none yet.
     const existing = getLoadsByDriverEmail(driver.email);

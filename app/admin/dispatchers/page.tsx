@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
+import { AdminShell } from "@/components/admin-shell";
 import { getUsers, toSafe } from "@/lib/auth";
 import { getAllLoads } from "@/lib/loads";
 import { AdminUserManager } from "@/components/admin-user-manager";
@@ -27,12 +28,14 @@ export default async function AdminDispatchersPage() {
   return (
     <CabinetServer active="dispatchers">
       <div className="wrap">
-        <div className="shead" style={{ marginBottom: 20 }}>
-          <span className="eyebrow">Accounts</span>
-          <h2 className="h2">Dispatchers</h2>
-          <p className="lead">{users.length} registered. Grant or change a plan.</p>
-        </div>
-        <AdminUserManager users={users} extras={extras} showFreeze />
+        <AdminShell
+          active="dispatchers"
+          title="Dispatchers"
+          subtitle={`${users.length} registered. Grant or change a plan.`}
+          adminName={me.name}
+        >
+          <AdminUserManager users={users} extras={extras} showFreeze />
+        </AdminShell>
       </div>
     </CabinetServer>
   );

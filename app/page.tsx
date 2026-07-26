@@ -1,3 +1,4 @@
+import "./landing.css";
 import { Nav } from "@/components/nav";
 import { currentUser } from "@/lib/guard";
 import { Hero } from "@/components/hero";

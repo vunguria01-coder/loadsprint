@@ -1,39 +1,127 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Search,
+  ChevronDown,
+  Check,
+  Infinity as InfinityIcon,
+  CalendarClock,
+  Plus,
+  RotateCcw,
+  Ban,
+} from "lucide-react";
 import type { SafeUser } from "@/lib/auth";
 import type { AccountTier } from "@/lib/schemas";
 import { driverAllowance } from "@/lib/billing-plans";
 import { useToast } from "@/components/toast";
 
+/* ---------------- plans ---------------- */
+
 // Admin grant options — each maps directly to a tier.
-const planOptions = [
-  { value: "none", label: "Free" },
-  { value: "silver", label: "Silver (2 drivers)" },
-  { value: "gold", label: "Gold (8 drivers)" },
-  { value: "platinum", label: "Platinum (30 drivers)" },
+const planOptions: { value: AccountTier; label: string; drivers: number }[] = [
+  { value: "none", label: "Free", drivers: 0 },
+  { value: "silver", label: "Silver", drivers: 2 },
+  { value: "gold", label: "Gold", drivers: 8 },
+  { value: "platinum", label: "Platinum", drivers: 30 },
 ];
+
+// Duration shortcuts; 0 = open-ended (no expiry).
+const dayPresets = [7, 30, 90, 365, 0];
+
+/* ---------------- status helpers ---------------- */
+
+const DAY = 86400000;
+/** Anything at or under this many days left counts as "expiring soon". */
+const SOON_DAYS = 7;
 
 function daysLeft(expiresAt?: string): number | null {
   if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000);
+  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / DAY);
 }
-function planName(u: SafeUser): string {
-  if (u.tier === "none") return "Free";
-  return u.tier[0].toUpperCase() + u.tier.slice(1);
+
+type Status = "free" | "active" | "soon" | "expired";
+
+function statusOf(u: SafeUser): Status {
+  if (u.tier === "none") return "free";
+  const left = daysLeft(u.tierExpiresAt);
+  if (left === null) return "active";
+  if (left < 0) return "expired";
+  return left <= SOON_DAYS ? "soon" : "active";
 }
+
+const statusLabel: Record<Status, string> = {
+  free: "Free",
+  active: "Active",
+  soon: "Expiring",
+  expired: "Expired",
+};
+
+function planName(tier: AccountTier): string {
+  if (tier === "none") return "Free";
+  return tier[0].toUpperCase() + tier.slice(1);
+}
+
+/** Human line under the plan name — "12 days left", "No expiry", … */
 function subLabel(u: SafeUser): string {
   if (u.tier === "none") return "No plan";
   const left = daysLeft(u.tierExpiresAt);
   if (left === null) return "No expiry";
   if (left < 0) return `Expired ${-left}d ago`;
+  if (left === 0) return "Expires today";
   return `${left} day${left === 1 ? "" : "s"} left`;
 }
-// Which dropdown value reflects the user's current plan.
-function currentValue(u: SafeUser): string {
-  return u.tier;
+
+function fmtDate(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/* ---------------- draft state ---------------- */
+
+type Draft = { tier: AccountTier; days: number };
+
+/**
+ * The draft an untouched row starts from. Deriving it from the user (rather
+ * than storing it on open) keeps "dirty" honest: after a save the row's user
+ * has changed, so the same function yields the new baseline.
+ */
+function baseDraft(u: SafeUser): Draft {
+  if (u.tier === "none") return { tier: "none", days: 30 };
+  const left = daysLeft(u.tierExpiresAt);
+  return { tier: u.tier, days: left === null ? 0 : Math.max(0, left) };
+}
+
+function sameDraft(a: Draft, b: Draft): boolean {
+  // Days are irrelevant while the account is on Free — nothing to expire.
+  if (a.tier === "none" && b.tier === "none") return true;
+  return a.tier === b.tier && a.days === b.days;
+}
+
+/* ---------------- filters ---------------- */
+
+const filters: { key: "all" | Status; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
+  { key: "soon", label: "Expiring" },
+  { key: "expired", label: "Expired" },
+  { key: "free", label: "Free" },
+];
+
+type SortKey = "name" | "expiry" | "plan" | "newest";
+
+const tierRank: Record<string, number> = { platinum: 3, gold: 2, silver: 1, none: 0 };
 
 export function AdminUserManager({
   users,
@@ -47,12 +135,59 @@ export function AdminUserManager({
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
-  const [draftPlan, setDraftPlan] = useState<Record<string, string>>({});
-  const [draftDays, setDraftDays] = useState<Record<string, string>>({});
+  const [open, setOpen] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"all" | Status>("all");
+  const [sort, setSort] = useState<SortKey>("name");
+  // Saved rows are patched in place so the card updates before the server
+  // round-trip lands; router.refresh() then reconciles with the real data.
+  const [patched, setPatched] = useState<Record<string, Partial<SafeUser>>>({});
+
+  const rows = useMemo(
+    () => users.map((u) => (patched[u.id] ? { ...u, ...patched[u.id] } : u)),
+    [users, patched]
+  );
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: rows.length, free: 0, active: 0, soon: 0, expired: 0 };
+    for (const u of rows) c[statusOf(u)]++;
+    return c;
+  }, [rows]);
+
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const out = rows.filter((u) => {
+      if (filter !== "all" && statusOf(u) !== filter) return false;
+      if (!needle) return true;
+      return (
+        u.name.toLowerCase().includes(needle) ||
+        u.email.toLowerCase().includes(needle) ||
+        (u.company || "").toLowerCase().includes(needle)
+      );
+    });
+    out.sort((a, b) => {
+      switch (sort) {
+        case "expiry": {
+          // Soonest expiry first, then open-ended plans, then free accounts.
+          const rank = (u: SafeUser) =>
+            u.tier === "none" ? 2e9 : daysLeft(u.tierExpiresAt) ?? 1e9;
+          return rank(a) - rank(b) || a.name.localeCompare(b.name);
+        }
+        case "plan":
+          return tierRank[b.tier] - tierRank[a.tier] || a.name.localeCompare(b.name);
+        case "newest":
+          return (b.createdAt || "").localeCompare(a.createdAt || "");
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+    return out;
+  }, [rows, q, filter, sort]);
 
   async function patch(
     userId: string,
-    body: { tier?: AccountTier; days?: number; planId?: string; canFreezeLocation?: boolean },
+    body: { tier?: AccountTier; days?: number; planId?: string; canFreezeLocation?: boolean; canConfirmationPdf?: boolean },
     successMsg: string
   ) {
     setBusy(userId);
@@ -65,6 +200,12 @@ export function AdminUserManager({
       const data = await res.json();
       if (!res.ok || !data.ok) toast("Update failed", data.error || "Try again.");
       else {
+        setPatched((p) => ({ ...p, [userId]: data.user }));
+        setDrafts((d) => {
+          const { [userId]: _drop, ...rest } = d;
+          void _drop;
+          return rest;
+        });
         toast("Saved", successMsg);
         router.refresh();
       }
@@ -75,96 +216,341 @@ export function AdminUserManager({
     }
   }
 
-  function applyPlan(u: SafeUser, sel: string, days: number) {
-    if (sel === "none") {
-      patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name}'s plan removed.`);
+  function applyDraft(u: SafeUser, d: Draft) {
+    if (d.tier === "none") {
+      patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`);
     } else {
-      patch(u.id, { tier: sel as AccountTier, planId: "", days }, `${u.name}: ${sel} granted.`);
+      const when = d.days > 0 ? ` until ${fmtDate(Date.now() + d.days * DAY)}` : " with no expiry";
+      patch(u.id, { tier: d.tier, planId: "", days: d.days }, `${u.name}: ${planName(d.tier)}${when}.`);
     }
+  }
+
+  /** Extend from the *remaining* time, not from today, so time is never lost. */
+  function extend(u: SafeUser, add: number) {
+    const left = daysLeft(u.tierExpiresAt);
+    const base = left === null ? 0 : Math.max(0, left);
+    const days = base + add;
+    patch(
+      u.id,
+      { tier: u.tier, days },
+      `${u.name}: +${add} days — now until ${fmtDate(Date.now() + days * DAY)}.`
+    );
   }
 
   if (users.length === 0) return <p className="px">No registered accounts yet.</p>;
 
   return (
-    <div className="am-list">
-      {users.map((u) => {
-        const sel = draftPlan[u.id] ?? currentValue(u);
-        const daysVal = draftDays[u.id] ?? "30";
-        const left = daysLeft(u.tierExpiresAt);
-        const expired = u.tier !== "none" && left !== null && left < 0;
-        const allowance = driverAllowance(undefined, u.tier);
-        return (
-          <div key={u.id} className="am-card" style={{ opacity: busy === u.id ? 0.55 : 1 }}>
-            <div className="am-top">
-              <div className="am-id">
-                <div className="am-name">{u.name}</div>
-                <div className="am-mail">{u.email}</div>
-                {extras[u.id] && <div className="am-extra">{extras[u.id]}</div>}
-              </div>
-              <div className="am-plan">
-                <span
-                  className="am-tier"
-                  style={{ color: expired ? "#fca5a5" : undefined }}
+    <div className="am">
+      <div className="am-bar">
+        <div className="driver-search am-search">
+          <Search size={18} />
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by name, email or company…"
+            aria-label="Search accounts"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")} aria-label="Clear search">
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="am-filters" role="group" aria-label="Filter by status">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`am-chip${filter === f.key ? " on" : ""}`}
+              aria-pressed={filter === f.key}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+              <span className="am-chip-n">{counts[f.key] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+
+        <label className="am-sort">
+          <span className="am-flabel">Sort</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+            <option value="name">Name (A–Z)</option>
+            <option value="expiry">Expires soonest</option>
+            <option value="plan">Highest plan</option>
+            <option value="newest">Newest first</option>
+          </select>
+        </label>
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="am-empty">
+          No accounts match{q ? ` “${q}”` : ""}
+          {filter !== "all" ? ` in ${statusLabel[filter as Status].toLowerCase()}` : ""}.
+        </p>
+      ) : (
+        <div className="am-list">
+          {visible.map((u, i) => {
+            const base = baseDraft(u);
+            const draft = drafts[u.id] ?? base;
+            const dirty = !sameDraft(draft, base);
+            const status = statusOf(u);
+            const expanded = open === u.id;
+            const isBusy = busy === u.id;
+            const allowance = driverAllowance(undefined, u.tier);
+            const previewMs = Date.now() + draft.days * DAY;
+
+            function setDraft(next: Partial<Draft>) {
+              setDrafts((d) => ({ ...d, [u.id]: { ...draft, ...next } }));
+            }
+
+            return (
+              <Fragment key={u.id}>
+              {/* Hairline between accounts so one row never bleeds into the next. */}
+              {i > 0 && <div className="am-div" aria-hidden="true" />}
+              <div
+                className={`am-card st-${status}${expanded ? " open" : ""}${isBusy ? " busy" : ""}`}
+              >
+                <button
+                  type="button"
+                  className="am-head"
+                  aria-expanded={expanded}
+                  onClick={() => setOpen(expanded ? null : u.id)}
                 >
-                  {planName(u)}
-                </span>
-                <span className="am-sub" style={{ color: expired ? "#fca5a5" : undefined }}>
-                  {subLabel(u)}{u.tier !== "none" ? ` · ${allowance} drivers` : ""}
-                </span>
+                  <span className={`am-av tier-${u.tier}`} aria-hidden="true">
+                    {initials(u.name)}
+                  </span>
+
+                  <span className="am-id">
+                    <span className="am-name">
+                      {u.name}
+                      <span className="role-pill">{u.role}</span>
+                    </span>
+                    <span className="am-mail">{u.email}</span>
+                    {extras[u.id] && <span className="am-extra">{extras[u.id]}</span>}
+                  </span>
+
+                  <span className="am-plan">
+                    <span className={`am-status st-${status}`}>
+                      <span className="am-dot" aria-hidden="true" />
+                      {statusLabel[status]}
+                    </span>
+                    <span className={`am-tier tier-${u.tier}`}>{planName(u.tier)}</span>
+                    <span className="am-sub">
+                      {subLabel(u)}
+                      {u.tier !== "none" ? ` · ${allowance} drivers` : ""}
+                    </span>
+                  </span>
+
+                  <ChevronDown size={18} className="am-caret" aria-hidden="true" />
+                </button>
+
+                {/* One-tap renewal, no need to open the editor. */}
+                {u.tier === "none" ? (
+                  !expanded && (
+                    <div className="am-quick">
+                      <button
+                        type="button"
+                        className="am-qbtn"
+                        disabled={isBusy}
+                        onClick={() => setOpen(u.id)}
+                      >
+                        <Plus size={13} /> Grant a plan
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div className="am-quick">
+                    <button
+                      type="button"
+                      className="am-qbtn"
+                      disabled={isBusy}
+                      onClick={() => extend(u, 30)}
+                      title="Add 30 days on top of the time that is left"
+                    >
+                      <Plus size={13} /> 30 days
+                    </button>
+                    <button
+                      type="button"
+                      className="am-qbtn"
+                      disabled={isBusy}
+                      onClick={() => extend(u, 365)}
+                      title="Add a year on top of the time that is left"
+                    >
+                      <Plus size={13} /> 1 year
+                    </button>
+                    <button
+                      type="button"
+                      className="am-qbtn danger"
+                      disabled={isBusy}
+                      onClick={() => patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`)}
+                      title="Remove the plan and drop this account to Free"
+                    >
+                      <Ban size={13} /> Revoke
+                    </button>
+                  </div>
+                )}
+
+                {expanded && (
+                  <div className="am-panel">
+                    <div className="am-group">
+                      <span className="am-flabel">Plan</span>
+                      <div className="am-opts">
+                        {planOptions.map((o) => (
+                          <button
+                            key={o.value}
+                            type="button"
+                            className={`am-opt tier-${o.value}${draft.tier === o.value ? " on" : ""}`}
+                            aria-pressed={draft.tier === o.value}
+                            disabled={isBusy}
+                            onClick={() => setDraft({ tier: o.value })}
+                          >
+                            {draft.tier === o.value && <Check size={13} />}
+                            {o.label}
+                            {o.drivers > 0 && <span className="am-opt-n">{o.drivers} drivers</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {draft.tier !== "none" && (
+                      <div className="am-group">
+                        <span className="am-flabel">Valid for</span>
+                        <div className="am-opts">
+                          {dayPresets.map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`am-opt${draft.days === d ? " on" : ""}`}
+                              aria-pressed={draft.days === d}
+                              disabled={isBusy}
+                              onClick={() => setDraft({ days: d })}
+                            >
+                              {d === 0 ? (
+                                <>
+                                  <InfinityIcon size={13} /> Forever
+                                </>
+                              ) : d === 365 ? (
+                                "1 year"
+                              ) : (
+                                `${d} days`
+                              )}
+                            </button>
+                          ))}
+                          <input
+                            type="number"
+                            min={0}
+                            className="am-days"
+                            aria-label="Custom number of days"
+                            title="Custom number of days (0 = no expiry)"
+                            value={draft.days}
+                            disabled={isBusy}
+                            onChange={(e) => setDraft({ days: Math.max(0, Number(e.target.value) || 0) })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Apply and the restricted-tool switches act on this one
+                        account — keep them in a single framed band. */}
+                    <div className="am-bottom">
+                    <div className="am-foot">
+                      {/* Projects the pending change; with nothing staged it
+                          states what the account *is* — an expired plan must
+                          never read back as "never expires". */}
+                      <p className={`am-preview${dirty ? " staged" : ""}`}>
+                        <CalendarClock size={14} />
+                        {!dirty ? (
+                          <>
+                            <b>{planName(u.tier)}</b> · {subLabel(u).toLowerCase()}
+                          </>
+                        ) : draft.tier === "none" ? (
+                          <>No plan — driver access removed.</>
+                        ) : draft.days === 0 ? (
+                          <>
+                            <b>{planName(draft.tier)}</b> · never expires
+                          </>
+                        ) : (
+                          <>
+                            <b>{planName(draft.tier)}</b> · until {fmtDate(previewMs)}
+                          </>
+                        )}
+                      </p>
+
+                      <div className="am-actions">
+                        {dirty && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            disabled={isBusy}
+                            onClick={() =>
+                              setDrafts((d) => {
+                                const { [u.id]: _drop, ...rest } = d;
+                                void _drop;
+                                return rest;
+                              })
+                            }
+                          >
+                            <RotateCcw size={14} /> Reset
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-primary btn-sm"
+                          disabled={isBusy || !dirty}
+                          onClick={() => applyDraft(u, draft)}
+                        >
+                          {isBusy ? "Saving…" : dirty ? "Apply changes" : "No changes"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {showFreeze && (
+                      <div className="am-tools">
+                        <span className="am-flabel">Restricted tools</span>
+                        <label className="sw">
+                          <input
+                            type="checkbox"
+                            checked={u.canFreezeLocation}
+                            disabled={isBusy}
+                            onChange={(e) =>
+                              patch(
+                                u.id,
+                                { canFreezeLocation: e.target.checked },
+                                e.target.checked ? `Location freeze granted to ${u.name}.` : `Location freeze revoked from ${u.name}.`
+                              )
+                            }
+                          />
+                          <span className="track" />
+                          <span className="sw-lbl">Location freeze</span>
+                        </label>
+                        <label className="sw">
+                          <input
+                            type="checkbox"
+                            checked={!!u.canConfirmationPdf}
+                            disabled={isBusy}
+                            onChange={(e) =>
+                              patch(
+                                u.id,
+                                { canConfirmationPdf: e.target.checked },
+                                e.target.checked ? `Clean rate-con PDF granted to ${u.name}.` : `Clean rate-con PDF revoked from ${u.name}.`
+                              )
+                            }
+                          />
+                          <span className="track" />
+                          <span className="sw-lbl">Clean rate-con PDF</span>
+                        </label>
+                      </div>
+                    )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-
-            <div className="am-controls">
-              <select
-                value={sel}
-                disabled={busy === u.id}
-                onChange={(e) => setDraftPlan((d) => ({ ...d, [u.id]: e.target.value }))}
-              >
-                {planOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={0}
-                title="Valid for N days (0 = forever / no expiry)"
-                value={daysVal}
-                disabled={busy === u.id || sel === "none"}
-                onChange={(e) => setDraftDays((d) => ({ ...d, [u.id]: e.target.value }))}
-                style={{ width: 72 }}
-              />
-              <span className="am-mail">days (0 = forever)</span>
-              <button
-                className="btn btn-primary"
-                style={{ padding: "8px 16px" }}
-                disabled={busy === u.id}
-                onClick={() => applyPlan(u, sel, Number(daysVal) || 0)}
-              >
-                Apply
-              </button>
-
-              {showFreeze && (
-                <label className="sw" style={{ marginLeft: "auto" }}>
-                  <input
-                    type="checkbox"
-                    checked={u.canFreezeLocation}
-                    disabled={busy === u.id}
-                    onChange={(e) =>
-                      patch(
-                        u.id,
-                        { canFreezeLocation: e.target.checked },
-                        e.target.checked ? `Granted to ${u.name}.` : `Revoked from ${u.name}.`
-                      )
-                    }
-                  />
-                  <span className="track" />
-                  <span className="sw-lbl">Freeze</span>
-                </label>
-              )}
-            </div>
-          </div>
-        );
-      })}
+              </Fragment>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

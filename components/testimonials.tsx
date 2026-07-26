@@ -36,6 +36,9 @@ export function Testimonials() {
         <div className="quotes">
           {reviews.map((r, i) => (
             <Reveal key={r.name} className="quote" delay={i * 0.06}>
+              <span className="qmark" aria-hidden>
+                &ldquo;
+              </span>
               <div className="stars">
                 {Array.from({ length: 5 }).map((_, k) => (
                   <Star key={k} size={16} />

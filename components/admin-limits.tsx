@@ -41,9 +41,7 @@ export function AdminLimits({ limits }: { limits: LimitsValues }) {
       <div className="price-edit">
         {(["silver", "gold", "platinum"] as const).map((t) => (
           <div className="pe" key={t}>
-            <div className="pt" style={{ color: "var(--ink)" }}>
-              {t} — drivers
-            </div>
+            <div className={`pt tier-${t}`}>{t} — drivers</div>
             <input
               type="number"
               min={0}
