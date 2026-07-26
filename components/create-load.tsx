@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Plus, Phone, Mail } from "lucide-react";
@@ -160,6 +160,19 @@ function parseConfirmation(text: string): Parsed {
   return out;
 }
 
+// A half-filled wizard shouldn't be lost when the tab is closed or reloaded, so
+// the typed details are kept in localStorage (per driver) until the load is
+// created. The PDF/AI result isn't stored — it's far too big for localStorage.
+const DRAFT_KEY = "ls_new_load_draft";
+type Draft = {
+  step: number;
+  ref: string;
+  origin: string;
+  dest: string;
+  rate: string;
+  broker: { name?: string; email?: string; phone?: string } | null;
+};
+
 type AiStop = { address: string; city: string; time?: string };
 type AiExtract = { ref?: string; rate?: number; billTo?: string; pickups: AiStop[]; dropoffs: AiStop[] };
 
@@ -187,6 +200,43 @@ export function CreateLoad({
   const [step, setStep] = useState(1);
   const [aiScope, setAiScope] = useState<"all" | "addresses_rate" | "addresses">("all");
   const [broker, setBroker] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
+
+  const draftKey = `${DRAFT_KEY}:${driverEmail}`;
+  const [restored, setRestored] = useState(false);
+  const done = useRef(false);
+
+  // Restore the draft once, on mount (not in useState, so the server-rendered
+  // markup and the first client render still match).
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(draftKey); } catch {}
+    if (raw) {
+      try {
+        const d = JSON.parse(raw) as Partial<Draft>;
+        if (typeof d.ref === "string") setRef(d.ref);
+        if (typeof d.origin === "string") setOrigin(d.origin);
+        if (typeof d.dest === "string") setDest(d.dest);
+        if (typeof d.rate === "string") setRate(d.rate);
+        if (d.broker && typeof d.broker === "object") setBroker(d.broker);
+        // Step 2 only makes sense with the PDF/AI result, which isn't stored —
+        // continue on the details step instead.
+        if (d.step === 2 || d.step === 3) setStep(3);
+      } catch {
+        /* corrupt draft — start clean */
+      }
+    }
+    setRestored(true);
+  }, [draftKey]);
+
+  // Keep the stored draft in sync with the form.
+  useEffect(() => {
+    if (!restored || done.current) return;
+    const empty = step === 1 && !ref && !origin && !dest && !rate && !broker;
+    try {
+      if (empty) localStorage.removeItem(draftKey);
+      else localStorage.setItem(draftKey, JSON.stringify({ step, ref, origin, dest, rate, broker } satisfies Draft));
+    } catch {}
+  }, [restored, draftKey, step, ref, origin, dest, rate, broker]);
 
   function copyText(t: string) {
     navigator.clipboard?.writeText(t);
@@ -311,6 +361,9 @@ export function CreateLoad({
             /* the load is already created; ignore attach failure */
           }
         }
+        // The load exists now — drop the draft so the next one starts clean.
+        done.current = true;
+        try { localStorage.removeItem(draftKey); } catch {}
         toast("Load created", `${data.load.ref} assigned to ${driverName}.`);
         router.push(`/loads/${data.load.id}`);
       }
