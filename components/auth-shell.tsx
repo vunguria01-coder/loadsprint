@@ -49,6 +49,8 @@ export function AuthShell({
           <span className="dot" aria-hidden="true">·</span>
           <Link href="/support">Support</Link>
           <span className="dot" aria-hidden="true">·</span>
+          <a href="mailto:help@loadsprint.com">Поддержка: help@loadsprint.com</a>
+          <span className="dot" aria-hidden="true">·</span>
           <span className="copy">© 2026 LoadSprint</span>
         </footer>
       </div>
