@@ -156,7 +156,7 @@ export function Nav({ authed = false }: { authed?: boolean }) {
                   Sign in
                 </a>
                 <a href="/register" className="btn btn-primary btn-quote">
-                  Registration
+                  Get started
                 </a>
               </>
             )}
@@ -208,7 +208,7 @@ export function Nav({ authed = false }: { authed?: boolean }) {
               className="btn btn-primary"
               onClick={() => setOpen(false)}
             >
-              Registration <ArrowRight size={17} />
+              Get started free <ArrowRight size={17} />
             </a>
             <a
               href="/login"
