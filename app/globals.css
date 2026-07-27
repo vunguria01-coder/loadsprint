@@ -1052,7 +1052,9 @@ table.acc select option{background:#0b1120}
 .am-chip:hover{color:var(--ink);border-color:var(--muted-2)}
 .am-chip.on{color:var(--blue);border-color:transparent;background:var(--accent-soft,rgba(56,189,248,.14))}
 .am-chip-n{font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px;background:var(--card-hi);color:inherit}
+/* the first picker takes the free space; any that follow sit beside it */
 .am-sort{display:flex;align-items:center;gap:8px;margin-left:auto}
+.am-sort+.am-sort{margin-left:0}
 .am-sort select{
   padding:8px 10px;border-radius:10px;border:1px solid var(--line);
   background:var(--card-hi);color:var(--ink);font-size:13px;cursor:pointer;
@@ -1142,6 +1144,14 @@ table.acc select option{background:#0b1120}
 }
 @keyframes am-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.am-panel{animation:none}}
+/* subscriber facts — company, sign-up date, plan id, driver limit, expiry */
+.am-facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 14px;margin:0;
+  padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+}
+.am-facts>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.am-facts dt{font-family:Manrope,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.am-facts dd{margin:0;font-size:13.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
 .am-group{display:flex;flex-direction:column;gap:8px}
 .am-opts{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .am-opt{
@@ -1981,6 +1991,7 @@ table.acc select option{background:#0b1120}
 .cab .price-edit .pe{background:#F6FAF9;border-color:var(--line)}
 .cab .price-edit input{background:#fff;color:var(--ink);border-color:var(--line)}
 .cab .am-bottom{background:#fff}
+.cab .am-facts{background:#fff;border-color:var(--line)}
 /* Pricing / driver-limit editors still carried the dark-theme fill, which read
    as flat grey blocks on the light cabinet. */
 .cab .price-edit .pe{background:#F6FAF9;border-color:var(--line)}

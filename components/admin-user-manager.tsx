@@ -11,8 +11,9 @@ import {
   Plus,
   RotateCcw,
   Ban,
+  Copy,
 } from "lucide-react";
-import type { SafeUser } from "@/lib/auth";
+import type { SafeUser, AccountRole } from "@/lib/auth";
 import type { AccountTier } from "@/lib/schemas";
 import { driverAllowance } from "@/lib/billing-plans";
 import { useToast } from "@/components/toast";
@@ -81,6 +82,13 @@ function fmtDate(ms: number): string {
   });
 }
 
+/** Same format as fmtDate, from a stored ISO string; "—" when absent/unparsable. */
+function fmtIso(iso?: string): string {
+  if (!iso) return "—";
+  const ms = new Date(iso).getTime();
+  return Number.isNaN(ms) ? "—" : fmtDate(ms);
+}
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -121,6 +129,10 @@ const filters: { key: "all" | Status; label: string }[] = [
 
 type SortKey = "name" | "expiry" | "plan" | "newest";
 
+function roleLabel(role: string): string {
+  return role[0].toUpperCase() + role.slice(1);
+}
+
 const tierRank: Record<string, number> = { platinum: 3, gold: 2, silver: 1, none: 0 };
 
 export function AdminUserManager({
@@ -139,7 +151,10 @@ export function AdminUserManager({
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | Status>("all");
+  const [role, setRole] = useState<"all" | AccountRole>("all");
   const [sort, setSort] = useState<SortKey>("name");
+  // Id of the row whose e-mail was just copied — drives the button's tick.
+  const [copied, setCopied] = useState<string | null>(null);
   // Saved rows are patched in place so the card updates before the server
   // round-trip lands; router.refresh() then reconciles with the real data.
   const [patched, setPatched] = useState<Record<string, Partial<SafeUser>>>({});
@@ -149,15 +164,29 @@ export function AdminUserManager({
     [users, patched]
   );
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: rows.length, free: 0, active: 0, soon: 0, expired: 0 };
-    for (const u of rows) c[statusOf(u)]++;
-    return c;
+  // Roles actually present, with their headcount. A page that lists a single
+  // role (admin/drivers, admin/brokers…) gets no role picker — nothing to pick.
+  const roles = useMemo(() => {
+    const c = new Map<AccountRole, number>();
+    for (const u of rows) c.set(u.role, (c.get(u.role) ?? 0) + 1);
+    return [...c.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [rows]);
+
+  const inRole = useMemo(
+    () => (role === "all" ? rows : rows.filter((u) => u.role === role)),
+    [rows, role]
+  );
+
+  // Status counts follow the role picker, so the chips always match the list.
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: inRole.length, free: 0, active: 0, soon: 0, expired: 0 };
+    for (const u of inRole) c[statusOf(u)]++;
+    return c;
+  }, [inRole]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const out = rows.filter((u) => {
+    const out = inRole.filter((u) => {
       if (filter !== "all" && statusOf(u) !== filter) return false;
       if (!needle) return true;
       return (
@@ -225,6 +254,13 @@ export function AdminUserManager({
     }
   }
 
+  function copyEmail(u: SafeUser) {
+    navigator.clipboard?.writeText(u.email);
+    setCopied(u.id);
+    toast("E-mail copied", `${u.email} is on your clipboard.`);
+    window.setTimeout(() => setCopied((c) => (c === u.id ? null : c)), 1800);
+  }
+
   /** Extend from the *remaining* time, not from today, so time is never lost. */
   function extend(u: SafeUser, add: number) {
     const left = daysLeft(u.tierExpiresAt);
@@ -273,6 +309,20 @@ export function AdminUserManager({
           ))}
         </div>
 
+        {roles.length > 1 && (
+          <label className="am-sort">
+            <span className="am-flabel">Role</span>
+            <select value={role} onChange={(e) => setRole(e.target.value as "all" | AccountRole)}>
+              <option value="all">All roles ({rows.length})</option>
+              {roles.map(([r, n]) => (
+                <option key={r} value={r}>
+                  {roleLabel(r)} ({n})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <label className="am-sort">
           <span className="am-flabel">Sort</span>
           <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
@@ -287,7 +337,8 @@ export function AdminUserManager({
       {visible.length === 0 ? (
         <p className="am-empty">
           No accounts match{q ? ` “${q}”` : ""}
-          {filter !== "all" ? ` in ${statusLabel[filter as Status].toLowerCase()}` : ""}.
+          {filter !== "all" ? ` in ${statusLabel[filter as Status].toLowerCase()}` : ""}
+          {role !== "all" ? ` among ${roleLabel(role).toLowerCase()} accounts` : ""}.
         </p>
       ) : (
         <div className="am-list">
@@ -346,10 +397,22 @@ export function AdminUserManager({
                   <ChevronDown size={18} className="am-caret" aria-hidden="true" />
                 </button>
 
-                {/* One-tap renewal, no need to open the editor. */}
-                {u.tier === "none" ? (
-                  !expanded && (
-                    <div className="am-quick">
+                {/* One-tap renewal, no need to open the editor. The copy button
+                    lives here rather than next to the address: the header is
+                    itself a button, and a button cannot nest inside one. */}
+                <div className="am-quick">
+                  <button
+                    type="button"
+                    className="am-qbtn"
+                    onClick={() => copyEmail(u)}
+                    title={`Copy ${u.email} to the clipboard`}
+                  >
+                    {copied === u.id ? <Check size={13} /> : <Copy size={13} />}
+                    {copied === u.id ? "Copied" : "Copy e-mail"}
+                  </button>
+
+                  {u.tier === "none" ? (
+                    !expanded && (
                       <button
                         type="button"
                         className="am-qbtn"
@@ -358,42 +421,73 @@ export function AdminUserManager({
                       >
                         <Plus size={13} /> Grant a plan
                       </button>
-                    </div>
-                  )
-                ) : (
-                  <div className="am-quick">
-                    <button
-                      type="button"
-                      className="am-qbtn"
-                      disabled={isBusy}
-                      onClick={() => extend(u, 30)}
-                      title="Add 30 days on top of the time that is left"
-                    >
-                      <Plus size={13} /> 30 days
-                    </button>
-                    <button
-                      type="button"
-                      className="am-qbtn"
-                      disabled={isBusy}
-                      onClick={() => extend(u, 365)}
-                      title="Add a year on top of the time that is left"
-                    >
-                      <Plus size={13} /> 1 year
-                    </button>
-                    <button
-                      type="button"
-                      className="am-qbtn danger"
-                      disabled={isBusy}
-                      onClick={() => patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`)}
-                      title="Remove the plan and drop this account to Free"
-                    >
-                      <Ban size={13} /> Revoke
-                    </button>
-                  </div>
-                )}
+                    )
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="am-qbtn"
+                        disabled={isBusy}
+                        onClick={() => extend(u, 30)}
+                        title="Add 30 days on top of the time that is left"
+                      >
+                        <Plus size={13} /> 30 days
+                      </button>
+                      <button
+                        type="button"
+                        className="am-qbtn"
+                        disabled={isBusy}
+                        onClick={() => extend(u, 365)}
+                        title="Add a year on top of the time that is left"
+                      >
+                        <Plus size={13} /> 1 year
+                      </button>
+                      <button
+                        type="button"
+                        className="am-qbtn danger"
+                        disabled={isBusy}
+                        onClick={() => patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`)}
+                        title="Remove the plan and drop this account to Free"
+                      >
+                        <Ban size={13} /> Revoke
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 {expanded && (
                   <div className="am-panel">
+                    {/* Who this account is, before any editing control: the
+                        facts an admin needs to decide what to grant. */}
+                    <dl className="am-facts">
+                      <div>
+                        <dt>Company</dt>
+                        <dd>{u.company || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Registered</dt>
+                        <dd>{fmtIso(u.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Plan id</dt>
+                        <dd>{u.planId || (u.tier === "none" ? "—" : "Admin grant")}</dd>
+                      </div>
+                      <div>
+                        <dt>Driver limit</dt>
+                        <dd>{driverAllowance(u.planId, u.tier)}</dd>
+                      </div>
+                      <div>
+                        <dt>Plan ends</dt>
+                        <dd>
+                          {u.tier === "none"
+                            ? "—"
+                            : u.tierExpiresAt
+                              ? fmtIso(u.tierExpiresAt)
+                              : "Never"}
+                        </dd>
+                      </div>
+                    </dl>
+
                     <div className="am-group">
                       <span className="am-flabel">Plan</span>
                       <div className="am-opts">
