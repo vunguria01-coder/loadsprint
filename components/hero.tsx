@@ -11,8 +11,16 @@ import {
   FileCheck2,
   ShieldCheck,
 } from "lucide-react";
+import type { AccountRole } from "@/lib/auth";
+import { homeHref } from "@/lib/home-href";
 
-export function Hero() {
+export function Hero({
+  authed = false,
+  role,
+}: {
+  authed?: boolean;
+  role?: AccountRole;
+}) {
   const pathRef = useRef<SVGPathElement>(null);
   const truckRef = useRef<SVGCircleElement>(null);
   const reduce = useReducedMotion();
@@ -63,8 +71,9 @@ export function Hero() {
             live — then send the broker a finished invoice packet in one click.
           </p>
           <div className="hero-cta">
-            <a href="/register" className="btn btn-primary">
-              Registration <ArrowRight size={17} />
+            {/* signed-in visitors get sent to their own page, not to sign-up */}
+            <a href={authed ? homeHref(role) : "/register"} className="btn btn-primary">
+              {authed ? "Open dashboard" : "Get started free"} <ArrowRight size={17} />
             </a>
             <a href="#how" className="btn btn-ghost">
               See how it works

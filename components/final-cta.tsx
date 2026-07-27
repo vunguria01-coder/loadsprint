@@ -1,7 +1,15 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import type { AccountRole } from "@/lib/auth";
+import { homeHref } from "@/lib/home-href";
 
-export function FinalCta() {
+export function FinalCta({
+  authed = false,
+  role,
+}: {
+  authed?: boolean;
+  role?: AccountRole;
+}) {
   return (
     <section className="section">
       <div className="wrap">
@@ -18,8 +26,9 @@ export function FinalCta() {
             packet — start in minutes.
           </p>
           <div className="final-cta-btns">
-            <a href="/register" className="btn btn-primary">
-              Registration <ArrowRight size={17} />
+            {/* same entry point as the header: sign-up for guests, app for users */}
+            <a href={authed ? homeHref(role) : "/register"} className="btn btn-primary">
+              {authed ? "Open dashboard" : "Get started free"} <ArrowRight size={17} />
             </a>
             <a href="#how" className="btn btn-ghost">
               See how it works

@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { BILLING_PLANS, fmtUsd, seatAllowance } from "@/lib/billing-plans";
+import type { AccountRole } from "@/lib/auth";
+import { homeHref } from "@/lib/home-href";
 
 // A short, benefit-led line-up per tier (kept tight on purpose).
 const tierFeatures: Record<string, string[]> = {
@@ -9,8 +11,19 @@ const tierFeatures: Record<string, string[]> = {
   platinum: ["Everything in Gold", "Built for growing fleets", "Most drivers & seats"],
 };
 
-export function PricingHome() {
+export function PricingHome({
+  authed = false,
+  role,
+}: {
+  authed?: boolean;
+  role?: AccountRole;
+}) {
   const monthly = BILLING_PLANS.filter((p) => p.mode === "subscription");
+  // Guests sign up; whoever can actually pay goes to /billing; everyone else
+  // (drivers) lands on their own page — /pricing tells them to ask their admin.
+  const canBill = role === "dispatcher" || role === "admin";
+  const planHref = !authed ? "/register" : canBill ? "/billing" : homeHref(role);
+  const planLabel = !authed ? "Get started" : canBill ? "Choose plan" : "Open dashboard";
   return (
     <section className="section" id="pricing">
       <div className="wrap">
@@ -49,8 +62,8 @@ export function PricingHome() {
                     </li>
                   ))}
                 </ul>
-                <a href="/register" className="plan-btn lp-plan-btn">
-                  Registration
+                <a href={planHref} className="plan-btn lp-plan-btn">
+                  {planLabel}
                 </a>
               </div>
             );

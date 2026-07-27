@@ -16,13 +16,13 @@ export default async function Home() {
     <div className="site-fresh">
       <Nav authed={!!me} role={me?.role} />
       <main id="home">
-        <Hero />
+        <Hero authed={!!me} role={me?.role} />
         <Stats />
         <Services />
         <HowItWorks />
-        <PricingHome />
+        <PricingHome authed={!!me} role={me?.role} />
         <Testimonials />
-        <FinalCta />
+        <FinalCta authed={!!me} role={me?.role} />
       </main>
       <Footer />
     </div>
