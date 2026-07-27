@@ -446,6 +446,11 @@ footer{border-top:1px solid var(--line-2);padding:60px 0 36px;background:var(--n
   color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px;transition:background .15s ease,color .15s ease;
 }
 .adm-rail-link svg{color:var(--muted-2);flex:0 0 auto}
+.adm-rail-count{
+  margin-left:auto;flex:0 0 auto;font-family:Manrope,sans-serif;font-weight:700;font-size:11px;
+  color:var(--muted-2);background:var(--line-2);border-radius:999px;padding:1px 7px;line-height:1.6;
+}
+.adm-rail-link.active .adm-rail-count{color:var(--blue,#38bdf8);background:var(--accent-soft,rgba(37,99,235,.16))}
 .adm-rail-link:hover{background:var(--accent-soft,rgba(56,189,248,.08));color:var(--ink)}
 .adm-rail-link.active{background:var(--accent-soft,rgba(37,99,235,.16));color:var(--blue,#38bdf8)}
 .adm-rail-link.active svg{color:var(--sky)}
@@ -2688,3 +2693,28 @@ table.acc select option{background:#0b1120}
   .ov-att-row{flex-wrap:wrap;gap:6px 10px}
   .ov-att-id{flex:1 1 100%}
 }
+
+/* The two tiles without a status of their own: the total borrows the accent
+   colour, Free stays neutral like the .am-card.st-free stripe. */
+.ov-total{--ov-c:var(--sky)}
+.ov-free{--ov-c:var(--line)}
+
+/* /admin renders inside .cab, and the block above was written for the dark
+   shell (#fff numerals, navy fills). Restate those surfaces the same way the
+   .am- account cards do further up. */
+.cab .ov-tile{background:#fff}
+.cab :is(.ov-num,.ov-chip b,.ov-att-id b){color:var(--ink)}
+.cab .ov-att{background:#fff}
+.cab .ov-att-row{background:#F6FAF9}
+.cab .ov-free{--ov-c:var(--muted-2)}
+
+/* Role picker sits next to the sort picker in .am-bar; once the toolbar wraps
+   onto one narrow column, give each its own full-width row. */
+@media (max-width:640px){
+  .am-sort{flex:1 1 100%}
+  .am-sort select{flex:1 1 auto;min-width:0}
+}
+
+/* Subscriber facts: a long plan id or company name wraps inside its column
+   instead of stretching the auto-fit grid. */
+.am-facts dd{overflow-wrap:anywhere}
