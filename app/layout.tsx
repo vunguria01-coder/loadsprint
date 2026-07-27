@@ -20,17 +20,18 @@ export const viewport: Viewport = {
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://loadsprint.us.com";
 
 export const metadata: Metadata = {
-  title: "LoadSprint — Reliable Freight Solutions Across America",
+  title: "LoadSprint — Dispatch Software for Carriers & Brokers",
   description:
-    "LoadSprint connects shippers and carriers with fast, efficient, and cost-effective transportation services. Get a freight quote or join our carrier network today.",
+    "Run your whole dispatch from one place: AI rate-con import, live GPS tracking, a driver mobile app, and one-click broker invoice packets. No setup fees, cancel anytime.",
   keywords: [
-    "freight brokerage",
-    "logistics",
-    "FTL",
-    "LTL",
-    "freight quote",
-    "carrier network",
-    "trucking",
+    "dispatch software",
+    "trucking dispatch",
+    "TMS",
+    "rate confirmation OCR",
+    "load tracking",
+    "driver app",
+    "carriers",
+    "freight brokers",
   ],
   metadataBase: new URL(SITE_URL),
   manifest: "/manifest.webmanifest",
@@ -47,26 +48,36 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "LoadSprint — Moving Freight Faster",
+    title: "LoadSprint — Run Your Whole Dispatch From One Place",
     description:
-      "Nationwide freight brokerage connecting shippers with a trusted carrier network. Fast quotes, real-time tracking, 98% on-time delivery.",
+      "Dispatch platform for carriers and brokers: AI reads the rate con, drivers run the stops, you track them live, and the broker gets a finished invoice packet in one click.",
     siteName: "LoadSprint",
     type: "website",
     url: SITE_URL,
   },
 };
 
+// Prices mirror lib/billing-plans.ts (monthly subscriptions, USD).
 const schema = {
   "@context": "https://schema.org",
-  "@type": "MovingCompany",
+  "@type": "SoftwareApplication",
   name: "LoadSprint",
   url: SITE_URL,
-  slogan: "Moving Freight Faster",
+  slogan: "Run your whole dispatch from one place",
   description:
-    "Freight brokerage and logistics platform connecting shippers with reliable carriers across the United States.",
+    "Dispatch platform for trucking carriers and freight brokers: AI rate-confirmation import, live GPS load tracking, a driver mobile app, and one-click broker invoice packets.",
+  applicationCategory: "BusinessApplication",
+  applicationSubCategory: "Transportation Management Software",
+  operatingSystem: "Web, iOS, Android",
   areaServed: "US",
-  telephone: "+1-888-555-0142",
-  email: "dispatch@loadsprint.com",
+  email: "support@loadsprint.us.com",
+  offers: {
+    "@type": "AggregateOffer",
+    priceCurrency: "USD",
+    lowPrice: "19",
+    highPrice: "199",
+    offerCount: 3,
+  },
 };
 
 export default async function RootLayout({
