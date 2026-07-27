@@ -102,6 +102,9 @@ function useLocationShare() {
   const [sharing, setSharing] = useState(false);
   const [err, setErr] = useState("");
   const [lastAt, setLastAt] = useState<number | null>(null);
+  // Live fix from the phone, kept even between the throttled server reports so
+  // the "near you" block can ask about where the truck is right now.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const watchId = useRef<number | null>(null);
   const lastSent = useRef(0);
 
@@ -127,7 +130,11 @@ function useLocationShare() {
     try { localStorage.setItem(LS_SHARE, "1"); } catch {}
     if (watchId.current !== null) return;
     watchId.current = navigator.geolocation.watchPosition(
-      (pos) => { setErr(""); send(pos.coords.latitude, pos.coords.longitude); },
+      (pos) => {
+        setErr("");
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        send(pos.coords.latitude, pos.coords.longitude);
+      },
       (e) => {
         setErr(
           e.code === 1
@@ -161,7 +168,78 @@ function useLocationShare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { sharing, err, lastAt, start, stop };
+  return { sharing, err, lastAt, coords, start, stop };
+}
+
+// Where the driver is + which of their loads is closest, answered by
+// /api/driver/nearby (HERE reverse geocode + AI notes per load).
+type NearbyLoadItem = {
+  id: string;
+  ref: string;
+  originName: string;
+  destName: string;
+  status: string;
+  targetKind: "pickup" | "delivery";
+  targetName: string;
+  miles: number;
+  rate: number | null;
+  pickupDate?: string;
+  deliveryDate?: string;
+  note?: string;
+};
+
+type NearbyData = {
+  location: {
+    lat: number;
+    lng: number;
+    cityState: string;
+    label: string;
+    live: boolean;
+    at: string | null;
+  } | null;
+  loads: NearbyLoadItem[];
+  summary: string;
+  ai: boolean;
+};
+
+function useNearby(coords: { lat: number; lng: number } | null) {
+  const [data, setData] = useState<NearbyData | null>(null);
+  const [busy, setBusy] = useState(false);
+  // Read the freshest fix at call time, but only re-run when the truck has
+  // actually moved (~1 km) — a GPS tick every few seconds shouldn't refetch.
+  const coordsRef = useRef(coords);
+  coordsRef.current = coords;
+  const gridKey = coords ? `${coords.lat.toFixed(2)},${coords.lng.toFixed(2)}` : "";
+
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      const c = coordsRef.current;
+      const q = c ? `?lat=${c.lat}&lng=${c.lng}` : "";
+      const res = await fetch(`/api/driver/nearby${q}`);
+      const d = await res.json();
+      if (d.ok) {
+        setData({
+          location: d.location ?? null,
+          loads: d.loads || [],
+          summary: d.summary || "",
+          ai: Boolean(d.ai),
+        });
+      }
+    } catch {
+      /* ignore — the block keeps the previous answer */
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 60000);
+    return () => clearInterval(t);
+  }, [load, gridKey]);
+
+  return { data, busy, refresh: load };
 }
 
 type Notif = { id: string; text: string; loadRef: string; createdAt: string; read: boolean };
@@ -177,6 +255,7 @@ export function DriverApp({ name }: { name: string }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const loc = useLocationShare();
+  const nearby = useNearby(loc.coords);
 
   const fetchList = useCallback(async () => {
     try {
@@ -312,6 +391,10 @@ export function DriverApp({ name }: { name: string }) {
         </button>
       </div>
 
+      <LocationCell data={nearby.data} busy={nearby.busy} onRefresh={nearby.refresh} />
+
+      <NearbyLoads data={nearby.data} onOpen={openLoad} />
+
       {unread.length > 0 && (
         <div style={{ background: "rgba(56,189,248,0.08)", border: `1px solid ${C.sky}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -365,6 +448,178 @@ function Pill({ status }: { status: string }) {
     }}>
       {status}
     </span>
+  );
+}
+
+// "You are here" — city/state resolved from the GPS fix on the server.
+function LocationCell({
+  data,
+  busy,
+  onRefresh,
+}: {
+  data: NearbyData | null;
+  busy: boolean;
+  onRefresh: () => void;
+}) {
+  const loc = data?.location;
+  const when = loc?.at ? new Date(loc.at) : null;
+
+  return (
+    <div
+      style={{
+        background: C.card,
+        border: `1px solid ${loc ? C.sky : C.line}`,
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 16,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ color: C.muted, fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
+          Your location
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4, wordBreak: "break-word" }}>
+          📍 {loc ? loc.cityState || loc.label : data ? "Unknown" : "Locating…"}
+        </div>
+        <div style={{ color: C.muted, fontSize: 12.5, marginTop: 3, lineHeight: 1.4 }}>
+          {loc
+            ? `${loc.lat.toFixed(3)}, ${loc.lng.toFixed(3)}${
+                when && !isNaN(when.getTime()) ? ` · updated ${when.toLocaleTimeString()}` : ""
+              }`
+            : data
+            ? "Turn on location sharing above so we can place you and show what's near you."
+            : "Checking your last known position…"}
+        </div>
+      </div>
+      <button
+        onClick={onRefresh}
+        disabled={busy}
+        style={{
+          flex: "none",
+          padding: "10px 14px",
+          borderRadius: 11,
+          fontWeight: 700,
+          fontSize: 14,
+          border: `1px solid ${C.line}`,
+          background: "transparent",
+          color: busy ? C.muted : C.sky,
+        }}
+      >
+        {busy ? "…" : "Refresh"}
+      </button>
+    </div>
+  );
+}
+
+// The loads that need this driver, closest first, with the AI's read on each.
+function NearbyLoads({
+  data,
+  onOpen,
+}: {
+  data: NearbyData | null;
+  onOpen: (id: string) => void;
+}) {
+  if (!data || !data.location) return null;
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>Loads near you</span>
+        {data.loads.length > 0 && (
+          <span style={{ color: C.muted, fontSize: 12 }}>closest first</span>
+        )}
+      </div>
+
+      {data.loads.length === 0 ? (
+        <Muted>Nothing to run right now — your dispatcher will send the next load here.</Muted>
+      ) : (
+        <>
+          {data.summary && (
+            <div
+              style={{
+                background: "rgba(56,189,248,0.08)",
+                border: `1px solid ${C.sky}`,
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 10,
+                fontSize: 14,
+                lineHeight: 1.45,
+              }}
+            >
+              <b style={{ color: C.sky }}>AI dispatch</b> — {data.summary}
+            </div>
+          )}
+
+          {data.loads.map((l) => (
+            <div
+              key={l.id}
+              style={{
+                background: C.card,
+                border: `1px solid ${C.line}`,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 10,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: 0.4 }}>{l.ref}</span>
+                <Pill status={l.status} />
+              </div>
+              <div style={{ fontSize: 15, marginTop: 6 }}>
+                {l.originName} → {l.destName}
+              </div>
+              <div style={{ color: C.sky, fontSize: 14, fontWeight: 700, marginTop: 6 }}>
+                {l.miles} mi to {l.targetKind}
+                {l.rate != null && (
+                  <span style={{ color: C.green }}> · ${l.rate.toLocaleString()}</span>
+                )}
+              </div>
+              {l.note && (
+                <div style={{ color: C.muted, fontSize: 13, marginTop: 6, lineHeight: 1.45 }}>
+                  {l.note}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={() => onOpen(l.id)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: `1px solid ${C.line}`,
+                    background: "transparent",
+                    color: C.text,
+                    fontWeight: 600,
+                    fontSize: 14,
+                  }}
+                >
+                  Open load
+                </button>
+                <button
+                  onClick={() => navigateTo(l.targetName)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: C.blue,
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  🧭 Navigate
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
   );
 }
 
