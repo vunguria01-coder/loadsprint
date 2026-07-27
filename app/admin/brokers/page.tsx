@@ -34,7 +34,7 @@ export default async function AdminBrokersPage() {
           subtitle={`${users.length} registered. Grant or change a plan.`}
           adminName={me.name}
         >
-          <AdminUserManager users={users} extras={extras} />
+          <AdminUserManager users={users} extras={extras} showFreeze />
         </AdminShell>
       </div>
     </CabinetServer>

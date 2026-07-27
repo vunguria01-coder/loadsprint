@@ -38,7 +38,7 @@ export default async function AdminDriversPage() {
           subtitle={`${users.length} registered.`}
           adminName={me.name}
         >
-          <AdminUserManager users={users} extras={extras} />
+          <AdminUserManager users={users} extras={extras} showFreeze />
         </AdminShell>
       </div>
     </CabinetServer>

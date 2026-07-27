@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Shield, Building2, Users, Truck, LifeBuoy } from "lucide-react";
+import { getUsers } from "@/lib/auth";
+import { getAllTickets } from "@/lib/support";
 
 /** Admin sections, in the order they appear in the rail. */
 const sections = [
@@ -10,6 +12,19 @@ const sections = [
   { key: "drivers", href: "/admin/drivers", label: "Drivers", icon: Truck },
   { key: "support", href: "/admin/support", label: "Support", icon: LifeBuoy },
 ];
+
+/** How many rows each section lists, so the rail shows the same numbers the pages do. */
+function sectionCounts(): Record<string, number> {
+  const users = getUsers();
+  const byRole = (role: string) => users.filter((u) => u.role === role).length;
+  return {
+    brokers: byRole("broker"),
+    dispatchers: byRole("dispatcher"),
+    accounts: users.length,
+    drivers: byRole("driver"),
+    support: getAllTickets().length,
+  };
+}
 
 export type AdminAnchor = { id: string; label: string };
 
@@ -33,6 +48,8 @@ export function AdminShell({
   anchors?: AdminAnchor[];
   children: ReactNode;
 }) {
+  const counts = sectionCounts();
+
   return (
     <div className="adm-shell">
       <nav className="adm-rail" aria-label="Admin sections">
@@ -48,6 +65,7 @@ export function AdminShell({
             >
               <Icon size={16} />
               <span>{s.label}</span>
+              <span className="adm-rail-count">{counts[s.key]}</span>
             </Link>
           );
         })}
