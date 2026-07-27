@@ -149,18 +149,19 @@ export function VoiceAssistant() {
     <>
       <button
         className="va-fab"
-        aria-label="Assistant"
+        aria-label="Jarvis"
+        title="Jarvis"
         onClick={() => setOpen((o) => !o)}
       >
         {open ? <X size={22} /> : <Mic size={22} />}
       </button>
 
       {open && (
-        <div className="va-panel" role="dialog" aria-label="Voice assistant">
+        <div className="va-panel" role="dialog" aria-label="Jarvis">
           <div className="va-head">
             <Volume2 size={16} />
-            <span>Ассистент</span>
-            <button className="va-close" onClick={() => setOpen(false)} aria-label="Close">
+            <span>Jarvis</span>
+            <button className="va-close" onClick={() => setOpen(false)} aria-label="Close" title="Закрыть Jarvis">
               <X size={16} />
             </button>
           </div>
@@ -168,7 +169,7 @@ export function VoiceAssistant() {
           <div className="va-body" ref={bodyRef}>
             {messages.length === 0 && (
               <div className="va-hint">
-                Нажмите микрофон и скажите, например: «покажи мои грузы», «открой
+                Нажмите микрофон и скажите Jarvis, например: «покажи мои грузы», «открой
                 водителей» или «создай груз из Далласа в Атланту водителю mike@demo.com».
               </div>
             )}
@@ -199,7 +200,7 @@ export function VoiceAssistant() {
               onClick={listening ? stopListening : startListening}
               disabled={!supportsVoice}
               aria-label="Speak"
-              title={supportsVoice ? "Говорить" : "Голос не поддерживается в этом браузере"}
+              title={supportsVoice ? "Говорить с Jarvis" : "Голос не поддерживается в этом браузере"}
             >
               <Mic size={18} />
             </button>
@@ -208,7 +209,13 @@ export function VoiceAssistant() {
               onChange={(e) => setDraft(e.target.value)}
               placeholder={listening ? "Слушаю…" : "Спросите или скажите…"}
             />
-            <button type="submit" className="va-send" aria-label="Send" disabled={!draft.trim()}>
+            <button
+              type="submit"
+              className="va-send"
+              aria-label="Send"
+              title="Отправить Jarvis"
+              disabled={!draft.trim()}
+            >
               <Send size={17} />
             </button>
           </form>
