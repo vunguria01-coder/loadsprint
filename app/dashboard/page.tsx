@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { currentUser } from "@/lib/guard";
 import { hasAccess, findByEmail } from "@/lib/auth";
+import { homeHref } from "@/lib/home-href";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
 import { buildDispatchOverview } from "@/lib/dispatch-overview";
@@ -20,8 +21,10 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const me = await currentUser();
   if (!me) redirect("/login");
-  if (me.role === "admin") redirect("/admin");
-  if (me.role !== "dispatcher") redirect("/loads");
+  // Same rule as every "Home"/"Dashboard" link in the app — keep it in the
+  // helper only, so this page and the links can't drift apart.
+  const home = homeHref(me.role);
+  if (home !== "/dashboard") redirect(home);
   if (!hasAccess(me)) redirect("/pricing");
 
   const invites = getInvitesByRole(me.id, "driver");
