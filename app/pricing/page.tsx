@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Check, ArrowLeft } from "lucide-react";
 import { getPricing, getLimits } from "@/lib/settings";
 import { currentUser } from "@/lib/guard";
+import { homeHref } from "@/lib/home-href";
 import { TIERS, type Tier, type AccountTier } from "@/lib/schemas";
 
 export const metadata: Metadata = {
@@ -49,7 +50,7 @@ export default async function PricingPage() {
         <Link href="/" aria-label="LoadSprint home" className="back">
           <ArrowLeft size={16} /> Back to site
         </Link>
-        <Link href={signedIn ? "/dashboard" : "/login"} className="back">
+        <Link href={signedIn ? homeHref(me?.role) : "/login"} className="back">
           {signedIn ? "Dashboard" : "Sign in"}
         </Link>
       </div>

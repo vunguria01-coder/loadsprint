@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, KeyRound, Mail, Lock } from "lucide-react";
 import { loginSchema, type LoginValues } from "@/lib/schemas";
+import { homeHref } from "@/lib/home-href";
 
 export function LoginForm() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export function LoginForm() {
         return;
       }
       // Trusted device — straight in.
-      router.push("/dashboard");
+      router.push(homeHref(data.role));
       router.refresh();
     } catch {
       setFormError("Network error. Please try again.");
@@ -82,7 +83,7 @@ export function LoginForm() {
         setVerifying(false);
         return;
       }
-      router.push("/dashboard");
+      router.push(homeHref(data.role));
       router.refresh();
     } catch {
       setFormError("Network error. Please try again.");

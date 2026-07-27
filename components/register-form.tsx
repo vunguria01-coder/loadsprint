@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
 import { registerSchema, type RegisterValues } from "@/lib/schemas";
+import { homeHref } from "@/lib/home-href";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export function RegisterForm() {
         setFormError(data.error || "Could not create your account.");
         return;
       }
-      router.push("/dashboard");
+      router.push(homeHref(data.role));
       router.refresh();
     } catch {
       setFormError("Network error. Please try again.");
