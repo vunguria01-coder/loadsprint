@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminAccountSchema } from "@/lib/schemas";
-import { updateUser, toSafe } from "@/lib/auth";
+import { updateUser, toSafe, type User } from "@/lib/auth";
 import { currentUser } from "@/lib/guard";
 
 export async function POST(req: Request) {
@@ -13,7 +13,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
   const { userId, tier, days, planId, canFreezeLocation, canConfirmationPdf } = parsed.data;
-  const patch: Record<string, unknown> = {};
+  // Typed as Partial<User>, not Record<string, unknown>: the patch is merged
+  // straight into the stored row, so a key that isn't a real column (or a grant
+  // spelled wrong) must fail the build rather than silently write a dead field.
+  // Only fields the request actually sent are assigned — untouched grants stay.
+  const patch: Partial<User> = {};
   if (tier !== undefined) {
     patch.tier = tier;
     if (tier === "none") {

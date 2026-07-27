@@ -54,6 +54,13 @@ function ensureStore() {
 
 function normalize(u: Partial<User>): User {
   return {
+    // Spread first, then fill defaults. Listing the fields alone made this a
+    // whitelist: `canConfirmationPdf` was missing from it, so every read
+    // dropped the admin-granted PDF permission (the gate saw `undefined` and
+    // answered 403) and the next saveUsers wrote the stripped row back to
+    // disk, erasing the grant for good. Spreading keeps columns that only the
+    // store knows about, including any added to User later.
+    ...u,
     id: u.id ?? newId(),
     name: u.name ?? "",
     company: u.company ?? "",
@@ -78,9 +85,12 @@ export function getUsers(): User[] {
   return Array.isArray(raw) ? raw.map(normalize) : [];
 }
 
-function saveUsers(users: User[]) {
+// Every write goes through normalize too, not just every read: a row built by a
+// caller (addUser, a merge in dedupeByEmail, a patch) can be missing columns the
+// store knows about, and whatever lands here is what the next process reads back.
+function saveUsers(users: Partial<User>[]) {
   ensureStore();
-  writeJsonAtomic(USERS_FILE, users);
+  writeJsonAtomic(USERS_FILE, users.map(normalize));
 }
 
 export function toSafe(u: User): SafeUser {
@@ -109,7 +119,10 @@ export function updateUser(id: string, patch: Partial<User>): User | undefined {
   const users = getUsers();
   const i = users.findIndex((u) => u.id === id);
   if (i === -1) return undefined;
-  users[i] = { ...users[i], ...patch, id: users[i].id };
+  // Keys absent from the patch keep their stored value (so a tier change never
+  // touches an admin grant); keys present win, including an explicit `undefined`
+  // that clears tierExpiresAt/planId. normalize keeps the merged row complete.
+  users[i] = normalize({ ...users[i], ...patch, id: users[i].id });
   saveUsers(users);
   return users[i];
 }
@@ -168,12 +181,15 @@ function dedupeByEmail(): void {
     dupes++;
     const older = kept.createdAt <= u.createdAt ? kept : u;
     const newer = older === kept ? u : kept;
-    // Never let the dedupe downgrade a paid account.
+    // Never let the dedupe downgrade a paid account, and never let it drop a
+    // grant an admin gave the row that loses: keep whichever side has it.
     byEmail.set(u.email, {
       ...older,
       tier: older.tier !== "none" ? older.tier : newer.tier,
       tierExpiresAt: older.tier !== "none" ? older.tierExpiresAt : newer.tierExpiresAt,
       planId: older.planId ?? newer.planId,
+      canFreezeLocation: older.canFreezeLocation || newer.canFreezeLocation,
+      canConfirmationPdf: older.canConfirmationPdf || newer.canConfirmationPdf,
     });
   }
   if (dupes > 0) saveUsers([...byEmail.values()]);
