@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X, ArrowRight, ChevronDown } from "lucide-react";
 import type { AccountRole } from "@/lib/auth";
+import { homeHref } from "@/lib/home-href";
 
 // The header used to list every section flat. Now *every* navigation link on
 // the page lives behind a single "Menu" dropdown, grouped into two columns —
@@ -51,15 +52,6 @@ const menuGroups = [
   },
 ];
 
-// /dashboard is a dispatcher page that bounces admins to /admin and everyone
-// else to /loads. Point the button straight at the role's real landing page so
-// signed-in visitors don't watch two redirects go by.
-function dashboardHref(role?: AccountRole) {
-  if (role === "admin") return "/admin";
-  if (role && role !== "dispatcher") return "/loads";
-  return "/dashboard";
-}
-
 export function Nav({
   authed = false,
   role,
@@ -67,7 +59,7 @@ export function Nav({
   authed?: boolean;
   role?: AccountRole;
 }) {
-  const home = dashboardHref(role);
+  const home = homeHref(role);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [open, setOpen] = useState(false);
