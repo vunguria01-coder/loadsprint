@@ -2611,3 +2611,69 @@ table.acc select option{background:#0b1120}
   opacity:0;transition:opacity .25s ease;pointer-events:none;
 }
 .nav.scrolled .nav-progress{opacity:1}
+
+/* ================= admin overview (subscriber snapshot) ================= */
+.ov{display:flex;flex-direction:column;gap:16px}
+.ov-tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.ov-tile{
+  --ov-c:var(--muted-2);
+  position:relative;border:1px solid var(--line);border-radius:13px;padding:14px 14px 13px;
+  background:var(--card-hi);display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden;
+}
+/* Accent hairline along the top edge — same colour language as the account cards. */
+.ov-tile::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--ov-c)}
+.ov-active{--ov-c:var(--am-active)}
+.ov-soon{--ov-c:var(--am-soon)}
+.ov-expired{--ov-c:var(--am-expired)}
+.ov-mrr{--ov-c:var(--sky)}
+.ov-ico{color:var(--ov-c);display:inline-flex;margin-bottom:4px}
+.ov-num{font-family:Poppins,sans-serif;font-weight:800;font-size:26px;line-height:1.1;color:#fff;letter-spacing:-.02em}
+.ov-mrr .ov-num{font-size:23px}
+.ov-lbl{font-family:Manrope,sans-serif;font-weight:600;font-size:11.5px;color:var(--muted)}
+
+/* per-tier breakdown behind the MRR number */
+.ov-break{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ov-chip{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;
+  font-family:Manrope,sans-serif;font-weight:700;font-size:12px;
+  color:var(--am-tier);border:1px solid color-mix(in srgb,var(--am-tier) 32%,transparent);
+  background:color-mix(in srgb,var(--am-tier) 10%,transparent);
+}
+.ov-chip b{font-family:Poppins,sans-serif;font-weight:800;font-size:13px;color:#fff}
+.ov-chip i{font-style:normal;font-weight:600;font-size:11.5px;color:var(--muted)}
+.ov-note{font-size:12px;color:var(--muted-2)}
+
+/* accounts that need an admin today */
+.ov-att{border:1px solid var(--line-2);border-radius:13px;padding:14px 16px;background:rgba(8,14,28,.4)}
+.ov-att-cap{
+  display:block;margin-bottom:10px;font-family:Manrope,sans-serif;font-weight:800;font-size:10.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);
+}
+.ov-att-empty{color:var(--muted);font-size:13.5px}
+.ov-att-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:2px}
+.ov-att-row{
+  --ov-c:var(--muted-2);
+  display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;
+  border-left:3px solid var(--ov-c);background:rgba(148,170,205,.04);
+}
+.ov-att-row.st-soon{--ov-c:var(--am-soon)}
+.ov-att-row.st-expired{--ov-c:var(--am-expired)}
+.ov-att-id{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}
+.ov-att-id b{font-weight:600;font-size:13.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-att-id i{font-style:normal;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-att-tier{
+  flex:0 0 auto;font-family:Manrope,sans-serif;font-weight:700;font-size:11.5px;color:var(--am-tier);
+  border:1px solid color-mix(in srgb,var(--am-tier) 30%,transparent);
+  background:color-mix(in srgb,var(--am-tier) 10%,transparent);padding:3px 9px;border-radius:8px;
+}
+.ov-att-when{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--ov-c);white-space:nowrap}
+.ov-att-more{margin-top:10px;font-size:12.5px;color:var(--muted)}
+.ov-att-more a{color:var(--sky);text-decoration:none}
+.ov-att-more a:hover{text-decoration:underline}
+
+@media(max-width:1100px){.ov-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){
+  .ov-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ov-att-row{flex-wrap:wrap;gap:6px 10px}
+  .ov-att-id{flex:1 1 100%}
+}

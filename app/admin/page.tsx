@@ -5,6 +5,7 @@ import { getPricing, getLimits } from "@/lib/settings";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { AdminShell } from "@/components/admin-shell";
+import { AdminOverview } from "@/components/admin-overview";
 import { AdminUserManager } from "@/components/admin-user-manager";
 import { AdminPricing } from "@/components/admin-pricing";
 import { AdminLimits } from "@/components/admin-limits";
@@ -33,11 +34,21 @@ export default async function AdminPage() {
           subtitle="Accounts, subscriptions, prices and restricted tools."
           adminName={me.name}
           anchors={[
+            { id: "overview", label: "Overview" },
             { id: "accounts", label: "Accounts" },
             { id: "pricing", label: "Subscription pricing" },
             { id: "limits", label: "Driver limits" },
           ]}
         >
+          <section className="admin-section" id="overview">
+            <h2>Overview</h2>
+            <p className="sx">
+              Where the subscriber base stands right now, what it is worth per
+              month, and which accounts need you today.
+            </p>
+            <AdminOverview users={users} pricing={pricing} />
+          </section>
+
           <section className="admin-section" id="accounts">
             <h2>Accounts</h2>
             <p className="sx">
