@@ -4,24 +4,24 @@ import { Star } from "lucide-react";
 const reviews = [
   {
     quote:
-      "LoadSprint consistently delivers outstanding service. Our freight shows up on time and we always know where it is.",
+      "I used to retype every rate con by hand. Now I drop the PDF in and the stops, rate and bill-to are already filled in — a load takes me under a minute.",
     initials: "MR",
     name: "Marcus Reyes",
-    role: "Ops Manager, Vantage Goods",
+    role: "Dispatcher, Vantage Transport LLC",
   },
   {
     quote:
-      "Their communication and carrier network are excellent. It feels like having a logistics team on staff without the overhead.",
+      "Live GPS ended the check calls. I can see exactly where every driver is and give the broker an ETA without picking up the phone.",
     initials: "DL",
     name: "Dana Liu",
-    role: "Supply Chain Lead, Northfield Mfg.",
+    role: "Dispatch Manager, Northfield Carriers",
   },
   {
     quote:
-      "Fast, professional, and reliable. When we have a rush load, LoadSprint is the first call we make — every time.",
+      "The broker packet is the part I'd pay for alone — rate confirmation, POD photos and the invoice in one ZIP. We get paid days sooner.",
     initials: "TB",
     name: "Tariq Bell",
-    role: "Founder, BellFresh Produce",
+    role: "Owner-operator, BellFreight (6 trucks)",
   },
 ];
 
@@ -30,8 +30,8 @@ export function Testimonials() {
     <section className="section" id="testimonials">
       <div className="wrap">
         <Reveal className="shead center">
-          <span className="eyebrow">Trusted by shippers</span>
-          <h2 className="h2">What our partners say</h2>
+          <span className="eyebrow">Trusted by dispatchers &amp; carriers</span>
+          <h2 className="h2">What dispatchers say</h2>
         </Reveal>
         <div className="quotes">
           {reviews.map((r, i) => (
