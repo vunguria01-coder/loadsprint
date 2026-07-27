@@ -12,7 +12,7 @@ export default async function PrivacyPage() {
   const me = await currentUser();
   return (
     <>
-      <Nav authed={!!me} />
+      <Nav authed={!!me} role={me?.role} />
       <main className="wrap" style={{ maxWidth: 820, padding: "48px 20px 80px", lineHeight: 1.7 }}>
         <h1 style={{ fontSize: 34, fontWeight: 800, marginBottom: 6 }}>Privacy Policy</h1>
         <p style={{ color: "var(--muted)", marginBottom: 28 }}>Last updated: June 27, 2026</p>

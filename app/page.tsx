@@ -14,7 +14,7 @@ export default async function Home() {
   const me = await currentUser();
   return (
     <div className="site-fresh">
-      <Nav authed={!!me} />
+      <Nav authed={!!me} role={me?.role} />
       <main id="home">
         <Hero />
         <Stats />
