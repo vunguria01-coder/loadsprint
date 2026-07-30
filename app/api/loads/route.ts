@@ -24,6 +24,34 @@ export async function POST(req: Request) {
     );
   }
 
+  // Cargo details off the rate confirmation — all optional, free text is trimmed
+  // and capped so a bad paste can't bloat the stored load.
+  const text = (v: unknown, max: number) => {
+    const s = String(v ?? "").trim();
+    return s ? s.slice(0, max) : undefined;
+  };
+  const positive = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  };
+  const commodity = text(body.commodity, 120);
+  const equipment = text(body.equipment, 60);
+  const notes = text(body.notes, 2000);
+  const weight = positive(body.weight);
+  const pieces = positive(body.pieces);
+
+  // Scheduled days for the calendar. Reject a malformed date instead of silently
+  // dropping it, so the dispatcher knows the day was not saved.
+  const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const pickupDate = text(body.pickupDate, 10);
+  const deliveryDate = text(body.deliveryDate, 10);
+  if ((pickupDate && !isDay(pickupDate)) || (deliveryDate && !isDay(deliveryDate))) {
+    return NextResponse.json(
+      { ok: false, error: "Pickup and delivery dates must be YYYY-MM-DD." },
+      { status: 400 }
+    );
+  }
+
   // Optional multi-stop list (pickups + dropoffs). Geocode each address so the
   // map and navigation work for every stop.
   let stops: Stop[] | undefined;
@@ -64,6 +92,26 @@ export async function POST(req: Request) {
     brokerContactName: body.brokerContactName ? String(body.brokerContactName) : undefined,
     brokerContactEmail: body.brokerContactEmail ? String(body.brokerContactEmail) : undefined,
     brokerContactPhone: body.brokerContactPhone ? String(body.brokerContactPhone) : undefined,
+    commodity,
+    weight,
+    equipment,
+    pieces,
+    notes,
+    pickupDate,
+    deliveryDate,
   });
-  return NextResponse.json({ ok: true, load: { id: load.id, ref: load.ref } });
+  return NextResponse.json({
+    ok: true,
+    load: {
+      id: load.id,
+      ref: load.ref,
+      commodity: load.commodity,
+      weight: load.weight,
+      equipment: load.equipment,
+      pieces: load.pieces,
+      notes: load.notes,
+      pickupDate: load.pickupDate,
+      deliveryDate: load.deliveryDate,
+    },
+  });
 }
