@@ -111,9 +111,14 @@ export function VoiceAssistant() {
       }
       const voice = pickFemaleVoice(voicesRef.current, lang);
       if (voice) u.voice = voice;
-      // Jarvis: lower timbre, slightly unhurried delivery.
-      u.rate = 0.95;
-      u.pitch = 0.85;
+      // Female timbre. A voice we actually recognised as female already sounds
+      // right, so it only gets a light lift and an unhurried pace. If the system
+      // has no female voice (pickFemaleVoice fell back to a neutral/male one, or
+      // returned nothing at all), we compensate on the default voice by raising
+      // the pitch further and slowing down a touch so it stays intelligible.
+      const isFemale = !!voice && FEMALE_NAMES.test(voice.name);
+      u.rate = isFemale ? 0.98 : 0.92;
+      u.pitch = isFemale ? 1.15 : 1.45;
       u.volume = 1;
       window.speechSynthesis.speak(u);
     } catch {
