@@ -121,6 +121,12 @@ export type Load = {
   etaCalcAt?: string; // when it was last computed (throttle HERE calls)
   stops?: Stop[]; // multi-stop loads: every pickup and drop-off, in order
   billTo?: string; // who the invoice is sent to (broker/customer from the rate con)
+  // What is actually being hauled — plain human details off the rate confirmation.
+  commodity?: string; // e.g. "Frozen chicken", "Auto parts"
+  weight?: number; // lbs
+  equipment?: string; // e.g. "Reefer 53'", "Dry Van", "Flatbed"
+  pieces?: number; // pallets / boxes / units count
+  notes?: string; // free-text load notes for the dispatcher and driver
   status: LoadStatus;
   documents: LoadDocument[];
   photos: LoadPhoto[];
@@ -992,12 +998,21 @@ export function createLoad(input: {
   rate?: number;
   stops?: Stop[];
   billTo?: string;
+  commodity?: string;
+  weight?: number;
+  equipment?: string;
+  pieces?: number;
+  notes?: string;
+  pickupDate?: string; // YYYY-MM-DD
+  deliveryDate?: string; // YYYY-MM-DD
   pickupApptAt?: string;
   deliveryApptAt?: string;
   truckNumber?: string;
   trailerNumber?: string;
   demo?: boolean;
 }): Load {
+  const cleanDate = (s?: string) =>
+    s && /^\d{4}-\d{2}-\d{2}$/.test(s.trim()) ? s.trim() : undefined;
   const now = new Date().toISOString();
   const ref =
     input.ref?.trim() ||
@@ -1031,6 +1046,13 @@ export function createLoad(input: {
     loadRate: input.rate && input.rate > 0 ? input.rate : undefined,
     stops: input.stops && input.stops.length > 0 ? input.stops : undefined,
     billTo: input.billTo?.trim() || undefined,
+    commodity: input.commodity?.trim() || undefined,
+    weight: input.weight && input.weight > 0 ? input.weight : undefined,
+    equipment: input.equipment?.trim() || undefined,
+    pieces: input.pieces && input.pieces > 0 ? input.pieces : undefined,
+    notes: input.notes?.trim() || undefined,
+    pickupDate: cleanDate(input.pickupDate),
+    deliveryDate: cleanDate(input.deliveryDate),
     pickupApptAt: input.pickupApptAt || undefined,
     deliveryApptAt: input.deliveryApptAt || undefined,
     truckNumber: input.truckNumber?.trim() || undefined,
