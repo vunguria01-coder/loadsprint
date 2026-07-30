@@ -170,6 +170,12 @@ type Draft = {
   origin: string;
   dest: string;
   rate: string;
+  commodity: string;
+  weight: string;
+  equipment: string;
+  pieces: string;
+  pickupDate: string;
+  deliveryDate: string;
   broker: { name?: string; email?: string; phone?: string } | null;
 };
 
@@ -191,6 +197,13 @@ export function CreateLoad({
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
   const [rate, setRate] = useState("");
+  // What's on the truck — typed on the confirm step, kept in the draft.
+  const [commodity, setCommodity] = useState("");
+  const [weight, setWeight] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const [pieces, setPieces] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
   const [stops, setStops] = useState<{ pickups: string[]; deliveries: string[] } | null>(null);
   const [ai, setAi] = useState<AiExtract | null>(null);
   const [pdfUrl, setPdfUrl] = useState("");
@@ -217,6 +230,12 @@ export function CreateLoad({
         if (typeof d.origin === "string") setOrigin(d.origin);
         if (typeof d.dest === "string") setDest(d.dest);
         if (typeof d.rate === "string") setRate(d.rate);
+        if (typeof d.commodity === "string") setCommodity(d.commodity);
+        if (typeof d.weight === "string") setWeight(d.weight);
+        if (typeof d.equipment === "string") setEquipment(d.equipment);
+        if (typeof d.pieces === "string") setPieces(d.pieces);
+        if (typeof d.pickupDate === "string") setPickupDate(d.pickupDate);
+        if (typeof d.deliveryDate === "string") setDeliveryDate(d.deliveryDate);
         if (d.broker && typeof d.broker === "object") setBroker(d.broker);
         // Step 2 only makes sense with the PDF/AI result, which isn't stored —
         // continue on the details step instead.
@@ -231,12 +250,18 @@ export function CreateLoad({
   // Keep the stored draft in sync with the form.
   useEffect(() => {
     if (!restored || done.current) return;
-    const empty = step === 1 && !ref && !origin && !dest && !rate && !broker;
+    const empty =
+      step === 1 && !ref && !origin && !dest && !rate && !broker &&
+      !commodity && !weight && !equipment && !pieces && !pickupDate && !deliveryDate;
     try {
       if (empty) localStorage.removeItem(draftKey);
-      else localStorage.setItem(draftKey, JSON.stringify({ step, ref, origin, dest, rate, broker } satisfies Draft));
+      else localStorage.setItem(draftKey, JSON.stringify({
+        step, ref, origin, dest, rate,
+        commodity, weight, equipment, pieces, pickupDate, deliveryDate,
+        broker,
+      } satisfies Draft));
     } catch {}
-  }, [restored, draftKey, step, ref, origin, dest, rate, broker]);
+  }, [restored, draftKey, step, ref, origin, dest, rate, commodity, weight, equipment, pieces, pickupDate, deliveryDate, broker]);
 
   function copyText(t: string) {
     navigator.clipboard?.writeText(t);
@@ -331,6 +356,12 @@ export function CreateLoad({
           ref, originName: origin, destName: dest,
           driverName, driverEmail,
           rate: Number(rate) > 0 ? Number(rate) : undefined,
+          commodity: commodity.trim() || undefined,
+          weight: Number(weight) > 0 ? Number(weight) : undefined,
+          equipment: equipment.trim() || undefined,
+          pieces: Number(pieces) > 0 ? Number(pieces) : undefined,
+          pickupDate: pickupDate || undefined,
+          deliveryDate: deliveryDate || undefined,
           stops,
           billTo: ai?.billTo,
           // Save the broker's contact from the rate con so the dispatcher always
@@ -560,6 +591,30 @@ export function CreateLoad({
             <div className="field">
               <label>Destination (City, ST or full address)</label>
               <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Atlanta, GA" />
+            </div>
+            <div className="field full">
+              <label>What are we hauling? (optional)</label>
+              <input value={commodity} onChange={(e) => setCommodity(e.target.value)} placeholder="Frozen chicken" />
+            </div>
+            <div className="field">
+              <label>Weight (lbs)</label>
+              <input type="number" min={0} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="42000" />
+            </div>
+            <div className="field">
+              <label>Trailer type</label>
+              <input value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="Reefer 53'" />
+            </div>
+            <div className="field">
+              <label>Pieces (pallets / units)</label>
+              <input type="number" min={0} value={pieces} onChange={(e) => setPieces(e.target.value)} placeholder="24" />
+            </div>
+            <div className="field">
+              <label>Pickup date</label>
+              <input type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Delivery date</label>
+              <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
             </div>
           </div>
 
