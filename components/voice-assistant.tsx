@@ -15,6 +15,33 @@ function langFor(text: string): "ru-RU" | "en-US" {
   return /[Ѐ-ӿ]/.test(text) ? "ru-RU" : "en-US";
 }
 
+// Names of the female voices shipped by Windows/Chrome/macOS/Android for the
+// two languages we speak. Browsers don't expose gender, so we match by name.
+const FEMALE_NAMES =
+  /(female|женск|zira|eva|irina|svetlana|katya|katia|alena|milena|tatyana|alyona|dariya|samantha|victoria|karen|moira|tessa|fiona|serena|allison|ava|susan|zoe|joanna|salli|kimberly|amy|emma|aria|jenny|michelle|google us english|женщина)/i;
+const MALE_NAMES = /(male|мужск|david|mark|pavel|dmitri|yuri|maxim|alex|daniel|fred|guy|ryan|tom|george)/i;
+
+// Best female voice for the language, or null while the list is still empty.
+function pickFemaleVoice(
+  voices: SpeechSynthesisVoice[],
+  lang: "ru-RU" | "en-US"
+): SpeechSynthesisVoice | null {
+  const prefix = lang.slice(0, 2);
+  const sameLang = voices.filter((v) =>
+    (v.lang || "").toLowerCase().replace("_", "-").startsWith(prefix)
+  );
+  if (!sameLang.length) return null;
+  const exact = sameLang.filter(
+    (v) => (v.lang || "").toLowerCase().replace("_", "-") === lang.toLowerCase()
+  );
+  const pool = exact.length ? exact : sameLang;
+  return (
+    pool.find((v) => FEMALE_NAMES.test(v.name)) ||
+    pool.find((v) => !MALE_NAMES.test(v.name)) ||
+    pool[0]
+  );
+}
+
 export function VoiceAssistant() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,6 +54,7 @@ export function VoiceAssistant() {
   const [supportsVoice, setSupportsVoice] = useState(true);
   const recognitionRef = useRef<any>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   // Only show for signed-in users.
   useEffect(() => {
@@ -53,6 +81,23 @@ export function VoiceAssistant() {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
   }, [messages, thinking]);
 
+  // getVoices() is empty on first call in Chrome/Edge — the list arrives with
+  // the "voiceschanged" event, so keep a ref in sync with it.
+  useEffect(() => {
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
+    if (!synth) return;
+    const load = () => {
+      try {
+        voicesRef.current = synth.getVoices() || [];
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
+    synth.addEventListener?.("voiceschanged", load);
+    return () => synth.removeEventListener?.("voiceschanged", load);
+  }, []);
+
   const speak = useCallback((text: string) => {
     if (typeof window === "undefined" || !window.speechSynthesis || !text) return;
     try {
@@ -60,6 +105,12 @@ export function VoiceAssistant() {
       const lang = langFor(text);
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
+      // Voices may still be loading on the very first utterance — re-read then.
+      if (!voicesRef.current.length) {
+        voicesRef.current = window.speechSynthesis.getVoices() || [];
+      }
+      const voice = pickFemaleVoice(voicesRef.current, lang);
+      if (voice) u.voice = voice;
       // Jarvis: lower timbre, slightly unhurried delivery.
       u.rate = 0.95;
       u.pitch = 0.85;
