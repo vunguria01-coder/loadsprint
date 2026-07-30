@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Phone, Mail } from "lucide-react";
+import { ArrowRight, Phone, Mail, Package, CalendarDays } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import { useToast } from "@/components/toast";
 import { StatusChip } from "@/components/status-chip";
@@ -15,6 +15,16 @@ import { LoadInvoiceAi } from "@/components/load-invoice-ai";
 import { LoadBrokerShare } from "@/components/load-broker-share";
 import { Collapsible } from "@/components/collapsible";
 import { DriverRate } from "@/components/driver-rate";
+
+// Format a "YYYY-MM-DD" date as a short local label (e.g. "Jul 8") without the
+// UTC-parse timezone shift that new Date("YYYY-MM-DD") introduces.
+function shortDate(ymd?: string): string | null {
+  if (!ymd) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export function LoadWorkspace({ loadId }: { loadId: string }) {
   const [load, setLoad] = useState<LoadView | null>(null);
@@ -105,6 +115,24 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
           <div className="route">
             {load.originName} <ArrowRight size={15} /> {load.destName}
           </div>
+          {(load.commodity || (load.weight ?? 0) > 0) && (
+            <div className="ld-meta">
+              <Package size={14} />
+              {load.commodity && <span>{load.commodity}</span>}
+              {load.commodity && (load.weight ?? 0) > 0 && <span className="ld-msep">·</span>}
+              {(load.weight ?? 0) > 0 && <span>{load.weight!.toLocaleString("en-US")} lbs</span>}
+            </div>
+          )}
+          {(shortDate(load.pickupDate) || shortDate(load.deliveryDate)) && (
+            <div className="ld-meta">
+              <CalendarDays size={14} />
+              {shortDate(load.pickupDate) && <span>Pickup {shortDate(load.pickupDate)}</span>}
+              {shortDate(load.pickupDate) && shortDate(load.deliveryDate) && (
+                <span className="ld-msep">→</span>
+              )}
+              {shortDate(load.deliveryDate) && <span>Delivery {shortDate(load.deliveryDate)}</span>}
+            </div>
+          )}
           {load.dispatcherName && (
             <div className="px" style={{ marginTop: 4 }}>
               Added by {load.dispatcherName}

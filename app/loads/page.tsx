@@ -32,6 +32,8 @@ function toSummary(l: Load): LoadSummary {
     photos: l.photos.length,
     messages: l.messages.length,
     loadRate: l.loadRate,
+    commodity: l.commodity,
+    weight: l.weight,
     pickupDate: l.pickupDate,
     deliveryDate: l.deliveryDate,
     sharingLive: l.driverShareLocation !== false && !!l.driverPoint,

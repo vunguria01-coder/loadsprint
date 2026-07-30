@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { MapPin, ArrowRight, Search, CalendarDays } from "lucide-react";
+import { MapPin, ArrowRight, Search, CalendarDays, Package } from "lucide-react";
 import { StatusChip } from "@/components/status-chip";
 import type { LoadStatus } from "@/lib/loads";
 
@@ -30,6 +30,8 @@ export type LoadSummary = {
   photos: number;
   messages: number;
   loadRate?: number;
+  commodity?: string;
+  weight?: number; // lbs
   pickupDate?: string; // YYYY-MM-DD
   deliveryDate?: string; // YYYY-MM-DD
   sharingLive: boolean;
@@ -64,6 +66,14 @@ function LoadCard({ load }: { load: LoadSummary }) {
       <div className="lc-route">
         <MapPin /> {load.originName} <ArrowRight size={15} /> {load.destName}
       </div>
+      {(load.commodity || (load.weight ?? 0) > 0) && (
+        <div className="lc-cargo">
+          <Package size={13} />
+          {load.commodity && <span>{load.commodity}</span>}
+          {load.commodity && (load.weight ?? 0) > 0 && <span className="lc-dsep">·</span>}
+          {(load.weight ?? 0) > 0 && <span>{load.weight!.toLocaleString("en-US")} lbs</span>}
+        </div>
+      )}
       {(shortDate(load.pickupDate) || shortDate(load.deliveryDate)) && (
         <div className="lc-dates">
           <CalendarDays size={13} />
