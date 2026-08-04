@@ -2667,10 +2667,10 @@ table.acc select option{background:#0b1120}
 .dl-route .dl-arrow{color:var(--sky);flex:0 0 auto}
 .dl-city{white-space:nowrap}
 .dl-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;border-top:1px solid var(--line-2,#eef4f2);padding-top:11px}
-.dl-meta-item{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;color:var(--muted)}
+.dl-meta-item{display:flex;align-items:center;gap:6px;min-width:0;font-size:13.5px;color:var(--muted)}
 .dl-meta-item svg{color:var(--muted-2);flex:0 0 auto}
 .dl-meta-label{color:var(--muted-2);flex:0 0 auto}
-.dl-meta-value{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-meta-value{color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .board-empty{border:1px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;color:var(--muted);font-size:14px;background:#fff}
 
 @media(max-width:640px){
