@@ -1475,7 +1475,6 @@ table.acc select option{background:#0b1120}
 /* ============================================================
    Home (dashboard overview) — stat cards with the signature rail.
    ============================================================ */
-.home-wrap{max-width:1040px}
 .home-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
 
 .home-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:16px;margin-bottom:26px}
@@ -2571,7 +2570,6 @@ table.acc select option{background:#0b1120}
    Status tones: green=Delivered, blue=Picked Up, sky=In Transit,
    yellow=At Delivery, orange=Appt Soon, red=Delayed, gray=Assigned.
    ===================================================================== */
-.home-wrap{max-width:1200px}
 .dispatch-board{display:flex;flex-direction:column;gap:22px}
 
 /* ---- stat cards ---- */
