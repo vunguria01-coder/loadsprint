@@ -899,7 +899,8 @@ table.acc select option{background:#0b1120}
 /* notifications bell */
 .bell{position:relative}
 .bell .bbtn{position:relative;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);background:rgba(148,170,205,.05);color:var(--ink);display:grid;place-items:center;cursor:pointer}
-.bell .bbtn:hover{border-color:rgba(56,189,248,.4)}
+.bell .bbtn:hover,.bell .bbtn:focus-visible{border-color:rgba(56,189,248,.4)}
+.bell .bbtn:focus-visible{outline:2px solid var(--sky,#38bdf8);outline-offset:2px}
 .bell .bbtn svg{width:19px;height:19px}
 .bell .count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;font-family:Manrope}
 .bell .drop{position:absolute;right:0;top:50px;width:330px;max-height:400px;overflow-y:auto;background:rgba(13,22,40,.98);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.8);z-index:70}
@@ -1386,7 +1387,8 @@ table.acc select option{background:#0b1120}
 .cab-side .cab-link.active{background:linear-gradient(90deg,rgba(37,99,235,.22),rgba(37,99,235,.06));position:relative}
 .cab-side .cab-link.active::before{content:"";position:absolute;left:-2px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--grad)}
 .cab-acc-btn{transition:border-color .15s ease,background .15s ease}
-.cab-acc-btn:hover{border-color:rgba(56,189,248,.4)}
+.cab-acc-btn:hover,.cab-acc-btn:focus-visible{border-color:rgba(56,189,248,.4)}
+.cab-acc-btn:focus-visible{outline:2px solid var(--sky,#38bdf8);outline-offset:2px}
 
 /* Inputs: a touch more room. */
 .cab-content .field input,

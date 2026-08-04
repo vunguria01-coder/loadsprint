@@ -300,6 +300,10 @@ export function VoiceAssistant() {
         .va-fab:hover {
           transform: scale(1.06);
         }
+        .va-fab:focus-visible {
+          outline: 2px solid #fff;
+          outline-offset: 3px;
+        }
         .va-panel {
           position: fixed;
           right: 22px;
