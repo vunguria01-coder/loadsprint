@@ -59,6 +59,8 @@ export default async function DashboardPage() {
           loads={overview.loads}
           alerts={overview.alerts}
           filters={overview.filters}
+          limit={5}
+          viewAllHref="/active-loads"
         />
       </div>
     </CabinetServer>

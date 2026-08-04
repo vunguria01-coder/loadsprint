@@ -82,9 +82,19 @@ function LoadCard({ load }: { load: LoadSummary }) {
           {shortDate(load.deliveryDate) && <span>Delivery {shortDate(load.deliveryDate)}</span>}
         </div>
       )}
-      <div className="lc-sub">
-        {load.docs} docs · {load.photos} photos · {load.messages} messages
-      </div>
+      {/* Counters only earn their space when there is something to count —
+          three zeros on every card is noise, not information. */}
+      {(load.docs > 0 || load.photos > 0 || load.messages > 0) && (
+        <div className="lc-sub">
+          {[
+            load.docs > 0 && `${load.docs} doc${load.docs === 1 ? "" : "s"}`,
+            load.photos > 0 && `${load.photos} photo${load.photos === 1 ? "" : "s"}`,
+            load.messages > 0 && `${load.messages} message${load.messages === 1 ? "" : "s"}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </div>
+      )}
       {typeof load.loadRate === "number" && load.loadRate > 0 && (
         <div className="lc-price">${load.loadRate.toLocaleString("en-US")}</div>
       )}

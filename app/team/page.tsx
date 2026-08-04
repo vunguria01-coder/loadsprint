@@ -6,6 +6,7 @@ import { CabinetServer } from "@/components/cabinet-server";
 import { TeamManager } from "@/components/team-manager";
 import { DispatchersList } from "@/components/dispatchers-list";
 import { TeamStats } from "@/components/team-stats";
+import { EmptyState } from "@/components/empty-state";
 import { hasAccess, findByEmail, getSubDispatchers } from "@/lib/auth";
 import { getInvitesByRole } from "@/lib/invites";
 import { getLoadsByDispatcher } from "@/lib/loads";
@@ -93,7 +94,11 @@ export default async function TeamPage() {
         </div>
 
         {dispatchers.length === 0 ? (
-          <p className="px">No additional dispatchers yet. Use “Add dispatcher” to invite your first teammate.</p>
+          <EmptyState
+            icon={<Users size={26} />}
+            title="No additional dispatchers yet"
+            sub="Use “Add dispatcher” to invite your first teammate."
+          />
         ) : (
           <DispatchersList dispatchers={dispatchers} />
         )}

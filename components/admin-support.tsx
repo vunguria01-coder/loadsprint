@@ -82,8 +82,12 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
             ) : (
               <div className="asup-noai">
                 No AI triage yet.{" "}
-                <button className="link" onClick={() => act(t.id, { action: "retriage" }, "Triaged.")}>
-                  Run AI
+                <button
+                  className="link"
+                  disabled={busy !== ""}
+                  onClick={() => act(t.id, { action: "retriage" }, "Triaged.")}
+                >
+                  {busy === t.id + "retriage" ? "Running…" : "Run AI"}
                 </button>
               </div>
             )}

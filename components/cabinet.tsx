@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import {
 import { NotificationsBell } from "@/components/notifications-bell";
 import { HelpWidget } from "@/components/help-widget";
 
-type NavItem = { key: string; href: string; label: string; icon: ReactNode };
+type NavItem = { key: string; href: string; label: string; icon: ReactNode; group?: string };
 
 function navForRole(role: string, isOwner: boolean): NavItem[] {
   if (role === "admin") {
@@ -34,20 +34,20 @@ function navForRole(role: string, isOwner: boolean): NavItem[] {
     ];
   }
   return [
-    { key: "dashboard", href: "/dashboard", label: "Home", icon: <LayoutDashboard size={18} /> },
-    { key: "active", href: "/active-loads", label: "Active loads", icon: <Truck size={18} /> },
-    { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} /> },
-    { key: "trucks", href: "/trucks", label: "Trucks", icon: <Container size={18} /> },
-    { key: "reminders", href: "/reminders", label: "Reminders", icon: <BellRing size={18} /> },
-    { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} /> },
-    { key: "calendar", href: "/calendar", label: "Calendar", icon: <CalendarDays size={18} /> },
-    { key: "insights", href: "/insights", label: "Insights", icon: <BarChart3 size={18} /> },
-    { key: "profit", href: "/profit", label: "Profit", icon: <TrendingUp size={18} /> },
-    { key: "settlements", href: "/settlements", label: "Settlements", icon: <Wallet size={18} /> },
+    { key: "dashboard", href: "/dashboard", label: "Home", icon: <LayoutDashboard size={18} />, group: "Operations" },
+    { key: "active", href: "/active-loads", label: "Active loads", icon: <Truck size={18} />, group: "Operations" },
+    { key: "drivers", href: "/drivers", label: "Drivers", icon: <Users size={18} />, group: "Operations" },
+    { key: "trucks", href: "/trucks", label: "Trucks", icon: <Container size={18} />, group: "Operations" },
+    { key: "reminders", href: "/reminders", label: "Reminders", icon: <BellRing size={18} />, group: "Operations" },
+    { key: "review", href: "/review", label: "Completed", icon: <PackageCheck size={18} />, group: "Operations" },
+    { key: "calendar", href: "/calendar", label: "Calendar", icon: <CalendarDays size={18} />, group: "Operations" },
+    { key: "insights", href: "/insights", label: "Insights", icon: <BarChart3 size={18} />, group: "Finance" },
+    { key: "profit", href: "/profit", label: "Profit", icon: <TrendingUp size={18} />, group: "Finance" },
+    { key: "settlements", href: "/settlements", label: "Settlements", icon: <Wallet size={18} />, group: "Finance" },
     // Team (additional dispatcher seats) — owners only.
-    ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} /> }] : []),
-    { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} /> },
-    { key: "support", href: "/support", label: "Support", icon: <LifeBuoy size={18} /> },
+    ...(isOwner ? [{ key: "team", href: "/team", label: "Team", icon: <UserCircle size={18} />, group: "Account" }] : []),
+    { key: "billing", href: "/billing", label: "Plans & billing", icon: <CreditCard size={18} />, group: "Account" },
+    { key: "support", href: "/support", label: "Support", icon: <LifeBuoy size={18} />, group: "Account" },
   ];
 }
 
@@ -107,15 +107,19 @@ export function Cabinet({
           <button className="cab-close" onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
         </div>
         <nav className="cab-nav">
-          {items.map((it) => (
-            <Link
-              key={it.key}
-              href={it.href}
-              onClick={() => setOpen(false)}
-              className={`cab-link${active === it.key ? " active" : ""}`}
-            >
-              {it.icon}<span>{it.label}</span>
-            </Link>
+          {items.map((it, i) => (
+            <Fragment key={it.key}>
+              {it.group && it.group !== items[i - 1]?.group && (
+                <span className="cab-nav-group">{it.group}</span>
+              )}
+              <Link
+                href={it.href}
+                onClick={() => setOpen(false)}
+                className={`cab-link${active === it.key ? " active" : ""}`}
+              >
+                {it.icon}<span>{it.label}</span>
+              </Link>
+            </Fragment>
           ))}
         </nav>
         <button className="cab-link cab-logout" onClick={logout}>

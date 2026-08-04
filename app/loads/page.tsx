@@ -75,20 +75,17 @@ export default async function LoadsPage() {
   return (
     <CabinetServer active="loads">
       <div className="wrap">
-        <div
-          className="shead"
-          style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}
-        >
-          <div>
-            <h1 className="admin-h">Loads</h1>
-            <p className="admin-sub">
+        <header className="adm-head">
+          <div className="adm-head-text">
+            <h1 className="adm-title">Loadboard</h1>
+            <p className="adm-subtitle">
               {me.role === "broker"
                 ? "Loads where you are the broker."
                 : "Search, filter and open any load for full control."}
             </p>
           </div>
           {me.role === "dispatcher" && <NewLoadButton drivers={driverOpts} />}
-        </div>
+        </header>
 
         {summaries.length === 0 ? (
           <div className="home-empty">

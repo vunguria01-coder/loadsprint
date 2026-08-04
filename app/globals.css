@@ -431,6 +431,7 @@ footer{border-top:1px solid var(--line-2);padding:60px 0 36px;background:var(--n
 
 /* ---- admin shell: compact header + sticky section rail ---- */
 .adm-shell{display:grid;grid-template-columns:206px minmax(0,1fr);gap:24px;align-items:start}
+.adm-shell.no-rail{grid-template-columns:minmax(0,1fr)}
 .adm-main{min-width:0}
 .adm-rail{
   position:sticky;top:74px;display:flex;flex-direction:column;gap:2px;padding:10px 8px;
@@ -979,6 +980,8 @@ table.acc select option{background:#0b1120}
 .cab-brand { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 18px; border-bottom: 1px solid var(--line, #22304a); }
 .cab-close { display: none; background: none; border: none; color: var(--muted, #93a4be); cursor: pointer; }
 .cab-nav { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; flex: 1; }
+.cab-nav-group{font-family:Manrope,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);padding:14px 12px 4px}
+.cab-nav-group:first-child{padding-top:0}
 .cab-link {
   display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px;
   color: var(--text, #e8eef8); text-decoration: none; font-weight: 600; font-size: 14.5px;
@@ -1066,6 +1069,16 @@ table.acc select option{background:#0b1120}
 }
 .am-sort select:focus{outline:none;border-color:var(--sky)}
 .am-empty{color:var(--muted);padding:28px 4px;text-align:center;font-size:14px}
+.am-zero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:56px 24px;border:1px dashed var(--line);border-radius:16px;background:var(--card);text-align:center}
+.am-confirm{width:420px;padding:22px}
+.am-confirm-title{font-size:17px;font-weight:800;color:var(--ink);line-height:1.3}
+.am-confirm-sub{color:var(--muted);font-size:13.5px;line-height:1.55;margin-top:8px}
+.am-confirm-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.am-confirm-go{background:var(--am-expired);border-color:var(--am-expired);color:#fff}
+.am-confirm-go:hover{filter:brightness(.94)}
+.am-zero-icon{color:var(--muted-2);display:inline-flex}
+.am-zero-title{font-weight:700;font-size:15px;color:var(--ink)}
+.am-zero-sub{color:var(--muted);font-size:13px;max-width:36ch}
 
 /* --- one account card --- */
 .am-list{display:flex;flex-direction:column;gap:13px}
@@ -1124,8 +1137,17 @@ table.acc select option{background:#0b1120}
 .am-status.st-soon .am-dot,.am-status.st-expired .am-dot{animation:am-pulse 1.8s ease-in-out infinite}
 @keyframes am-pulse{0%,100%{opacity:1}50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.am-status .am-dot{animation:none}}
-.am-tier{font-weight:800;font-size:14px;color:var(--am-tier)}
+/* Three different kinds of information sit in this header, so each gets its
+   own shape: status (what needs doing) is a filled pill, plan tier (what was
+   bought) an outlined chip, role (who this is) a quiet grey pill by the name. */
+.am-tier{
+  display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;
+  color:var(--ink);background:transparent;border:1px solid var(--line);
+  padding:3px 9px;border-radius:8px;
+}
+.am-tier-dot{width:7px;height:7px;border-radius:2px;flex:0 0 auto;background:var(--am-tier,var(--muted-2))}
 .am-tier.tier-none{color:var(--muted)}
+.am-tier.tier-none .am-tier-dot{background:var(--muted-2)}
 .am-sub{color:var(--muted);font-size:12px}
 .am-caret{flex:0 0 auto;color:var(--muted-2);transition:transform .2s ease}
 .am-card.open .am-caret{transform:rotate(180deg)}
@@ -1138,7 +1160,8 @@ table.acc select option{background:#0b1120}
   padding:5px 10px;border-radius:9px;border:1px solid var(--line);background:transparent;transition:.16s ease;
 }
 .am-qbtn:hover:not(:disabled){color:var(--blue);border-color:var(--sky);background:var(--accent-soft,rgba(56,189,248,.1))}
-.am-qbtn.danger:hover:not(:disabled){color:var(--am-expired);border-color:var(--am-expired);background:rgba(248,113,113,.1)}
+.am-qbtn.danger{margin-left:auto;color:var(--am-expired);border-color:transparent}
+.am-qbtn.danger:hover:not(:disabled){color:#fff;border-color:var(--am-expired);background:var(--am-expired)}
 .am-qbtn:disabled{opacity:.45;cursor:default}
 
 /* --- expanded editor --- */
@@ -1332,7 +1355,9 @@ table.acc select option{background:#0b1120}
    and forces a horizontal scrollbar with content clipped off the right edge.
    In-app, fill the content column instead (capped for readability, centered
    on very wide screens). */
-.cab-content .wrap{width:100%;max-width:var(--maxw);margin-inline:auto}
+/* Wider in-app than the marketing cap: these are working screens with tables
+   and lists, and at 1180px a 1920px monitor is mostly empty margin. */
+.cab-content .wrap{width:100%;max-width:1440px;margin-inline:auto}
 
 /* Headings: the marketing-size 50px reads heavy in-app — tighten to an
    elegant, app-like scale with crisp tracking. */
@@ -1955,7 +1980,9 @@ table.acc select option{background:#0b1120}
   --card:#FFFFFF; --card-hi:#EAF3F1;
   --line:#DBE7E3; --line-2:#E9F0ED;
   --sky:#0D9488; --blue:#0F766E; --grad:linear-gradient(120deg,#0D9488,#14B8A6);
-  --ink:#0E1D1B; --text:#0E1D1B; --muted:#5A6E69; --muted-2:#8B9C97;
+  /* --muted-2 carries real text (e-mails, counts, meta lines), so it is kept
+     dark enough to clear WCAG AA on white cards rather than fading out. */
+  --ink:#0E1D1B; --text:#0E1D1B; --muted:#51655F; --muted-2:#6B7D78;
   --accent-soft:rgba(13,148,136,.12);
   background:var(--bg); color:var(--ink);
 }
@@ -2603,6 +2630,10 @@ table.acc select option{background:#0b1120}
 
 /* ---- toolbar: search + quick filters ---- */
 .board-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+.board-toolbar-preview{align-items:baseline}
+.board-preview-title{font-size:16px;font-weight:800;color:var(--ink)}
+.board-view-all{font-family:Manrope,sans-serif;font-weight:700;font-size:13px;color:var(--blue);text-decoration:none}
+.board-view-all:hover{text-decoration:underline}
 .board-search{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 12px;height:44px;flex:1 1 320px;min-width:240px;transition:border-color .18s ease,box-shadow .18s ease}
 .board-search svg{color:var(--muted-2);flex:0 0 auto}
 .board-search input{border:0;outline:0;background:none;width:100%;font-size:14px;color:var(--ink);font-family:Inter,sans-serif}

@@ -12,11 +12,13 @@ import {
   RotateCcw,
   Ban,
   Copy,
+  Users,
 } from "lucide-react";
 import type { SafeUser, AccountRole } from "@/lib/auth";
 import type { AccountTier } from "@/lib/schemas";
 import { driverAllowance } from "@/lib/billing-plans";
 import { useToast } from "@/components/toast";
+import { EmptyState } from "@/components/empty-state";
 
 /* ---------------- plans ---------------- */
 
@@ -158,6 +160,9 @@ export function AdminUserManager({
   // Saved rows are patched in place so the card updates before the server
   // round-trip lands; router.refresh() then reconciles with the real data.
   const [patched, setPatched] = useState<Record<string, Partial<SafeUser>>>({});
+  // Revoking strips a paid plan and the driver seats with it — never on one
+  // stray click, so the button opens this confirmation instead of acting.
+  const [confirming, setConfirming] = useState<SafeUser | null>(null);
 
   const rows = useMemo(
     () => users.map((u) => (patched[u.id] ? { ...u, ...patched[u.id] } : u)),
@@ -273,7 +278,15 @@ export function AdminUserManager({
     );
   }
 
-  if (users.length === 0) return <p className="px">No registered accounts yet.</p>;
+  if (users.length === 0) {
+    return (
+      <EmptyState
+        icon={<Users size={26} />}
+        title="No accounts yet"
+        sub="Registered accounts will show up here once someone signs up."
+      />
+    );
+  }
 
   return (
     <div className="am">
@@ -387,7 +400,10 @@ export function AdminUserManager({
                       <span className="am-dot" aria-hidden="true" />
                       {statusLabel[status]}
                     </span>
-                    <span className={`am-tier tier-${u.tier}`}>{planName(u.tier)}</span>
+                    <span className={`am-tier tier-${u.tier}`}>
+                      <span className="am-tier-dot" aria-hidden="true" />
+                      {planName(u.tier)}
+                    </span>
                     <span className="am-sub">
                       {subLabel(u)}
                       {u.tier !== "none" ? ` · ${allowance} drivers` : ""}
@@ -446,7 +462,7 @@ export function AdminUserManager({
                         type="button"
                         className="am-qbtn danger"
                         disabled={isBusy}
-                        onClick={() => patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`)}
+                        onClick={() => setConfirming(u)}
                         title="Remove the plan and drop this account to Free"
                       >
                         <Ban size={13} /> Revoke
@@ -644,6 +660,37 @@ export function AdminUserManager({
             );
           })}
         </div>
+      )}
+
+      {confirming && (
+        <>
+          <div className="pkg-scrim" onClick={() => setConfirming(null)} />
+          <div className="pkg-modal am-confirm" role="dialog" aria-modal="true" aria-labelledby="am-confirm-t">
+            <h3 id="am-confirm-t" className="am-confirm-title">
+              Revoke {planName(confirming.tier)} from {confirming.name}?
+            </h3>
+            <p className="am-confirm-sub">
+              The account drops to Free right away and loses its {driverAllowance(confirming.planId, confirming.tier)} driver
+              seats. You can grant a plan again at any time.
+            </p>
+            <div className="am-confirm-acts">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirming(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm am-confirm-go"
+                onClick={() => {
+                  const u = confirming;
+                  setConfirming(null);
+                  patch(u.id, { tier: "none", planId: "", days: 0 }, `${u.name} moved to Free.`);
+                }}
+              >
+                <Ban size={14} /> Revoke plan
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

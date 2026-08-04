@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PackageCheck } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
+import { EmptyState } from "@/components/empty-state";
 import {
   getLoadsByDispatcher,
   getLoadsByBrokerEmail,
@@ -36,13 +38,18 @@ export default async function HistoryPage() {
   return (
     <CabinetServer active="history">
         <div className="wrap">
-          <div className="shead" style={{ marginBottom: 20 }}>
-            <span className="eyebrow">Completed</span>
-            <h2 className="h2">History</h2>
-            <p className="lead">Delivered and closed loads.</p>
-          </div>
+          <header className="adm-head">
+            <div className="adm-head-text">
+              <h1 className="adm-title">History</h1>
+              <p className="adm-subtitle">Delivered and closed loads.</p>
+            </div>
+          </header>
           {done.length === 0 ? (
-            <p className="px">No completed loads yet.</p>
+            <EmptyState
+              icon={<PackageCheck size={26} />}
+              title="No completed loads yet"
+              sub="Delivered and closed loads will appear here."
+            />
           ) : (
             <div className="load-list">
               {done.map((l) => (

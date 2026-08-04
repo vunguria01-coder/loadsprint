@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { getLoadsByDispatcher, getAllLoads, type Load } from "@/lib/loads";
 import { BrokerPackage } from "@/components/broker-package";
+import { EmptyState } from "@/components/empty-state";
 
 export const metadata: Metadata = {
   title: "Completed loads — LoadSprint",
@@ -44,7 +45,11 @@ export default async function ReviewPage() {
         </div>
 
         {driverGroups.length === 0 ? (
-          <p className="px">No completed loads yet. Delivered and closed loads will appear here for review.</p>
+          <EmptyState
+            icon={<PackageCheck size={26} />}
+            title="No completed loads yet"
+            sub="Delivered and closed loads will appear here for review."
+          />
         ) : (
           driverGroups.map((g) => (
             <div key={g.name} className="rev-group">

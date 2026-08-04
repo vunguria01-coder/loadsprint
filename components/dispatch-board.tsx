@@ -138,16 +138,25 @@ export function DispatchBoard({
   loads,
   alerts,
   filters,
+  limit,
+  viewAllHref,
 }: {
   stats: StatCard[];
   loads: DispatchLoad[];
   alerts: DispatchAlert[];
   filters: { key: string; label: string; count: number }[];
+  // Home shows a short preview instead of the full searchable board — the
+  // full list already lives at viewAllHref, so duplicating it here just
+  // pushes today's alerts further down the page.
+  limit?: number;
+  viewAllHref?: string;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const preview = typeof limit === "number";
 
   const visible = useMemo(() => {
+    if (preview) return loads.slice(0, limit);
     const q = query.trim().toLowerCase();
     return loads.filter((l) => {
       if (filter !== "all" && l.filterKey !== filter) return false;
@@ -164,7 +173,7 @@ export function DispatchBoard({
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q));
     });
-  }, [loads, query, filter]);
+  }, [loads, query, filter, preview, limit]);
 
   return (
     <div className="dispatch-board">
@@ -209,6 +218,16 @@ export function DispatchBoard({
       )}
 
       <section className="board-main">
+        {preview ? (
+          <div className="board-toolbar board-toolbar-preview">
+            <h3 className="board-preview-title">Active loads</h3>
+            {viewAllHref && loads.length > limit! && (
+              <Link href={viewAllHref} className="board-view-all">
+                View all {loads.length}
+              </Link>
+            )}
+          </div>
+        ) : (
         <div className="board-toolbar">
           <div className="board-search">
             <Search size={16} />
@@ -243,6 +262,7 @@ export function DispatchBoard({
             ))}
           </div>
         </div>
+        )}
 
         {visible.length > 0 ? (
           <div className="dl-grid">
