@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutGrid, LayoutDashboard, Users, History, Shield, LogOut, Menu, X,
   Building2, Truck, UserCircle, ChevronDown, ArrowLeft, CreditCard, PackageCheck, BarChart3, Wallet, CalendarDays, Container, TrendingUp, BellRing, LifeBuoy,
@@ -88,6 +88,10 @@ export function Cabinet({
   const [open, setOpen] = useState(false); // mobile sidebar
   const [acc, setAcc] = useState(false); // account dropdown
   const router = useRouter();
+  const pathname = usePathname();
+  // Home is the root of the app — "Back" from there has nowhere meaningful
+  // to go. Every other page (including load/driver detail views) keeps it.
+  const showBack = pathname !== "/dashboard";
   const items = navForRole(role, isOwner);
   const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
 
@@ -133,9 +137,11 @@ export function Cabinet({
       <div className="cab-main">
         <header className="cab-top">
           <button className="cab-burger" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={22} /></button>
-          <button className="cab-back" onClick={() => router.back()} aria-label="Go back">
-            <ArrowLeft size={18} /> <span>Back</span>
-          </button>
+          {showBack && (
+            <button className="cab-back" onClick={() => router.back()} aria-label="Go back">
+              <ArrowLeft size={18} /> <span>Back</span>
+            </button>
+          )}
           <div style={{ flex: 1 }} />
           <NotificationsBell />
           <div className="cab-acc">
