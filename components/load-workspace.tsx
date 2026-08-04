@@ -11,7 +11,7 @@ import { LoadStatusPanel } from "@/components/load-status";
 import { LoadDocuments } from "@/components/load-documents";
 import { LoadPhotos } from "@/components/load-photos";
 import { PhotosToPdf } from "@/components/photos-to-pdf";
-import { LoadInvoiceAi } from "@/components/load-invoice-ai";
+import { LoadInvoice } from "@/components/load-invoice";
 import { LoadBrokerShare } from "@/components/load-broker-share";
 import { Collapsible } from "@/components/collapsible";
 import { DriverRate } from "@/components/driver-rate";
@@ -185,7 +185,9 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
             </div>
             <div>
               {/* Invoice is the focus on a closed load */}
-              <LoadInvoiceAi load={load} mutate={mutate} />
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <LoadInvoice load={load} />
+              )}
               <Collapsible title="Status">
                 <LoadStatusPanel load={load} mutate={mutate} />
               </Collapsible>
@@ -239,6 +241,12 @@ export function LoadWorkspace({ loadId }: { loadId: string }) {
             </div>
             <div>
               <LoadStatusPanel load={load} mutate={mutate} />
+              {/* Invoicing doesn't have to wait for the load to close. */}
+              {(load.youRole === "dispatcher" || load.youRole === "admin") && (
+                <Collapsible title="Invoice">
+                  <LoadInvoice load={load} />
+                </Collapsible>
+              )}
               {load.stops && load.stops.length > 0 && (
                 <div className="panel">
                   <h3>Stops ({load.stops.length})</h3>

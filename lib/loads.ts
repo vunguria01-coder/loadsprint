@@ -410,6 +410,7 @@ export function setInvoice(
     amount: number;
     notes?: string;
     currency?: string;
+    number?: string; // set when a real invoice document was generated
     gross?: number;
     commissionType?: "pct" | "amt";
     commissionValue?: number;
@@ -435,7 +436,8 @@ export function setInvoice(
     currency: data.currency ?? existing?.currency ?? "$",
     notes: data.notes ?? existing?.notes ?? "",
     status: "draft",
-    number: existing?.number ?? `${loads[i].ref}-${kind === "broker" ? "B" : "D"}`,
+    number:
+      data.number ?? existing?.number ?? `${loads[i].ref}-${kind === "broker" ? "B" : "D"}`,
     updatedAt: now,
     history: [...(existing?.history ?? []), event],
     gross: data.gross ?? existing?.gross,

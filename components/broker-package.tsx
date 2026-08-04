@@ -7,16 +7,13 @@ import { loadJsPDF, type JsPDFDoc } from "@/components/use-jspdf";
 import { loadJsZip } from "@/components/use-jszip";
 import { useToast } from "@/components/toast";
 
-type InvoiceLine = { label: string; amount: number };
-type AiInvoice = {
-  invoiceNumber: string;
-  date: string;
-  from?: string;
-  billTo: string;
-  lines: InvoiceLine[];
-  subtotal: number;
+// The invoice PDF is rendered on the server (same document the dispatcher saved
+// on the load), so the package just carries the finished file.
+type PackageInvoice = {
+  number: string;
   total: number;
-  notes?: string;
+  dataUrl: string;
+  saved: boolean;
 };
 type PackageData = {
   ok: boolean;
@@ -25,7 +22,7 @@ type PackageData = {
   rate: number | null;
   confirmation: { name: string; dataUrl: string } | null;
   photos: { name: string; dataUrl: string }[];
-  invoice: AiInvoice | null;
+  invoice: PackageInvoice | null;
   error?: string;
 };
 
@@ -50,75 +47,6 @@ function extFromDataUrl(dataUrl: string): string {
 function base64Of(dataUrl: string): string {
   const i = dataUrl.indexOf(",");
   return i >= 0 ? dataUrl.slice(i + 1) : dataUrl;
-}
-
-// Renders the AI invoice into a jsPDF document (returns a datauristring).
-async function invoicePdf(inv: AiInvoice, ref: string): Promise<string> {
-  const JsPDF = await loadJsPDF();
-  const doc = new JsPDF({ unit: "pt", format: "a4" }) as JsPDFDoc;
-  const W = doc.internal.pageSize.getWidth();
-  const m = 48;
-  let y = 64;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(24);
-  doc.setTextColor(17, 24, 39);
-  doc.text("INVOICE", m, y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`#${inv.invoiceNumber}`, W - m, y - 8, { align: "right" });
-  doc.text(`Date: ${inv.date}`, W - m, y + 8, { align: "right" });
-
-  y += 36;
-  if (inv.from) {
-    doc.setTextColor(31, 41, 55);
-    doc.setFontSize(11);
-    doc.text(inv.from, m, y);
-  }
-  doc.setTextColor(31, 41, 55);
-  doc.setFont("helvetica", "bold");
-  doc.text("Bill to:", W - m - 220, y, {});
-  doc.setFont("helvetica", "normal");
-  doc.text(inv.billTo || "—", W - m - 220, y + 16);
-
-  y += 64;
-  doc.setDrawColor(229, 231, 235);
-  doc.line(m, y, W - m, y);
-  y += 22;
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(107, 114, 128);
-  doc.setFontSize(10);
-  doc.text("DESCRIPTION", m, y);
-  doc.text("AMOUNT", W - m, y, { align: "right" });
-  y += 8;
-  doc.line(m, y, W - m, y);
-  y += 20;
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(31, 41, 55);
-  doc.setFontSize(11);
-  for (const ln of inv.lines || []) {
-    doc.text(ln.label, m, y);
-    doc.text(money(ln.amount), W - m, y, { align: "right" });
-    y += 20;
-  }
-  y += 4;
-  doc.line(m, y, W - m, y);
-  y += 22;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("TOTAL", m, y);
-  doc.text(money(inv.total), W - m, y, { align: "right" });
-
-  if (inv.notes) {
-    y += 36;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(107, 114, 128);
-    doc.text(inv.notes, m, y);
-  }
-  return doc.output("datauristring");
 }
 
 // Renders the photos into a single jsPDF document (returns a datauristring).
@@ -207,8 +135,7 @@ export function BrokerPackage({
         zip.file("photos.pdf", base64Of(pPdf), { base64: true });
       }
       if (data.invoice) {
-        const iPdf = await invoicePdf(data.invoice, data.ref);
-        zip.file("invoice.pdf", base64Of(iPdf), { base64: true });
+        zip.file("invoice.pdf", base64Of(data.invoice.dataUrl), { base64: true });
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
@@ -286,7 +213,9 @@ export function BrokerPackage({
                   <b>Invoice</b>
                   <span>
                     {invoice
-                      ? `#${invoice.invoiceNumber} · total ${money(invoice.total)}`
+                      ? `#${invoice.number} · total ${money(invoice.total)}${
+                          invoice.saved ? "" : " · draft — open the load to save it"
+                        }`
                       : "Not generated yet — open the load to create it"}
                   </span>
                 </div>

@@ -106,6 +106,20 @@ export const invoiceProfileSchema = z.object({
   email: z.string().max(120).optional().default(""),
   payTerms: z.string().max(120).optional().default(""),
   notes: z.string().max(400).optional().default(""),
+  // Company logo printed top-left on every invoice. Stored as a data URL so the
+  // whole profile stays in one JSON file — the form shrinks it before saving.
+  logoDataUrl: z
+    .string()
+    .max(700_000)
+    .refine((v) => v === "" || v.startsWith("data:image/"), "Logo must be an image")
+    .optional()
+    .default(""),
+  taxId: z.string().max(60).optional().default(""), // "Tax Registration #"
+  terms: z.string().max(40).optional().default("NET 30"),
+  termsDays: z.coerce.number().int().min(0).max(365).optional().default(30),
+  taxPercent: z.coerce.number().min(0).max(100).optional().default(0),
+  // Running invoice counter — the next invoice created gets this number.
+  nextInvoiceNumber: z.coerce.number().int().min(1).max(9_999_999).optional().default(1001),
 });
 export type InvoiceProfile = z.infer<typeof invoiceProfileSchema>;
 

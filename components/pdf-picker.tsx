@@ -115,7 +115,14 @@ export function PdfPicker({
     <div className="pdfp">
       <div className="pdfp-bar">
         <div className="pdfp-picked">
-          {picked ? picked : <span className="pdfp-hint">Click words in the PDF to build an address</span>}
+          {picked ? (
+            picked
+          ) : pages.every((p) => p.spans.length === 0) ? (
+            // A scan has no text spans at all — nothing here is clickable.
+            <span className="pdfp-hint">Scanned document — no selectable text, type the address</span>
+          ) : (
+            <span className="pdfp-hint">Click words in the PDF to build an address</span>
+          )}
         </div>
         <div className="pdfp-actions">
           <button type="button" className="btn btn-ghost" style={{ padding: "6px 11px" }} disabled={!picked} onClick={() => onOrigin(picked)}>

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/guard";
 import { getLoadById } from "@/lib/loads";
 import { getInvoiceProfile } from "@/lib/invoice-profile";
-import { aiGenerateInvoice } from "@/lib/ai-invoice";
+import { buildInvoiceDraft, invoiceTotals } from "@/lib/invoice-build";
+import { generateInvoicePdf } from "@/lib/invoice-pdf";
 
 // GET /api/loads/[id]/package
 // Returns everything needed to build the broker package on the client:
 //   - confirmation (the rate-confirmation document uploaded at creation)
 //   - photos (the load photos)
-//   - invoice (AI-generated, price taken from the rate con)
+//   - invoice (the one already saved on the load, or a fresh draft rendered now)
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -35,23 +36,29 @@ export async function GET(
     dataUrl: p.dataUrl,
   }));
 
-  // Invoice (best-effort — package still builds if AI is unavailable).
-  let invoice = null;
-  if (process.env.ANTHROPIC_API_KEY) {
+  // Prefer the invoice the dispatcher already created — the broker should get
+  // exactly the document that was saved on the load. If there isn't one yet,
+  // render the draft so the package is never missing an invoice.
+  let invoice: { number: string; total: number; dataUrl: string; saved: boolean } | null = null;
+  const savedDoc = load.documents.find((d) => d.type === "invoice_broker");
+  if (savedDoc) {
+    invoice = {
+      number: load.brokerInvoice?.number || savedDoc.name.replace(/^Invoice\s*|\.pdf$/gi, ""),
+      total: load.brokerInvoice?.amount ?? load.loadRate ?? 0,
+      dataUrl: savedDoc.dataUrl,
+      saved: true,
+    };
+  } else {
     try {
-      const company = getInvoiceProfile(me.id);
-      invoice = await aiGenerateInvoice({
-        ref: load.ref,
-        originName: load.originName,
-        destName: load.destName,
-        rate: load.loadRate,
-        stops: load.stops?.map((s) => ({ kind: s.kind, address: s.address })),
-        driverName: load.driverName,
-        billTo: load.billTo,
-        company,
-      });
+      const draft = buildInvoiceDraft(load, getInvoiceProfile(me.id));
+      invoice = {
+        number: draft.invoiceNumber,
+        total: invoiceTotals(draft).total,
+        dataUrl: await generateInvoicePdf(draft),
+        saved: false,
+      };
     } catch {
-      invoice = null;
+      invoice = null; // the package still builds without it
     }
   }
 

@@ -12,6 +12,12 @@ const EMPTY: InvoiceProfile = {
   email: "",
   payTerms: "",
   notes: "",
+  logoDataUrl: "",
+  taxId: "",
+  terms: "NET 30",
+  termsDays: 30,
+  taxPercent: 0,
+  nextInvoiceNumber: 1001,
 };
 
 function readAll(): Record<string, InvoiceProfile> {
@@ -40,4 +46,22 @@ export function setInvoiceProfile(
   all[dispatcherId] = { ...EMPTY, ...profile };
   writeAll(all);
   return all[dispatcherId];
+}
+
+// Hand out the next invoice number and advance the counter. Called when the PDF
+// is actually saved — a draft the dispatcher abandons must not burn a number.
+// `manual` lets the dispatcher override the number; the counter then jumps past
+// it so the next automatic number can never collide with what they typed.
+export function allocateInvoiceNumber(
+  dispatcherId: string,
+  manual?: number
+): number {
+  const all = readAll();
+  const profile: InvoiceProfile = { ...EMPTY, ...(all[dispatcherId] ?? {}) };
+  const next = Number(profile.nextInvoiceNumber) || EMPTY.nextInvoiceNumber;
+  const used = manual && manual > 0 ? Math.floor(manual) : next;
+  profile.nextInvoiceNumber = Math.max(next, used + 1);
+  all[dispatcherId] = profile;
+  writeAll(all);
+  return used;
 }

@@ -18,7 +18,15 @@ export async function POST(req: Request) {
   }
   const parsed = invoiceProfileSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: "Invalid data" }, { status: 400 });
+    // Name the fields that failed — "Invalid data" alone left the dispatcher
+    // guessing which box was too long.
+    const detail = parsed.error.issues
+      .map((i) => `${i.path.join(".") || "form"}: ${i.message}`)
+      .join("; ");
+    return NextResponse.json(
+      { ok: false, error: detail || "Invalid data" },
+      { status: 400 }
+    );
   }
   const profile = setInvoiceProfile(me.id, parsed.data);
   return NextResponse.json({ ok: true, profile });

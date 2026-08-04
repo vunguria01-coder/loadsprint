@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Plus, Phone, Mail } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { fileToDataUrl } from "@/lib/format";
 import { PdfPicker } from "@/components/pdf-picker";
 import { CleanConfirmation } from "@/components/clean-confirmation";
 
@@ -276,10 +277,10 @@ export function CreateLoad({
     try {
       const text = await extractText(file);
       setPdfName(file.name || "Rate Confirmation.pdf");
-      // Keep the original PDF so it can be opened/viewed in the form.
-      const reader = new FileReader();
-      reader.onload = () => setPdfUrl(String(reader.result));
-      reader.readAsDataURL(file);
+      // Keep the original PDF so it can be opened/viewed in the form — and so a
+      // scanned document can be handed to the AI as a file below.
+      const dataUrl = await fileToDataUrl(file);
+      setPdfUrl(dataUrl);
       const p = parseConfirmation(text);
       if (p.ref) setRef(p.ref);
       if (p.pickups[0]) setOrigin(p.pickups[0]);
@@ -293,39 +294,75 @@ export function CreateLoad({
         setBroker({ name: p.brokerName, email: p.brokerEmail, phone: p.brokerPhone });
 
       // Then ask the AI to read it precisely (server-side, needs ANTHROPIC_API_KEY).
-      try {
-        const aiRes = await fetch("/api/ai/rate-con", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, scope: aiScope }),
-          // If extraction stalls, fall back to the heuristic result rather than hang.
-          signal: AbortSignal.timeout(90000),
-        });
-        const aiData = await aiRes.json();
-        if (aiRes.ok && aiData.ok && aiData.result) {
-          const r = aiData.result as AiExtract;
-          setAi(r);
-          if (r.ref) setRef(r.ref);
-          if (r.rate) setRate(String(r.rate));
-          const firstPick = r.pickups[0];
-          const lastDrop = r.dropoffs[r.dropoffs.length - 1];
-          if (firstPick) setOrigin(firstPick.address || firstPick.city);
-          if (lastDrop) setDest(lastDrop.address || lastDrop.city);
-          toast(
-            "AI read the rate con",
-            `Found ${r.pickups.length} pickup(s) and ${r.dropoffs.length} drop-off(s). Please verify.`
-          );
-          setStep(2);
-          return;
+      // A scanned rate con has no text layer at all, so there is nothing to send
+      // as text — in that case the PDF itself goes to the AI, which reads the
+      // pages. Same fallback if the text path comes back empty-handed.
+      const scanned = text.trim().length < 40;
+      if (scanned)
+        toast("Scanned PDF", "No text layer — reading the pages. This takes a few seconds.");
+
+      const applyAi = (r: AiExtract): boolean => {
+        if (r.pickups.length === 0 && r.dropoffs.length === 0 && !r.rate && !r.billTo) return false;
+        setAi(r);
+        if (r.ref) setRef(r.ref);
+        if (r.rate) setRate(String(r.rate));
+        const firstPick = r.pickups[0];
+        const lastDrop = r.dropoffs[r.dropoffs.length - 1];
+        if (firstPick) setOrigin(firstPick.address || firstPick.city);
+        if (lastDrop) setDest(lastDrop.address || lastDrop.city);
+        toast(
+          "AI read the rate con",
+          `Found ${r.pickups.length} pickup(s) and ${r.dropoffs.length} drop-off(s). Please verify.`
+        );
+        setStep(2);
+        return true;
+      };
+
+      type AiTry = { filled: boolean; error: string | null };
+      const askAi = async (
+        url: string,
+        payload: Record<string, unknown>,
+        timeout: number
+      ): Promise<AiTry> => {
+        try {
+          const aiRes = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(timeout),
+          });
+          const aiData = await aiRes.json().catch(() => ({}));
+          if (aiRes.ok && aiData.ok && aiData.result && applyAi(aiData.result as AiExtract))
+            return { filled: true, error: null };
+          // fetch does not throw on 4xx/5xx — say what actually went wrong
+          // instead of silently falling through to "Nothing found".
+          if (aiRes.status === 413)
+            return { filled: false, error: "This PDF is too large to read (over 10 MB)." };
+          if (aiRes.status === 401)
+            return { filled: false, error: "Sign in as a dispatcher to use AI reading." };
+          return { filled: false, error: aiRes.ok ? null : aiData.error || null };
+        } catch {
+          return { filled: false, error: "The AI took too long to answer." };
         }
-      } catch {
-        /* fall through to heuristic result below */
+      };
+
+      let aiError: string | null = null;
+      if (!scanned) {
+        const viaText = await askAi("/api/ai/rate-con", { text, scope: aiScope }, 90000);
+        if (viaText.filled) return;
+        aiError = viaText.error;
       }
+      // Either there was no text layer, or reading the text produced no stops —
+      // let the AI look at the pages themselves.
+      const viaFile = await askAi("/api/ai/rate-con-file", { dataUrl, scope: aiScope }, 180000);
+      if (viaFile.filled) return;
+      aiError = viaFile.error || aiError;
 
       const np = p.pickups.length || (p.origin ? 1 : 0);
       const nd = p.deliveries.length || (p.dest ? 1 : 0);
       if (np || nd || p.rate || p.brokerName)
         toast("Imported", `Found ${np} pickup(s) and ${nd} delivery(ies). Check the fields.`);
+      else if (aiError) toast("Couldn't read it", `${aiError} Enter the details manually.`);
       else toast("Nothing found", "Couldn't read it — enter the details manually.");
       setStep(2);
     } catch {
