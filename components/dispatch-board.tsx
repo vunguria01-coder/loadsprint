@@ -132,9 +132,9 @@ function LoadCard({ l }: { l: DispatchLoad }) {
         <span className={`dl-badge tone-${l.badgeTone}`}>{l.badgeLabel}</span>
       </div>
       <div className="dl-route">
-        <span className="dl-city">{l.origin}</span>
+        <span className="dl-city" title={l.origin}>{l.origin}</span>
         <ArrowRight size={15} className="dl-arrow" />
-        <span className="dl-city">{l.dest}</span>
+        <span className="dl-city" title={l.dest}>{l.dest}</span>
       </div>
       <div className="dl-meta">
         <MetaItem icon={User} label="Driver" value={l.driverName} />
