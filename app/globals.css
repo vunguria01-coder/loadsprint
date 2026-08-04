@@ -2664,7 +2664,11 @@ table.acc select option{background:#0b1120}
 @keyframes dl-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .dl-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .dl-ref{font-family:Manrope,sans-serif;font-weight:800;font-size:14px;color:var(--ink);letter-spacing:.03em}
-.dl-badge{font-family:Manrope,sans-serif;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding:4px 9px;border-radius:999px;color:var(--tc);background:var(--tb);border:1px solid var(--tbd);white-space:nowrap}
+/* Same shape/weight as the plain-status .st chip (Loadboard/load detail) —
+   this one just adds urgency tones (Delayed, Appt Soon) that raw load
+   status alone can't express, so it stays its own component. */
+.dl-badge{display:inline-flex;align-items:center;gap:6px;font-family:Manrope,sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:999px;color:var(--tc);background:var(--tb);border:1px solid var(--tbd);white-space:nowrap}
+.dl-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
 .dl-route{display:flex;align-items:center;gap:9px;font-family:Poppins,sans-serif;font-weight:700;font-size:16.5px;color:var(--ink)}
 .dl-route .dl-arrow{color:var(--sky);flex:0 0 auto}
 .dl-city{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:38%}
