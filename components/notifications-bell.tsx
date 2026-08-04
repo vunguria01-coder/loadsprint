@@ -84,7 +84,7 @@ export function NotificationsBell() {
 
   return (
     <div className="bell" ref={ref}>
-      <button className="bbtn" onClick={toggle} aria-label="Notifications">
+      <button className="bbtn" onClick={toggle} aria-label="Notifications" title="Notifications">
         <Bell />
         {unread > 0 && <span className="count">{unread > 9 ? "9+" : unread}</span>}
       </button>

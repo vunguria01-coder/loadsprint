@@ -205,8 +205,8 @@ export function VoiceAssistant() {
     <>
       <button
         className="va-fab"
-        aria-label="Jarvis"
-        title="Jarvis"
+        aria-label="Voice assistant (Jarvis)"
+        title="Voice assistant (Jarvis)"
         onClick={() => setOpen((o) => !o)}
       >
         {open ? <X size={22} /> : <Mic size={22} />}
