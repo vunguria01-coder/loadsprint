@@ -70,11 +70,20 @@ function useCountUp(target: number, ms = 650): number {
   return display;
 }
 
+// Each KPI tile opens the page that explains the number, so it doubles as
+// navigation instead of being a dead-end count.
+const STAT_HREF: Partial<Record<StatCard["icon"], string>> = {
+  loads: "/active-loads",
+  drivers: "/drivers",
+  deliveries: "/review",
+};
+
 function StatTile({ stat }: { stat: StatCard }) {
   const Icon = STAT_ICON[stat.icon];
   const value = useCountUp(stat.value);
-  return (
-    <div className={`dstat dstat-${stat.accent}`}>
+  const href = STAT_HREF[stat.icon];
+  const body = (
+    <>
       <div className="dstat-ic">
         <Icon size={18} />
       </div>
@@ -84,8 +93,16 @@ function StatTile({ stat }: { stat: StatCard }) {
       </div>
       <div className="dstat-label">{stat.label}</div>
       <div className={`dstat-sub sub-${stat.subTone || "muted"}`}>{stat.sub}</div>
-    </div>
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className={`dstat dstat-${stat.accent} dstat-link`}>
+        {body}
+      </Link>
+    );
+  }
+  return <div className={`dstat dstat-${stat.accent}`}>{body}</div>;
 }
 
 function MetaItem({

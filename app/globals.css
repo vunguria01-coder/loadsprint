@@ -2581,6 +2581,8 @@ table.acc select option{background:#0b1120}
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
 }
 .dstat:hover{transform:translateY(-3px);box-shadow:0 1px 2px rgba(16,40,36,.06),0 22px 44px -24px rgba(16,40,36,.34)}
+.dstat-link{display:block;text-decoration:none;cursor:pointer}
+.dstat-link:hover{border-color:var(--sky)}
 .dstat::before{content:"";position:absolute;left:0;right:0;top:0;height:3px}
 .dstat-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:14px}
 .dstat-val{font-family:Poppins,sans-serif;font-weight:800;font-size:32px;line-height:1;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
