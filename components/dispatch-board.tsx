@@ -27,6 +27,7 @@ import type {
   DispatchAlert,
   StatCard,
 } from "@/lib/dispatch-overview";
+import { EmptyState } from "@/components/empty-state";
 
 const STAT_ICON = {
   loads: Package,
@@ -287,12 +288,10 @@ export function DispatchBoard({
               <LoadCard key={l.id} l={l} />
             ))}
           </div>
+        ) : loads.length === 0 ? (
+          <EmptyState icon={<Package size={26} />} title="No active loads right now" sub="Create a load to get a truck moving." />
         ) : (
-          <div className="board-empty">
-            {loads.length === 0
-              ? "No active loads right now."
-              : "No loads match your search or filter."}
-          </div>
+          <div className="board-empty">No loads match your search or filter.</div>
         )}
       </section>
     </div>
