@@ -157,6 +157,15 @@ export function LoadBoard({
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        {(query || status) && (
+          <button
+            type="button"
+            className="lb-clear-filters"
+            onClick={() => { setQ(""); setStatus(""); }}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {shown.length === 0 ? (
