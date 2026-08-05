@@ -203,6 +203,17 @@ export function LoadBoard({
     return [...m.entries()];
   }, [shown, grouped]);
 
+  function collapseAll() {
+    if (!groups) return;
+    const all = new Set(groups.map(([driver]) => driver));
+    setCollapsed(all);
+    try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify([...all])); } catch {}
+  }
+  function expandAll() {
+    setCollapsed(new Set());
+    try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify([])); } catch {}
+  }
+
   return (
     <>
       {(query || status) && (
@@ -258,6 +269,17 @@ export function LoadBoard({
           </button>
         )}
       </div>
+
+      {grouped && groups && groups.length > 1 && (
+        <div className="lb-group-controls">
+          <button type="button" className="lb-clear-filters" onClick={collapseAll}>
+            Collapse all
+          </button>
+          <button type="button" className="lb-clear-filters" onClick={expandAll}>
+            Expand all
+          </button>
+        </div>
+      )}
 
       {shown.length === 0 ? (
         <EmptyState

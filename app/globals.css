@@ -1978,6 +1978,7 @@ table.acc select option{background:#0b1120}
 .lb-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;position:sticky;top:64px;z-index:20;background:var(--bg);padding:10px 0}
 .lb-clear-filters{font-family:Manrope,sans-serif;font-weight:700;font-size:13px;color:var(--sky,#38bdf8);background:none;border:none;cursor:pointer;padding:4px 2px}
 .lb-clear-filters:hover{text-decoration:underline}
+.lb-group-controls{display:flex;gap:16px;margin:-8px 0 16px}
 .lb-search{flex:1;min-width:220px;margin:0}
 .lb-status{flex:none;font-family:Inter,sans-serif;font-size:14px;color:#fff;background:rgba(8,14,28,.7);border:1px solid var(--line);border-radius:11px;padding:0 38px 0 14px;height:46px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2393A4BE' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
 .lb-status:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
