@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPlus, X, Copy, Trash2 } from "lucide-react";
 import { useToast } from "@/components/toast";
@@ -12,6 +12,42 @@ export function TeamManager({ invites }: { invites: DriverInvite[] }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    boxRef.current?.querySelector<HTMLElement>("input, button")?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = boxRef.current?.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      triggerRef.current?.focus();
+    };
+  }, [open]);
 
   async function invite() {
     const value = email.trim();
@@ -58,6 +94,7 @@ export function TeamManager({ invites }: { invites: DriverInvite[] }) {
       }
     } finally {
       setBusy(false);
+      setConfirmId(null);
     }
   }
 
@@ -68,15 +105,15 @@ export function TeamManager({ invites }: { invites: DriverInvite[] }) {
 
   return (
     <>
-      <button className="btn btn-primary dm-trigger" onClick={() => setOpen(true)}>
+      <button ref={triggerRef} className="btn btn-primary dm-trigger" onClick={() => setOpen(true)}>
         <UserPlus size={17} /> Add dispatcher
       </button>
 
       {open && (
         <div className="modal" onClick={() => setOpen(false)}>
-          <div className="box dm-box" onClick={(e) => e.stopPropagation()}>
+          <div ref={boxRef} className="box dm-box" role="dialog" aria-modal="true" aria-labelledby="dm-title" onClick={(e) => e.stopPropagation()}>
             <div className="mh">
-              <b>Add a dispatcher</b>
+              <b id="dm-title">Add a dispatcher</b>
               <button onClick={() => setOpen(false)} aria-label="Close">
                 <X size={18} />
               </button>
@@ -116,12 +153,29 @@ export function TeamManager({ invites }: { invites: DriverInvite[] }) {
                         {iv.status === "claimed" ? "✓ registered" : "pending"}
                       </span>
                       <div className="dm-actions">
-                        <button title="Copy code" onClick={() => copyCode(iv.code)}>
-                          <Copy size={15} />
-                        </button>
-                        <button title="Remove" className="dm-del" onClick={() => remove(iv.id)} disabled={busy}>
-                          <Trash2 size={15} />
-                        </button>
+                        {confirmId === iv.id ? (
+                          <>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => remove(iv.id)}
+                              disabled={busy}
+                            >
+                              {busy ? "…" : "Confirm"}
+                            </button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setConfirmId(null)}>
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button title="Copy code" onClick={() => copyCode(iv.code)}>
+                              <Copy size={15} />
+                            </button>
+                            <button title="Remove" className="dm-del" onClick={() => setConfirmId(iv.id)} disabled={busy}>
+                              <Trash2 size={15} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))
