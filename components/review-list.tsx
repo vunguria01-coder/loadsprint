@@ -85,6 +85,31 @@ export function ReviewList({ loads }: { loads: Load[] }) {
     }
   }
 
+  function exportCsv() {
+    const header = ["Ref", "Status", "Driver", "Driver email", "Origin", "Destination", "Rate", "Delivered"];
+    const rows = driverGroups.flatMap((g) =>
+      g.loads.map((l) => [
+        l.ref,
+        l.status,
+        l.driverName || "",
+        l.driverEmail || "",
+        l.originName,
+        l.destName,
+        typeof l.loadRate === "number" ? String(l.loadRate) : "",
+        l.deliveredAt || l.createdAt || "",
+      ])
+    );
+    const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const csv = [header, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "completed-loads.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <>
       {(query || range) && (
@@ -133,6 +158,9 @@ export function ReviewList({ loads }: { loads: Load[] }) {
           <option value="oldest">Oldest delivered</option>
           <option value="ref">Load number</option>
         </select>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={shown.length === 0}>
+          Export CSV
+        </button>
         {(query || range || sort) && (
           <button
             type="button"
