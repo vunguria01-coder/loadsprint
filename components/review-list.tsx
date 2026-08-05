@@ -13,11 +13,18 @@ export function ReviewList({ loads }: { loads: Load[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [range, setRange] = useState<"" | "today" | "7d" | "30d">(
+    () => (searchParams.get("range") as "today" | "7d" | "30d") || ""
+  );
 
   useEffect(() => {
-    router.replace(q ? `${pathname}?q=${encodeURIComponent(q)}` : pathname, { scroll: false });
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (range) params.set("range", range);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, range]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -34,13 +41,21 @@ export function ReviewList({ loads }: { loads: Load[] }) {
   }, []);
 
   const query = q.trim().toLowerCase();
+  const DAY = 86400000;
+  const rangeMs = range === "today" ? DAY : range === "7d" ? 7 * DAY : range === "30d" ? 30 * DAY : 0;
+  const byDate = rangeMs
+    ? loads.filter((l) => {
+        const at = l.deliveredAt || l.createdAt;
+        return at && Date.now() - new Date(at).getTime() <= rangeMs;
+      })
+    : loads;
   const shown = query
-    ? loads.filter((l) =>
+    ? byDate.filter((l) =>
         [l.ref, l.originName, l.destName, l.driverName, l.driverEmail]
           .filter(Boolean)
           .some((v) => (v as string).toLowerCase().includes(query))
       )
-    : loads;
+    : byDate;
 
   const groups = new Map<string, { name: string; loads: Load[] }>();
   for (const l of shown) {
@@ -52,41 +67,68 @@ export function ReviewList({ loads }: { loads: Load[] }) {
 
   return (
     <>
-      {query && (
+      {(query || range) && (
         <p className="lb-count" aria-live="polite">
           {shown.length} of {loads.length} completed load{loads.length === 1 ? "" : "s"}
         </p>
       )}
-      <div className="driver-search" style={{ marginBottom: 20 }}>
-        <Search size={18} />
-        <input
-          ref={searchRef}
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Escape") return;
-            if (q) setQ("");
-            else (e.target as HTMLInputElement).blur();
-          }}
-          placeholder="Search by load #, route or driver… (press /)"
-        />
-        {q && (
-          <button type="button" className="ds-clear" onClick={() => setQ("")}>
-            ✕
+      <div className="driver-controls" style={{ marginBottom: 20 }}>
+        <div className="driver-search" style={{ marginBottom: 0 }}>
+          <Search size={18} />
+          <input
+            ref={searchRef}
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
+            placeholder="Search by load #, route or driver… (press /)"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")}>
+              ✕
+            </button>
+          )}
+        </div>
+        <select
+          className="lb-status"
+          value={range}
+          onChange={(e) => setRange(e.target.value as "" | "today" | "7d" | "30d")}
+        >
+          <option value="">All time</option>
+          <option value="today">Today</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+        {(query || range) && (
+          <button
+            type="button"
+            className="lb-clear-filters"
+            onClick={() => { setQ(""); setRange(""); }}
+          >
+            Clear filters
           </button>
         )}
       </div>
 
       {driverGroups.length === 0 ? (
         <EmptyState
-          icon={query ? <Search size={26} /> : <PackageCheck size={26} />}
-          title={query ? "No matching loads" : "No completed loads yet"}
-          sub={query ? `No completed loads match "${q}".` : "Delivered and closed loads will appear here for review."}
+          icon={query || range ? <Search size={26} /> : <PackageCheck size={26} />}
+          title={query || range ? "No matching loads" : "No completed loads yet"}
+          sub={
+            query
+              ? `No completed loads match "${q}".`
+              : range
+                ? "No completed loads in this date range."
+                : "Delivered and closed loads will appear here for review."
+          }
           action={
-            query ? (
-              <button type="button" className="lb-clear-filters" onClick={() => setQ("")}>
-                Clear search
+            query || range ? (
+              <button type="button" className="lb-clear-filters" onClick={() => { setQ(""); setRange(""); }}>
+                Clear filters
               </button>
             ) : undefined
           }
