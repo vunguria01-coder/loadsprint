@@ -118,6 +118,9 @@ export function LoadBoard({
   const [status, setStatus] = useState<"" | LoadStatus>(
     () => (searchParams.get("status") as LoadStatus) || ""
   );
+  const [sort, setSort] = useState<"" | "appt" | "ref">(
+    () => (searchParams.get("sort") as "appt" | "ref") || ""
+  );
 
   // Keep the URL in sync so a reload or a back-navigation from a load's
   // detail page returns to the same filtered view instead of resetting it.
@@ -125,10 +128,11 @@ export function LoadBoard({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status) params.set("status", status);
+    if (sort) params.set("sort", sort);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, status]);
+  }, [q, status, sort]);
 
   // "/" jumps to the search box (unless it would steal a keystroke from
   // another field, e.g. the reference-number input while typing text).
@@ -157,13 +161,17 @@ export function LoadBoard({
     }
     return counts;
   }, [loads, query]);
-  const shown = useMemo(
-    () =>
-      loads.filter(
-        (l) => (!query || l.search.includes(query)) && (!status || l.status === status)
-      ),
-    [loads, query, status]
-  );
+  const shown = useMemo(() => {
+    const filtered = loads.filter(
+      (l) => (!query || l.search.includes(query)) && (!status || l.status === status)
+    );
+    if (sort === "ref") return [...filtered].sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true }));
+    if (sort === "appt") {
+      // No pickup date sorts last, not first — an unscheduled load isn't "soonest".
+      return [...filtered].sort((a, b) => (a.pickupDate || "9999").localeCompare(b.pickupDate || "9999"));
+    }
+    return filtered;
+  }, [loads, query, status, sort]);
 
   const groups = useMemo(() => {
     if (!grouped) return null;
@@ -212,11 +220,20 @@ export function LoadBoard({
             <option key={s} value={s}>{s} ({statusCounts[s] || 0})</option>
           ))}
         </select>
-        {(query || status) && (
+        <select
+          className="lb-status"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "" | "appt" | "ref")}
+        >
+          <option value="">Sort: default</option>
+          <option value="appt">Appointment soonest</option>
+          <option value="ref">Load number</option>
+        </select>
+        {(query || status || sort) && (
           <button
             type="button"
             className="lb-clear-filters"
-            onClick={() => { setQ(""); setStatus(""); }}
+            onClick={() => { setQ(""); setStatus(""); setSort(""); }}
           >
             Clear filters
           </button>
