@@ -10,17 +10,11 @@ import { getTrucksByOwner, truckFinance, fleetFinance } from "@/lib/trucks";
 import { money } from "@/lib/format";
 import { CabinetServer } from "@/components/cabinet-server";
 import { TruckManager } from "@/components/truck-manager";
+import { TruckGrid, type TruckSummary } from "@/components/truck-grid";
 
 export const metadata: Metadata = {
   title: "Trucks — LoadSprint",
   robots: { index: false, follow: false },
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  active: "Active",
-  in_shop: "In shop",
-  parked: "Parked",
-  sold: "Sold",
 };
 
 export default async function TrucksPage() {
@@ -40,6 +34,32 @@ export default async function TrucksPage() {
   );
 
   const fleet = fleetFinance(trucks, loads);
+
+  const summaries: TruckSummary[] = trucks.map((t) => {
+    const fin = truckFinance(t, loads);
+    const driverName = t.driverEmail
+      ? findByEmail(t.driverEmail)?.name || t.driverEmail
+      : null;
+    return {
+      id: t.id,
+      name: t.name,
+      unit: t.unit,
+      plate: t.plate,
+      vin: t.vin,
+      make: t.make,
+      model: t.model,
+      year: t.year,
+      status: t.status,
+      driverName,
+      cost: fin.cost,
+      income: fin.income,
+      net: fin.net,
+      search: [t.name, t.unit, t.plate, t.vin, t.make, t.model, driverName || ""]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+    };
+  });
 
   return (
     <CabinetServer active="trucks">
@@ -105,51 +125,7 @@ export default async function TrucksPage() {
             </p>
           </div>
         ) : (
-          <div className="truck-grid">
-            {trucks.map((t) => {
-              const fin = truckFinance(t, loads);
-              const driverName = t.driverEmail
-                ? findByEmail(t.driverEmail)?.name || t.driverEmail
-                : null;
-              return (
-                <Link key={t.id} href={`/trucks/${t.id}`} className="truck-card">
-                  <div className="tc-top">
-                    <div className="tc-title">
-                      <Container size={18} />
-                      <span>{t.name}</span>
-                    </div>
-                    <span className={`tc-status st-${t.status}`}>
-                      {STATUS_LABEL[t.status] || t.status}
-                    </span>
-                  </div>
-                  <div className="tc-sub">
-                    {[t.unit && `Unit ${t.unit}`, [t.year, t.make, t.model].filter(Boolean).join(" ")]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </div>
-                  <div className="tc-driver">
-                    {driverName ? `Driver: ${driverName}` : "No driver assigned"}
-                  </div>
-                  <div className="tc-fin">
-                    <div>
-                      <span className="tc-fin-l">Cost</span>
-                      <span className="tc-fin-v">{money(fin.cost)}</span>
-                    </div>
-                    <div>
-                      <span className="tc-fin-l">Income</span>
-                      <span className="tc-fin-v">{money(fin.income)}</span>
-                    </div>
-                    <div>
-                      <span className="tc-fin-l">Net</span>
-                      <span className={`tc-fin-v ${fin.net >= 0 ? "pos" : "neg"}`}>
-                        {money(fin.net)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <TruckGrid trucks={summaries} />
         )}
       </div>
     </CabinetServer>
