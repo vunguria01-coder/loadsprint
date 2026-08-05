@@ -52,6 +52,11 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
 
   return (
     <>
+      {query && (
+        <p className="lb-count" aria-live="polite">
+          {shown.length} of {drivers.length} driver{drivers.length === 1 ? "" : "s"}
+        </p>
+      )}
       <div className="driver-search">
         <Search size={18} />
         <input
