@@ -10,6 +10,7 @@ import {
   Search,
   X,
   ArrowRight,
+  ChevronRight,
   User,
   Truck,
   Box,
@@ -135,7 +136,10 @@ function LoadCard({ l }: { l: DispatchLoad }) {
     <Link href={`/loads/${l.id}`} className={`dl-card tone-${l.badgeTone}`}>
       <div className="dl-top">
         <span className="dl-ref">{l.ref}</span>
-        <span className={`dl-badge tone-${l.badgeTone}`}>{l.badgeLabel}</span>
+        <span className="dl-top-right">
+          <span className={`dl-badge tone-${l.badgeTone}`}>{l.badgeLabel}</span>
+          <ChevronRight size={16} className="dl-chevron" aria-hidden="true" />
+        </span>
       </div>
       <div className="dl-route">
         <span className="dl-city" title={l.origin}>{l.origin}</span>
