@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MapPin, ArrowRight, Search, CalendarDays, Package } from "lucide-react";
 import { StatusChip } from "@/components/status-chip";
+import { EmptyState } from "@/components/empty-state";
 import type { LoadStatus } from "@/lib/loads";
 
 // Format a "YYYY-MM-DD" date as a short local label (e.g. "Jul 8") without the
@@ -174,7 +175,16 @@ export function LoadBoard({
       </div>
 
       {shown.length === 0 ? (
-        <p className="px">No loads match your search.</p>
+        <EmptyState
+          icon={<Search size={26} />}
+          title="No matching loads"
+          sub="Try a different search term or status."
+          action={
+            <button type="button" className="lb-clear-filters" onClick={() => { setQ(""); setStatus(""); }}>
+              Clear filters
+            </button>
+          }
+        />
       ) : grouped && groups ? (
         groups.map(([driver, dloads]) => {
           const groupTotal = dloads.reduce((s, l) => s + (l.loadRate || 0), 0);
