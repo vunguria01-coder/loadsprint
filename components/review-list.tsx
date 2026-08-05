@@ -52,6 +52,11 @@ export function ReviewList({ loads }: { loads: Load[] }) {
 
   return (
     <>
+      {query && (
+        <p className="lb-count" aria-live="polite">
+          {shown.length} of {loads.length} completed load{loads.length === 1 ? "" : "s"}
+        </p>
+      )}
       <div className="driver-search" style={{ marginBottom: 20 }}>
         <Search size={18} />
         <input
