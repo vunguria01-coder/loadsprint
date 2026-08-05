@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/toast";
+import { EmptyState } from "@/components/empty-state";
 
 type DriverRow = {
   email: string;
@@ -73,7 +74,16 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
       </div>
 
       {shown.length === 0 ? (
-        <p className="px">No drivers match “{q}”.</p>
+        <EmptyState
+          icon={<Search size={26} />}
+          title="No matching drivers"
+          sub={`No drivers match "${q}".`}
+          action={
+            <button type="button" className="lb-clear-filters" onClick={() => setQ("")}>
+              Clear search
+            </button>
+          }
+        />
       ) : (
         <div className="load-list">
           {shown.map((d) => (
