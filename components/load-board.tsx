@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MapPin, ArrowRight, Search, CalendarDays, Package } from "lucide-react";
+import { MapPin, ArrowRight, Search, CalendarDays, Package, ChevronDown } from "lucide-react";
 import { StatusChip } from "@/components/status-chip";
 import { EmptyState } from "@/components/empty-state";
 import type { LoadStatus } from "@/lib/loads";
@@ -18,6 +18,7 @@ function shortDate(ymd?: string): string | null {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
+const COLLAPSED_GROUPS_KEY = "ls_collapsed_load_groups";
 
 // Client-side search + status filter over a dispatcher/admin/broker load list.
 // Serialized summaries come from the server page; all filtering is instant.
@@ -121,6 +122,24 @@ export function LoadBoard({
   const [sort, setSort] = useState<"" | "appt" | "ref">(
     () => (searchParams.get("sort") as "appt" | "ref") || ""
   );
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(COLLAPSED_GROUPS_KEY); } catch {}
+    if (!raw) return;
+    try { setCollapsed(new Set(JSON.parse(raw))); } catch {}
+  }, []);
+
+  function toggleGroup(driver: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(driver)) next.delete(driver);
+      else next.add(driver);
+      try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
 
   // Keep the URL in sync so a reload or a back-navigation from a load's
   // detail page returns to the same filtered view instead of resetting it.
@@ -254,9 +273,15 @@ export function LoadBoard({
       ) : grouped && groups ? (
         groups.map(([driver, dloads]) => {
           const groupTotal = dloads.reduce((s, l) => s + (l.loadRate || 0), 0);
+          const isCollapsed = collapsed.has(driver);
           return (
           <div className="driver-group" key={driver}>
-            <div className="dg-head">
+            <button
+              type="button"
+              className="dg-head dg-head-btn"
+              onClick={() => toggleGroup(driver)}
+              aria-expanded={!isCollapsed}
+            >
               <div className="dg-av">
                 {driver.split(" ").map((p) => p[0]).join("").slice(0, 2)}
               </div>
@@ -267,12 +292,15 @@ export function LoadBoard({
                   {groupTotal > 0 && <> · <span className="dg-total">{money(groupTotal)}</span></>}
                 </div>
               </div>
-            </div>
-            <div className="load-cards">
-              {dloads.map((l) => (
-                <LoadCard key={l.id} load={l} />
-              ))}
-            </div>
+              <ChevronDown className={`dg-chev${isCollapsed ? " collapsed" : ""}`} size={18} />
+            </button>
+            {!isCollapsed && (
+              <div className="load-cards">
+                {dloads.map((l) => (
+                  <LoadCard key={l.id} load={l} />
+                ))}
+              </div>
+            )}
           </div>
           );
         })

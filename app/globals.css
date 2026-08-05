@@ -782,6 +782,9 @@ table.acc select option{background:#0b1120}
 .loads-body{padding-block:40px}
 .driver-group{margin-bottom:30px}
 .driver-group .dg-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.driver-group .dg-head-btn{width:100%;background:none;border:none;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.driver-group .dg-chev{margin-left:auto;flex:0 0 auto;color:var(--muted);transition:transform .15s ease}
+.driver-group .dg-chev.collapsed{transform:rotate(-90deg)}
 .driver-group .dg-av{width:38px;height:38px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-family:Poppins;font-weight:700;color:#fff;font-size:14px;flex:0 0 auto}
 .driver-group .dg-name{font-family:Poppins;font-weight:600;font-size:17px;color:#fff}
 .driver-group .dg-meta{font-size:13px;color:var(--muted)}
