@@ -68,8 +68,9 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
       const pts: [number, number][] = [];
       drivers.forEach((d) => {
         pts.push([d.lat, d.lng]);
-        const bg = d.active ? "#38BDF8" : "#94a3b8";
-        const ring = d.active ? "rgba(56,189,248,.25)" : "rgba(148,163,184,.2)";
+        const stale = Date.now() - new Date(d.at).getTime() > 24 * 60 * 60 * 1000;
+        const bg = stale ? "#f97316" : d.active ? "#38BDF8" : "#94a3b8";
+        const ring = stale ? "rgba(249,115,22,.25)" : d.active ? "rgba(56,189,248,.25)" : "rgba(148,163,184,.2)";
         const icon = L.divIcon({
           className: "",
           html:
@@ -80,7 +81,7 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
         });
         L.marker([d.lat, d.lng], { icon })
           .addTo(m)
-          .bindTooltip(`${d.name} · ${ago(d.at)}`, {
+          .bindTooltip(`${d.name} · ${ago(d.at)}${stale ? " · Location stale" : ""}`, {
             permanent: true,
             direction: "right",
             className: "stop-label",
@@ -129,6 +130,9 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
         </span>
         <span>
           <i className="fleet-idle" /> Idle
+        </span>
+        <span>
+          <i className="fleet-stale" /> Location stale (24h+)
         </span>
       </div>
     </div>
