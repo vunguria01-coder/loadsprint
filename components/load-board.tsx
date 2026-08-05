@@ -200,7 +200,11 @@ export function LoadBoard({
       if (!m.has(key)) m.set(key, []);
       m.get(key)!.push(l);
     }
-    return [...m.entries()];
+    // Unassigned loads need a dispatcher's attention first — put that group
+    // at the top instead of wherever it happened to fall alphabetically/by-insertion.
+    return [...m.entries()].sort((a, b) =>
+      a[0] === "Unassigned" ? -1 : b[0] === "Unassigned" ? 1 : 0
+    );
   }, [shown, grouped]);
 
   function collapseAll() {
@@ -296,15 +300,16 @@ export function LoadBoard({
         groups.map(([driver, dloads]) => {
           const groupTotal = dloads.reduce((s, l) => s + (l.loadRate || 0), 0);
           const isCollapsed = collapsed.has(driver);
+          const isUnassigned = driver === "Unassigned";
           return (
-          <div className="driver-group" key={driver}>
+          <div className={`driver-group${isUnassigned ? " driver-group-warn" : ""}`} key={driver}>
             <button
               type="button"
               className="dg-head dg-head-btn"
               onClick={() => toggleGroup(driver)}
               aria-expanded={!isCollapsed}
             >
-              <div className="dg-av">
+              <div className={`dg-av${isUnassigned ? " dg-av-warn" : ""}`}>
                 {driver.split(" ").map((p) => p[0]).join("").slice(0, 2)}
               </div>
               <div>

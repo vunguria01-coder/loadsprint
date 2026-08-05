@@ -785,6 +785,9 @@ table.acc select option{background:#0b1120}
 .driver-group .dg-head-btn{width:100%;background:none;border:none;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
 .driver-group .dg-chev{margin-left:auto;flex:0 0 auto;color:var(--muted);transition:transform .15s ease}
 .driver-group .dg-chev.collapsed{transform:rotate(-90deg)}
+.driver-group-warn{background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.3);border-radius:14px;padding:14px 14px 4px}
+.driver-group-warn .dg-name{color:#f97316}
+.dg-av-warn{background:#f97316!important}
 .driver-group .dg-av{width:38px;height:38px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-family:Poppins;font-weight:700;color:#fff;font-size:14px;flex:0 0 auto}
 .driver-group .dg-name{font-family:Poppins;font-weight:600;font-size:17px;color:#fff}
 .driver-group .dg-meta{font-size:13px;color:var(--muted)}
