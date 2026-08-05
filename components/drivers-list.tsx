@@ -60,8 +60,13 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   }, []);
 
   const query = q.trim().toLowerCase();
+  // Counts respect the current search but not the filter itself, same
+  // reasoning as the status counts on Active loads.
+  const searched = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
+  const withCount = searched.filter((d) => d.active > 0).length;
+  const withoutCount = searched.length - withCount;
   const shown = (() => {
-    let filtered = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
+    let filtered = searched;
     if (filter === "with") filtered = filtered.filter((d) => d.active > 0);
     else if (filter === "without") filtered = filtered.filter((d) => d.active === 0);
     if (sort === "name-asc") return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
@@ -136,9 +141,9 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
           value={filter}
           onChange={(e) => setFilter(e.target.value as "" | "with" | "without")}
         >
-          <option value="">All</option>
-          <option value="with">With active loads</option>
-          <option value="without">Without active loads</option>
+          <option value="">All ({searched.length})</option>
+          <option value="with">With active loads ({withCount})</option>
+          <option value="without">Without active loads ({withoutCount})</option>
         </select>
         {(query || sort || filter) && (
           <button
