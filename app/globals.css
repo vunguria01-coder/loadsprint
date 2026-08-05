@@ -996,6 +996,7 @@ table.acc select option{background:#0b1120}
 }
 .cab-link svg { color: var(--muted, #93a4be); flex-shrink: 0; }
 .cab-link:hover { background: rgba(56,189,248,.08); }
+.cab-link:focus-visible { outline: 2px solid var(--sky,#38bdf8); outline-offset: -2px; }
 .cab-link.active { background: rgba(37,99,235,.16); color: #fff; }
 .cab-link.active svg { color: var(--sky, #38bdf8); }
 .cab-logout { margin-top: auto; color: #fca5a5; }
