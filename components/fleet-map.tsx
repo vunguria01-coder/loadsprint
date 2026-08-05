@@ -96,6 +96,19 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
     if (open) setTimeout(() => map.current?.invalidateSize(), 50);
   }, [open]);
 
+  // Undoes any single-driver zoom (from a marker click or "Locate on map")
+  // by refitting to every marker currently on the board.
+  function fitAll() {
+    if (!map.current || !window.L) return;
+    const pts = drivers.map((d): [number, number] => [d.lat, d.lng]);
+    try {
+      if (pts.length > 1) map.current.fitBounds(window.L.latLngBounds(pts), { padding: [44, 44] });
+      else if (pts.length === 1) map.current.setView(pts[0], 9);
+    } catch {
+      /* ignore */
+    }
+  }
+
   useEffect(() => {
     if (drivers.length === 0) return;
     let cancelled = false;
@@ -177,9 +190,16 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
           <h3>Where your drivers are</h3>
           <p className="px">Last known position for each driver — live whether they&apos;re on a load or not.</p>
         </div>
-        <button type="button" className="fleet-toggle" onClick={toggle}>
-          {open ? "Hide map" : "Show map"}
-        </button>
+        <div className="fleet-head-actions">
+          {open && (
+            <button type="button" className="fleet-toggle" onClick={fitAll}>
+              Fit all drivers
+            </button>
+          )}
+          <button type="button" className="fleet-toggle" onClick={toggle}>
+            {open ? "Hide map" : "Show map"}
+          </button>
+        </div>
       </div>
       <div className="fleet-map" ref={el} style={{ display: open ? undefined : "none" }} />
       {open && (

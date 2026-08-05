@@ -1866,6 +1866,7 @@ table.acc select option{background:#0b1120}
 
 /* Fleet map — all drivers' last-known locations on the Drivers page */
 .fleet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.fleet-head-actions{display:flex;gap:8px;flex:0 0 auto;flex-wrap:wrap}
 .fleet-toggle{flex:0 0 auto;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
 .fleet-toggle:hover{background:rgba(148,163,184,.1);border-color:rgba(148,163,184,.4)}
 .fleet-map{height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0a1424;margin-top:10px}
