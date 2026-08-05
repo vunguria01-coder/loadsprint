@@ -1559,6 +1559,7 @@ table.acc select option{background:#0b1120}
 .drv-email{color:var(--muted);font-size:13px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .drv-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .drv-chip{font-family:Manrope;font-weight:600;font-size:12px;color:var(--muted);background:rgba(148,170,205,.08);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.drv-chip-stale{color:#f97316;background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.35)}
 .drv-chip b{color:#fff;font-weight:800}
 .drv-chev{color:var(--muted-2);flex:0 0 auto}
 

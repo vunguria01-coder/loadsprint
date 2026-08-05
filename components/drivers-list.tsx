@@ -16,7 +16,25 @@ type DriverRow = {
   search: string; // lowercased haystack: name, email, load refs, broker names
 };
 
-export function DriversList({ drivers, located = [] }: { drivers: DriverRow[]; located?: string[] }) {
+function locationAgo(iso: string): string {
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 90) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 48) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+
+export function DriversList({
+  drivers,
+  located = [],
+  locationAt = {},
+}: {
+  drivers: DriverRow[];
+  located?: string[];
+  locationAt?: Record<string, string>;
+}) {
   const locatedSet = useMemo(() => new Set(located), [located]);
   const router = useRouter();
   const pathname = usePathname();
@@ -196,6 +214,14 @@ export function DriversList({ drivers, located = [] }: { drivers: DriverRow[]; l
                   <div className="drv-chips">
                     <span className="drv-chip"><b>{d.active}</b> active</span>
                     <span className="drv-chip"><b>{d.total}</b> total</span>
+                    {locationAt[d.email] && (() => {
+                      const stale = Date.now() - new Date(locationAt[d.email]).getTime() > 24 * 60 * 60 * 1000;
+                      return (
+                        <span className={`drv-chip${stale ? " drv-chip-stale" : ""}`}>
+                          Updated {locationAgo(locationAt[d.email])}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <ChevronRight className="drv-chev" />
