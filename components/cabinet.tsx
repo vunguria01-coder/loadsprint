@@ -89,9 +89,11 @@ export function Cabinet({
   const [acc, setAcc] = useState(false); // account dropdown
   const router = useRouter();
   const pathname = usePathname();
-  // Home is the root of the app — "Back" from there has nowhere meaningful
-  // to go. Every other page (including load/driver detail views) keeps it.
-  const showBack = pathname !== "/dashboard";
+  // Home is the root of the app, and the top-level Active loads / Drivers
+  // lists aren't "into" anything — "Back" has nowhere meaningful to go from
+  // any of them. Their own detail pages (a load, a driver) keep it.
+  const ROOT_LIST_PATHS = ["/dashboard", "/active-loads", "/drivers"];
+  const showBack = !ROOT_LIST_PATHS.includes(pathname);
   const items = navForRole(role, isOwner);
   const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
 
