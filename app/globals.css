@@ -800,6 +800,8 @@ table.acc select option{background:#0b1120}
 .load-card .lc-route{display:flex;align-items:center;gap:9px;font-size:15.5px;color:var(--ink);margin-bottom:6px}
 .load-card .lc-route svg{width:15px;height:15px;color:var(--sky);flex:0 0 auto}
 .load-card .lc-sub{font-size:12.5px;color:var(--muted)}
+.lc-chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.lc-chip-mini{display:inline-flex;align-items:center;gap:4px;font-family:Manrope;font-weight:700;font-size:11.5px;color:var(--muted);background:rgba(148,170,205,.08);border:1px solid var(--line);padding:3px 8px;border-radius:999px}
 .empty{border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--muted)}
 
 /* status chip */

@@ -3,7 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MapPin, ArrowRight, Search, CalendarDays, Package, ChevronDown } from "lucide-react";
+import {
+  MapPin,
+  ArrowRight,
+  Search,
+  CalendarDays,
+  Package,
+  ChevronDown,
+  FileText,
+  Image as ImageIcon,
+  MessageSquare,
+} from "lucide-react";
 import { StatusChip } from "@/components/status-chip";
 import { EmptyState } from "@/components/empty-state";
 import type { LoadStatus } from "@/lib/loads";
@@ -88,14 +98,22 @@ function LoadCard({ load }: { load: LoadSummary }) {
       {/* Counters only earn their space when there is something to count —
           three zeros on every card is noise, not information. */}
       {(load.docs > 0 || load.photos > 0 || load.messages > 0) && (
-        <div className="lc-sub">
-          {[
-            load.docs > 0 && `${load.docs} doc${load.docs === 1 ? "" : "s"}`,
-            load.photos > 0 && `${load.photos} photo${load.photos === 1 ? "" : "s"}`,
-            load.messages > 0 && `${load.messages} message${load.messages === 1 ? "" : "s"}`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+        <div className="lc-chips">
+          {load.docs > 0 && (
+            <span className="lc-chip-mini" title={`${load.docs} document${load.docs === 1 ? "" : "s"}`}>
+              <FileText size={12} /> {load.docs}
+            </span>
+          )}
+          {load.photos > 0 && (
+            <span className="lc-chip-mini" title={`${load.photos} photo${load.photos === 1 ? "" : "s"}`}>
+              <ImageIcon size={12} /> {load.photos}
+            </span>
+          )}
+          {load.messages > 0 && (
+            <span className="lc-chip-mini" title={`${load.messages} message${load.messages === 1 ? "" : "s"}`}>
+              <MessageSquare size={12} /> {load.messages}
+            </span>
+          )}
         </div>
       )}
       {typeof load.loadRate === "number" && load.loadRate > 0 && (
