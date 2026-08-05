@@ -235,8 +235,8 @@ export function DriversList({
                   </div>
                   <div className="drv-email">{d.email}</div>
                   <div className="drv-chips">
-                    <span className="drv-chip"><b>{d.active}</b> active</span>
-                    <span className="drv-chip"><b>{d.total}</b> total</span>
+                    <span className="drv-chip"><b>{d.active}</b> active load{d.active === 1 ? "" : "s"}</span>
+                    <span className="drv-chip"><b>{d.total}</b> total load{d.total === 1 ? "" : "s"}</span>
                     {locationAt[d.email] ? (() => {
                       const stale = Date.now() - new Date(locationAt[d.email]).getTime() > 24 * 60 * 60 * 1000;
                       return (
