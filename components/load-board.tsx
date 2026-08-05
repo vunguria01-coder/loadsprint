@@ -276,8 +276,9 @@ export function LoadBoard({
           className="lb-status"
           value={sort}
           onChange={(e) => setSort(e.target.value as "" | "appt" | "ref")}
+          title="Order the loads were created — oldest first"
         >
-          <option value="">Sort: default</option>
+          <option value="">Date added</option>
           <option value="appt">Appointment soonest</option>
           <option value="ref">Load number</option>
         </select>
