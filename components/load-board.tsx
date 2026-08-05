@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MapPin, ArrowRight, Search, CalendarDays, Package } from "lucide-react";
 import { StatusChip } from "@/components/status-chip";
 import { EmptyState } from "@/components/empty-state";
@@ -110,8 +111,24 @@ export function LoadBoard({
   loads: LoadSummary[];
   grouped?: boolean;
 }) {
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<"" | LoadStatus>("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [status, setStatus] = useState<"" | LoadStatus>(
+    () => (searchParams.get("status") as LoadStatus) || ""
+  );
+
+  // Keep the URL in sync so a reload or a back-navigation from a load's
+  // detail page returns to the same filtered view instead of resetting it.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status) params.set("status", status);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, status]);
 
   const query = q.trim().toLowerCase();
   const shown = useMemo(
