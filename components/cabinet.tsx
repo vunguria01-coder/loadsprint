@@ -102,6 +102,7 @@ export function Cabinet({
 
   return (
     <div className="cab">
+      <a href="#cab-main" className="skip-link">Skip to main content</a>
       {/* Sidebar */}
       <aside className={`cab-side${open ? " open" : ""}`}>
         <div className="cab-brand">
@@ -175,7 +176,7 @@ export function Cabinet({
             )}
           </div>
         </header>
-        <main className="cab-content">{children}</main>
+        <main id="cab-main" className="cab-content">{children}</main>
       </div>
       <HelpWidget />
     </div>
