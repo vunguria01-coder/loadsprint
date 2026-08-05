@@ -175,7 +175,7 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
       ) : (
         <div className="load-list">
           {shown.map((d) => (
-            <div key={d.email} className="load-card driver-row-wrap">
+            <div key={d.email} id={`driver-row-${d.email}`} className="load-card driver-row-wrap">
               <Link
                 href={`/drivers/${encodeURIComponent(d.email)}`}
                 className="driver-row-link"

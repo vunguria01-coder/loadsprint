@@ -109,6 +109,13 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
             direction: "right",
             className: "stop-label",
             offset: [8, -8],
+          })
+          .on("click", () => {
+            const row = document.getElementById(`driver-row-${d.email}`);
+            if (!row) return;
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.classList.add("driver-row-flash");
+            setTimeout(() => row.classList.remove("driver-row-flash"), 1500);
           });
       });
 

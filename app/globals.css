@@ -963,6 +963,11 @@ table.acc select option{background:#0b1120}
   animation: drawer-fade .15s ease;
 }
 @keyframes drawer-fade { from { opacity: 0 } to { opacity: 1 } }
+.driver-row-flash{animation:driver-row-flash 1.5s ease}
+@keyframes driver-row-flash{
+  0%,100%{background:var(--card);border-color:var(--line)}
+  15%,60%{background:rgba(56,189,248,.14);border-color:rgba(56,189,248,.55)}
+}
 .drawer {
   position: fixed; top: 0; left: 0; bottom: 0; width: 272px; max-width: 80vw;
   background: var(--card, #0f1729); border-right: 1px solid var(--line, #22304a);
