@@ -72,6 +72,11 @@ export function DispatchersList({ dispatchers }: { dispatchers: DispatcherRow[] 
 
   return (
     <div>
+      {query && (
+        <p className="lb-count" aria-live="polite">
+          {shown.length} of {dispatchers.length} members
+        </p>
+      )}
       {dispatchers.length > 1 && (
         <div className="driver-search" style={{ marginBottom: 16 }}>
           <Search size={18} />
