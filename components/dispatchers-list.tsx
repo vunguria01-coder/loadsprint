@@ -18,13 +18,20 @@ export function DispatchersList({ dispatchers }: { dispatchers: DispatcherRow[] 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [sort, setSort] = useState<"" | "name-asc" | "name-desc" | "email-asc">(
+    () => (searchParams.get("sort") as "name-asc" | "name-desc" | "email-asc") || ""
+  );
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
 
   useEffect(() => {
-    router.replace(q ? `${pathname}?q=${encodeURIComponent(q)}` : pathname, { scroll: false });
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (sort) params.set("sort", sort);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, sort]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -41,11 +48,16 @@ export function DispatchersList({ dispatchers }: { dispatchers: DispatcherRow[] 
   }, []);
 
   const query = q.trim().toLowerCase();
-  const shown = query
+  const filtered = query
     ? dispatchers.filter(
         (d) => d.name.toLowerCase().includes(query) || d.email.toLowerCase().includes(query)
       )
     : dispatchers;
+  const shown =
+    sort === "name-asc" ? [...filtered].sort((a, b) => a.name.localeCompare(b.name)) :
+    sort === "name-desc" ? [...filtered].sort((a, b) => b.name.localeCompare(a.name)) :
+    sort === "email-asc" ? [...filtered].sort((a, b) => a.email.localeCompare(b.email)) :
+    filtered;
 
   async function remove(email: string) {
     setBusy(email);
@@ -78,25 +90,37 @@ export function DispatchersList({ dispatchers }: { dispatchers: DispatcherRow[] 
         </p>
       )}
       {dispatchers.length > 1 && (
-        <div className="driver-search" style={{ marginBottom: 16 }}>
-          <Search size={18} />
-          <input
-            ref={searchRef}
-            type="text"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== "Escape") return;
-              if (q) setQ("");
-              else (e.target as HTMLInputElement).blur();
-            }}
-            placeholder="Search by name or email… (press /)"
-          />
-          {q && (
-            <button type="button" className="ds-clear" onClick={() => setQ("")}>
-              ✕
-            </button>
-          )}
+        <div className="driver-controls" style={{ marginBottom: 16 }}>
+          <div className="driver-search" style={{ marginBottom: 0 }}>
+            <Search size={18} />
+            <input
+              ref={searchRef}
+              type="text"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Escape") return;
+                if (q) setQ("");
+                else (e.target as HTMLInputElement).blur();
+              }}
+              placeholder="Search by name or email… (press /)"
+            />
+            {q && (
+              <button type="button" className="ds-clear" onClick={() => setQ("")}>
+                ✕
+              </button>
+            )}
+          </div>
+          <select
+            className="lb-status"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "" | "name-asc" | "name-desc" | "email-asc")}
+          >
+            <option value="">Sort: default</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="email-asc">E-mail A-Z</option>
+          </select>
         </div>
       )}
       {shown.length === 0 ? (
