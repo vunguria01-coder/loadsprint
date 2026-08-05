@@ -94,7 +94,7 @@ function StatTile({ stat }: { stat: StatCard }) {
       <div className="dstat-ic">
         <Icon size={18} />
       </div>
-      <div className="dstat-val">
+      <div className="dstat-val" aria-live={stat.icon === "attention" ? "polite" : undefined}>
         {stat.prefix}
         {value.toLocaleString("en-US")}
       </div>
