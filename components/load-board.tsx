@@ -169,7 +169,7 @@ export function LoadBoard({
   return (
     <>
       {(query || status) && (
-        <p className="lb-count">
+        <p className="lb-count" aria-live="polite">
           {shown.length} of {loads.length} load{loads.length === 1 ? "" : "s"}
         </p>
       )}
