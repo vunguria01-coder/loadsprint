@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -50,9 +50,32 @@ function ago(iso: string): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
+const LS_OPEN = "ls_fleet_map_open";
+
 export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(LS_OPEN); } catch {}
+    if (saved === "0") setOpen(false);
+  }, []);
+
+  function toggle() {
+    setOpen((v) => {
+      const next = !v;
+      try { localStorage.setItem(LS_OPEN, next ? "1" : "0"); } catch {}
+      return next;
+    });
+  }
+
+  // Leaflet renders blank if resized while its container is display:none,
+  // so nudge it once the panel becomes visible again.
+  useEffect(() => {
+    if (open) setTimeout(() => map.current?.invalidateSize(), 50);
+  }, [open]);
 
   useEffect(() => {
     if (drivers.length === 0) return;
@@ -121,20 +144,29 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
 
   return (
     <div className="panel fleet-panel">
-      <h3>Where your drivers are</h3>
-      <p className="px">Last known position for each driver — live whether they&apos;re on a load or not.</p>
-      <div className="fleet-map" ref={el} />
-      <div className="fleet-legend">
-        <span>
-          <i className="lg lg-truck" /> On a load
-        </span>
-        <span>
-          <i className="fleet-idle" /> Idle
-        </span>
-        <span>
-          <i className="fleet-stale" /> Location stale (24h+)
-        </span>
+      <div className="fleet-head">
+        <div>
+          <h3>Where your drivers are</h3>
+          <p className="px">Last known position for each driver — live whether they&apos;re on a load or not.</p>
+        </div>
+        <button type="button" className="fleet-toggle" onClick={toggle}>
+          {open ? "Hide map" : "Show map"}
+        </button>
       </div>
+      <div className="fleet-map" ref={el} style={{ display: open ? undefined : "none" }} />
+      {open && (
+        <div className="fleet-legend">
+          <span>
+            <i className="lg lg-truck" /> On a load
+          </span>
+          <span>
+            <i className="fleet-idle" /> Idle
+          </span>
+          <span>
+            <i className="fleet-stale" /> Location stale (24h+)
+          </span>
+        </div>
+      )}
     </div>
   );
 }
