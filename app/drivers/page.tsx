@@ -86,7 +86,7 @@ export default async function DriversPage() {
 
   return (
     <CabinetServer active="drivers">
-        <div className="wrap" style={{ maxWidth: 820 }}>
+        <div className="wrap">
           <div className="shead" style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
             <div>
               <span className="eyebrow">Dispatch</span>
