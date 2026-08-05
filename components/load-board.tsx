@@ -293,6 +293,29 @@ export function LoadBoard({
         )}
       </div>
 
+      {(query || status || sort) && (
+        <div className="lb-filter-chips">
+          {query && (
+            <span className="lb-filter-chip">
+              Search: "{q}"
+              <button type="button" onClick={() => setQ("")} aria-label="Clear search">✕</button>
+            </span>
+          )}
+          {status && (
+            <span className="lb-filter-chip">
+              Status: {status}
+              <button type="button" onClick={() => setStatus("")} aria-label="Clear status filter">✕</button>
+            </span>
+          )}
+          {sort && (
+            <span className="lb-filter-chip">
+              Sort: {sort === "appt" ? "Appointment soonest" : "Load number"}
+              <button type="button" onClick={() => setSort("")} aria-label="Clear sort">✕</button>
+            </span>
+          )}
+        </div>
+      )}
+
       {grouped && groups && groups.length > 1 && (
         <div className="lb-group-controls">
           <button type="button" className="lb-clear-filters" onClick={collapseAll}>
