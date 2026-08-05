@@ -134,6 +134,11 @@ export function LoadBoard({
 
   return (
     <>
+      {(query || status) && (
+        <p className="lb-count">
+          {shown.length} of {loads.length} load{loads.length === 1 ? "" : "s"}
+        </p>
+      )}
       <div className="lb-controls">
         <div className="driver-search lb-search">
           <Search size={18} />
