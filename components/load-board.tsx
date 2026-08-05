@@ -147,6 +147,16 @@ export function LoadBoard({
   }, []);
 
   const query = q.trim().toLowerCase();
+  // Counts reflect the current search but not the status filter itself, so
+  // picking a different status in the dropdown never zeroes its own count.
+  const statusCounts = useMemo(() => {
+    const counts: Partial<Record<LoadStatus, number>> = {};
+    for (const l of loads) {
+      if (query && !l.search.includes(query)) continue;
+      counts[l.status] = (counts[l.status] || 0) + 1;
+    }
+    return counts;
+  }, [loads, query]);
   const shown = useMemo(
     () =>
       loads.filter(
@@ -199,7 +209,7 @@ export function LoadBoard({
         >
           <option value="">All statuses</option>
           {STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{s} ({statusCounts[s] || 0})</option>
           ))}
         </select>
         {(query || status) && (
