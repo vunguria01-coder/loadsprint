@@ -53,6 +53,11 @@ function useCountUp(target: number, ms = 650): number {
   useEffect(() => {
     const from = fromRef.current;
     if (from === target) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      fromRef.current = target;
+      setDisplay(target);
+      return;
+    }
     const start = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / ms);
