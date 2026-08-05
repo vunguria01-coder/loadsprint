@@ -55,6 +55,7 @@ const LS_OPEN = "ls_fleet_map_open";
 export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
+  const markers = useRef<Map<string, any>>(new Map());
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -70,6 +71,24 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
       return next;
     });
   }
+
+  // A driver's card can ask to be shown on the map — open the panel if it's
+  // collapsed, then pan/zoom once Leaflet has had a frame to become visible.
+  useEffect(() => {
+    function onLocate(e: Event) {
+      const email = (e as CustomEvent<{ email: string }>).detail?.email;
+      const marker = email && markers.current.get(email);
+      if (!marker) return;
+      setOpen(true);
+      try { localStorage.setItem(LS_OPEN, "1"); } catch {}
+      setTimeout(() => {
+        map.current?.invalidateSize();
+        map.current?.setView(marker.getLatLng(), 12);
+      }, 80);
+    }
+    window.addEventListener("locate-driver", onLocate);
+    return () => window.removeEventListener("locate-driver", onLocate);
+  }, []);
 
   // Leaflet renders blank if resized while its container is display:none,
   // so nudge it once the panel becomes visible again.
@@ -102,7 +121,7 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
           iconSize: [18, 18],
           iconAnchor: [9, 9],
         });
-        L.marker([d.lat, d.lng], { icon })
+        const marker = L.marker([d.lat, d.lng], { icon })
           .addTo(m)
           .bindTooltip(`${d.name} · ${ago(d.at)}${stale ? " · Location stale" : ""}`, {
             permanent: true,
@@ -117,6 +136,7 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
             row.classList.add("driver-row-flash");
             setTimeout(() => row.classList.remove("driver-row-flash"), 1500);
           });
+        markers.current.set(d.email, marker);
       });
 
       try {
@@ -134,6 +154,7 @@ export function FleetMap({ drivers }: { drivers: FleetDriver[] }) {
         map.current.remove();
         map.current = null;
       }
+      markers.current.clear();
     };
   }, [drivers]);
 

@@ -148,7 +148,7 @@ export default async function DriversPage() {
               No drivers yet. Use “Add driver” to invite your first one.
             </p>
           ) : (
-            <DriversList drivers={drivers} />
+            <DriversList drivers={drivers} located={fleet.map((f) => f.email)} />
           )}
         </div>
       </CabinetServer>

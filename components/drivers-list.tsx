@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, MoreVertical, Search, Trash2 } from "lucide-react";
+import { ChevronRight, MapPin, MoreVertical, Search, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { EmptyState } from "@/components/empty-state";
@@ -16,7 +16,8 @@ type DriverRow = {
   search: string; // lowercased haystack: name, email, load refs, broker names
 };
 
-export function DriversList({ drivers }: { drivers: DriverRow[] }) {
+export function DriversList({ drivers, located = [] }: { drivers: DriverRow[]; located?: string[] }) {
+  const locatedSet = useMemo(() => new Set(located), [located]);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -214,6 +215,21 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
                   </button>
                 </div>
               ) : (
+                <>
+                  {locatedSet.has(d.email) && (
+                    <button
+                      type="button"
+                      className="row-locate-btn"
+                      title="Locate on map"
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent("locate-driver", { detail: { email: d.email } })
+                        )
+                      }
+                    >
+                      <MapPin size={14} /> Locate on map
+                    </button>
+                  )}
                 <div className="row-menu-wrap">
                   <button
                     className="row-menu-btn"
@@ -242,6 +258,7 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
                     </>
                   )}
                 </div>
+                </>
               )}
             </div>
           ))}
