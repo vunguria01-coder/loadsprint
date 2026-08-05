@@ -140,6 +140,15 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
           <option value="with">With active loads</option>
           <option value="without">Without active loads</option>
         </select>
+        {(query || sort || filter) && (
+          <button
+            type="button"
+            className="lb-clear-filters"
+            onClick={() => { setQ(""); setSort(""); setFilter(""); }}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {shown.length === 0 ? (
