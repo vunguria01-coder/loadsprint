@@ -21,6 +21,9 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [sort, setSort] = useState<"" | "name-asc" | "name-desc" | "active">(
+    () => (searchParams.get("sort") as "name-asc" | "name-desc" | "active") || ""
+  );
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -28,9 +31,13 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   // Same reason as Active loads: a reload or a back-navigation from a
   // driver's detail page should return to the same search, not reset it.
   useEffect(() => {
-    router.replace(q ? `${pathname}?q=${encodeURIComponent(q)}` : pathname, { scroll: false });
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (sort) params.set("sort", sort);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, sort]);
 
   // Same "/" shortcut as Active loads — ignored while any input already
   // has focus, so it never steals a keystroke mid-typing.
@@ -49,9 +56,13 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   }, []);
 
   const query = q.trim().toLowerCase();
-  const shown = query
-    ? drivers.filter((d) => d.search.includes(query))
-    : drivers;
+  const shown = (() => {
+    const filtered = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
+    if (sort === "name-asc") return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === "name-desc") return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
+    if (sort === "active") return [...filtered].sort((a, b) => b.active - a.active);
+    return filtered;
+  })();
 
   async function remove(email: string) {
     setBusy(email);
@@ -83,25 +94,37 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
           {shown.length} of {drivers.length} driver{drivers.length === 1 ? "" : "s"}
         </p>
       )}
-      <div className="driver-search">
-        <Search size={18} />
-        <input
-          ref={searchRef}
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Escape") return;
-            if (q) setQ("");
-            else (e.target as HTMLInputElement).blur();
-          }}
-          placeholder="Search by driver, email, load # or broker… (press /)"
-        />
-        {q && (
-          <button type="button" className="ds-clear" onClick={() => setQ("")}>
-            ✕
-          </button>
-        )}
+      <div className="driver-controls">
+        <div className="driver-search">
+          <Search size={18} />
+          <input
+            ref={searchRef}
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
+            placeholder="Search by driver, email, load # or broker… (press /)"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")}>
+              ✕
+            </button>
+          )}
+        </div>
+        <select
+          className="lb-status"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "" | "name-asc" | "name-desc" | "active")}
+        >
+          <option value="">Sort: default</option>
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="active">Most active loads</option>
+        </select>
       </div>
 
       {shown.length === 0 ? (
