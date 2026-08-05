@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Search, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -31,6 +31,22 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
     router.replace(q ? `${pathname}?q=${encodeURIComponent(q)}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
+
+  // Same "/" shortcut as Active loads — ignored while any input already
+  // has focus, so it never steals a keystroke mid-typing.
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/") return;
+      const el = document.activeElement;
+      const typing = el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const query = q.trim().toLowerCase();
   const shown = query
@@ -70,10 +86,16 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
       <div className="driver-search">
         <Search size={18} />
         <input
+          ref={searchRef}
           type="text"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by driver, email, load # or broker…"
+          onKeyDown={(e) => {
+            if (e.key !== "Escape") return;
+            if (q) setQ("");
+            else (e.target as HTMLInputElement).blur();
+          }}
+          placeholder="Search by driver, email, load # or broker… (press /)"
         />
         {q && (
           <button type="button" className="ds-clear" onClick={() => setQ("")}>
