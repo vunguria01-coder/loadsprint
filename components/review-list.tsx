@@ -46,20 +46,25 @@ export function ReviewList({ loads }: { loads: Load[] }) {
 
   const query = q.trim().toLowerCase();
   const DAY = 86400000;
-  const rangeMs = range === "today" ? DAY : range === "7d" ? 7 * DAY : range === "30d" ? 30 * DAY : 0;
-  const byDate = rangeMs
-    ? loads.filter((l) => {
-        const at = l.deliveredAt || l.createdAt;
-        return at && Date.now() - new Date(at).getTime() <= rangeMs;
-      })
-    : loads;
-  const shown = query
-    ? byDate.filter((l) =>
+  const searched = query
+    ? loads.filter((l) =>
         [l.ref, l.originName, l.destName, l.driverName, l.driverEmail]
           .filter(Boolean)
           .some((v) => (v as string).toLowerCase().includes(query))
       )
-    : byDate;
+    : loads;
+  // Range counts respect the current search but not the range itself, same
+  // reasoning as the status counts on Active loads.
+  const ageMs = (l: Load) => {
+    const at = l.deliveredAt || l.createdAt;
+    return at ? Date.now() - new Date(at).getTime() : Infinity;
+  };
+  const todayCount = searched.filter((l) => ageMs(l) <= DAY).length;
+  const sevenDayCount = searched.filter((l) => ageMs(l) <= 7 * DAY).length;
+  const thirtyDayCount = searched.filter((l) => ageMs(l) <= 30 * DAY).length;
+
+  const rangeMs = range === "today" ? DAY : range === "7d" ? 7 * DAY : range === "30d" ? 30 * DAY : 0;
+  const shown = rangeMs ? searched.filter((l) => ageMs(l) <= rangeMs) : searched;
 
   const groups = new Map<string, { name: string; loads: Load[] }>();
   for (const l of shown) {
@@ -113,10 +118,10 @@ export function ReviewList({ loads }: { loads: Load[] }) {
           value={range}
           onChange={(e) => setRange(e.target.value as "" | "today" | "7d" | "30d")}
         >
-          <option value="">All time</option>
-          <option value="today">Today</option>
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
+          <option value="">All time ({searched.length})</option>
+          <option value="today">Today ({todayCount})</option>
+          <option value="7d">Last 7 days ({sevenDayCount})</option>
+          <option value="30d">Last 30 days ({thirtyDayCount})</option>
         </select>
         <select
           className="lb-status"
