@@ -176,6 +176,29 @@ export function DriversList({
         )}
       </div>
 
+      {(query || sort || filter) && (
+        <div className="lb-filter-chips">
+          {query && (
+            <span className="lb-filter-chip">
+              Search: "{q}"
+              <button type="button" onClick={() => setQ("")} aria-label="Clear search">✕</button>
+            </span>
+          )}
+          {sort && (
+            <span className="lb-filter-chip">
+              Sort: {sort === "name-asc" ? "Name A-Z" : sort === "name-desc" ? "Name Z-A" : "Most active loads"}
+              <button type="button" onClick={() => setSort("")} aria-label="Clear sort">✕</button>
+            </span>
+          )}
+          {filter && (
+            <span className="lb-filter-chip">
+              {filter === "with" ? "With active loads" : "Without active loads"}
+              <button type="button" onClick={() => setFilter("")} aria-label="Clear filter">✕</button>
+            </span>
+          )}
+        </div>
+      )}
+
       {shown.length === 0 ? (
         <EmptyState
           icon={<Search size={26} />}
