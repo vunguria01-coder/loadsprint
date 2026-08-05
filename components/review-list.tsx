@@ -16,15 +16,19 @@ export function ReviewList({ loads }: { loads: Load[] }) {
   const [range, setRange] = useState<"" | "today" | "7d" | "30d">(
     () => (searchParams.get("range") as "today" | "7d" | "30d") || ""
   );
+  const [sort, setSort] = useState<"" | "newest" | "oldest" | "ref">(
+    () => (searchParams.get("sort") as "newest" | "oldest" | "ref") || ""
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (range) params.set("range", range);
+    if (sort) params.set("sort", sort);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, range]);
+  }, [q, range, sort]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -64,6 +68,17 @@ export function ReviewList({ loads }: { loads: Load[] }) {
     groups.get(key)!.loads.push(l);
   }
   const driverGroups = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+  // Sort within each driver's group — grouping by driver stays, only the
+  // order of loads inside each group changes.
+  if (sort) {
+    for (const g of driverGroups) {
+      if (sort === "ref") g.loads.sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true }));
+      else {
+        const dir = sort === "newest" ? -1 : 1;
+        g.loads.sort((a, b) => dir * ((a.deliveredAt || a.createdAt) || "").localeCompare((b.deliveredAt || b.createdAt) || ""));
+      }
+    }
+  }
 
   return (
     <>
@@ -103,11 +118,21 @@ export function ReviewList({ loads }: { loads: Load[] }) {
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
         </select>
-        {(query || range) && (
+        <select
+          className="lb-status"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "" | "newest" | "oldest" | "ref")}
+        >
+          <option value="">Sort: default</option>
+          <option value="newest">Newest delivered</option>
+          <option value="oldest">Oldest delivered</option>
+          <option value="ref">Load number</option>
+        </select>
+        {(query || range || sort) && (
           <button
             type="button"
             className="lb-clear-filters"
-            onClick={() => { setQ(""); setRange(""); }}
+            onClick={() => { setQ(""); setRange(""); setSort(""); }}
           >
             Clear filters
           </button>
