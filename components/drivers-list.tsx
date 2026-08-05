@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Search, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { EmptyState } from "@/components/empty-state";
 
@@ -17,11 +17,20 @@ type DriverRow = {
 };
 
 export function DriversList({ drivers }: { drivers: DriverRow[] }) {
-  const [q, setQ] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
+
+  // Same reason as Active loads: a reload or a back-navigation from a
+  // driver's detail page should return to the same search, not reset it.
+  useEffect(() => {
+    router.replace(q ? `${pathname}?q=${encodeURIComponent(q)}` : pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   const query = q.trim().toLowerCase();
   const shown = query
