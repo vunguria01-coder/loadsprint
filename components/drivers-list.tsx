@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Search, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Search, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { EmptyState } from "@/components/empty-state";
@@ -30,6 +30,7 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
   // Same reason as Active loads: a reload or a back-navigation from a
   // driver's detail page should return to the same search, not reset it.
@@ -213,14 +214,34 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
                   </button>
                 </div>
               ) : (
-                <button
-                  className="row-del"
-                  onClick={() => setConfirm(d.email)}
-                  title="Remove driver"
-                  aria-label="Remove driver"
-                >
-                  <Trash2 size={17} />
-                </button>
+                <div className="row-menu-wrap">
+                  <button
+                    className="row-menu-btn"
+                    onClick={() => setMenuOpen(menuOpen === d.email ? null : d.email)}
+                    title="More options"
+                    aria-label="More options"
+                    aria-haspopup="true"
+                    aria-expanded={menuOpen === d.email}
+                  >
+                    <MoreVertical size={17} />
+                  </button>
+                  {menuOpen === d.email && (
+                    <>
+                      <div className="cab-acc-scrim" onClick={() => setMenuOpen(null)} />
+                      <div className="row-menu">
+                        <button
+                          className="row-menu-item danger"
+                          onClick={() => {
+                            setMenuOpen(null);
+                            setConfirm(d.email);
+                          }}
+                        >
+                          <Trash2 size={15} /> Remove driver
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           ))}
