@@ -160,10 +160,14 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
         <EmptyState
           icon={<Search size={26} />}
           title="No matching drivers"
-          sub={`No drivers match "${q}".`}
+          sub={query ? `No drivers match "${q}".` : "No drivers match this filter."}
           action={
-            <button type="button" className="lb-clear-filters" onClick={() => setQ("")}>
-              Clear search
+            <button
+              type="button"
+              className="lb-clear-filters"
+              onClick={() => { setQ(""); setSort(""); setFilter(""); }}
+            >
+              {query ? "Clear search" : "Clear filters"}
             </button>
           }
         />
