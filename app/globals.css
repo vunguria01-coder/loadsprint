@@ -787,7 +787,8 @@ table.acc select option{background:#0b1120}
 .driver-group .dg-meta{font-size:13px;color:var(--muted)}
 .load-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .load-card{display:block;border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--card);transition:.22s}
-.load-card:hover{transform:translateY(-3px);border-color:rgba(56,189,248,.35);background:var(--card-hi)}
+.load-card:hover,.load-card:focus-within{transform:translateY(-3px);border-color:rgba(56,189,248,.35);background:var(--card-hi)}
+.driver-row-link:focus-visible{outline:2px solid var(--sky,#38bdf8);outline-offset:2px;border-radius:10px}
 .load-card .lc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .load-card .lc-ref{font-family:Manrope;font-weight:700;font-size:14px;color:#fff;letter-spacing:.04em}
 .load-card .lc-route{display:flex;align-items:center;gap:9px;font-size:15.5px;color:var(--ink);margin-bottom:6px}
