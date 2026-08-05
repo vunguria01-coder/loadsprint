@@ -24,6 +24,9 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
   const [sort, setSort] = useState<"" | "name-asc" | "name-desc" | "active">(
     () => (searchParams.get("sort") as "name-asc" | "name-desc" | "active") || ""
   );
+  const [filter, setFilter] = useState<"" | "with" | "without">(
+    () => (searchParams.get("filter") as "with" | "without") || ""
+  );
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -34,10 +37,11 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (sort) params.set("sort", sort);
+    if (filter) params.set("filter", filter);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, sort]);
+  }, [q, sort, filter]);
 
   // Same "/" shortcut as Active loads — ignored while any input already
   // has focus, so it never steals a keystroke mid-typing.
@@ -57,7 +61,9 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
 
   const query = q.trim().toLowerCase();
   const shown = (() => {
-    const filtered = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
+    let filtered = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
+    if (filter === "with") filtered = filtered.filter((d) => d.active > 0);
+    else if (filter === "without") filtered = filtered.filter((d) => d.active === 0);
     if (sort === "name-asc") return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "name-desc") return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
     if (sort === "active") return [...filtered].sort((a, b) => b.active - a.active);
@@ -124,6 +130,15 @@ export function DriversList({ drivers }: { drivers: DriverRow[] }) {
           <option value="name-asc">Name A-Z</option>
           <option value="name-desc">Name Z-A</option>
           <option value="active">Most active loads</option>
+        </select>
+        <select
+          className="lb-status"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as "" | "with" | "without")}
+        >
+          <option value="">All</option>
+          <option value="with">With active loads</option>
+          <option value="without">Without active loads</option>
         </select>
       </div>
 
