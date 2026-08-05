@@ -2635,7 +2635,8 @@ table.acc select option{background:#0b1120}
 .tone-teal{--tc:#0d9488;--tb:rgba(13,148,136,.11);--tbd:rgba(13,148,136,.30)}
 .tone-gray{--tc:#475569;--tb:rgba(100,116,139,.10);--tbd:rgba(100,116,139,.28)}
 .alert.tone-red,.alert.tone-orange,.alert.tone-yellow,.alert.tone-green,.alert.tone-blue,.alert.tone-sky,.alert.tone-teal,.alert.tone-gray{border-left-color:var(--tc)}
-.alert:hover{border-color:var(--tbd);border-left-color:var(--tc)}
+.alert:hover,.alert:focus-visible{border-color:var(--tbd);border-left-color:var(--tc)}
+.alert:focus-visible{transform:translateX(2px);outline:2px solid var(--tc);outline-offset:2px}
 .alert-dot{background:var(--tb);color:var(--tc)}
 
 /* ---- toolbar: search + quick filters ---- */
