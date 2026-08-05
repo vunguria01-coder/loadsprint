@@ -109,11 +109,20 @@ export default async function DriversPage() {
 
           <div className="seat-meter">
             <div className="seat-info">
-              <span className="seat-count">
-                {usedDrivers}
-                <i> / {planLimit === Infinity ? "∞" : planLimit}</i>
+              <span className="seat-compact">
+                {usedDrivers} / {planLimit === Infinity ? "∞" : planLimit} drivers
+                {planLimit !== Infinity && planLimit > 0 && (
+                  <> · {Math.min(100, Math.round((usedDrivers / planLimit) * 100))}%</>
+                )}
               </span>
-              <span className="seat-label">drivers used</span>
+              {planLimit !== Infinity && planLimit > 0 && (
+                <div className="seat-bar">
+                  <div
+                    className="seat-bar-fill"
+                    style={{ width: `${Math.min(100, Math.round((usedDrivers / planLimit) * 100))}%` }}
+                  />
+                </div>
+              )}
             </div>
             <div className="seat-right">
               {planLimit === Infinity ? (
