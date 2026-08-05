@@ -181,6 +181,11 @@ export function LoadBoard({
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
             placeholder="Search by load #, driver, route or broker… (press /)"
           />
           {q && (
