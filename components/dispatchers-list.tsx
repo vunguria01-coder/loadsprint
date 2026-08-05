@@ -121,6 +121,18 @@ export function DispatchersList({ dispatchers }: { dispatchers: DispatcherRow[] 
             <option value="name-desc">Name Z-A</option>
             <option value="email-asc">E-mail A-Z</option>
           </select>
+          {(q || sort) && (
+            <button
+              type="button"
+              className="lb-clear-filters"
+              onClick={() => {
+                setQ("");
+                setSort("");
+              }}
+            >
+              Clear
+            </button>
+          )}
         </div>
       )}
       {shown.length === 0 ? (
