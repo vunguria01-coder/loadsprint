@@ -120,6 +120,7 @@ export function Cabinet({
                 href={it.href}
                 onClick={() => setOpen(false)}
                 className={`cab-link${active === it.key ? " active" : ""}`}
+                aria-current={active === it.key ? "page" : undefined}
               >
                 {it.icon}<span>{it.label}</span>
               </Link>
