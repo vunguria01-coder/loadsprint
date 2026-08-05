@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MapPin, ArrowRight, Search, CalendarDays, Package } from "lucide-react";
@@ -130,6 +130,22 @@ export function LoadBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, status]);
 
+  // "/" jumps to the search box (unless it would steal a keystroke from
+  // another field, e.g. the reference-number input while typing text).
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/") return;
+      const el = document.activeElement;
+      const typing = el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const query = q.trim().toLowerCase();
   const shown = useMemo(
     () =>
@@ -161,10 +177,11 @@ export function LoadBoard({
         <div className="driver-search lb-search">
           <Search size={18} />
           <input
+            ref={searchRef}
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by load #, driver, route or broker…"
+            placeholder="Search by load #, driver, route or broker… (press /)"
           />
           {q && (
             <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
