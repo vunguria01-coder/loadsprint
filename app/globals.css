@@ -1716,6 +1716,7 @@ table.acc select option{background:#0b1120}
 .ev-drop{color:#86efac;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35)}
 .ev-drop .ev-dot{background:#4ade80}
 .cal-ev:hover{filter:brightness(1.15)}
+.cal-ev:focus-visible,.cal-ev-more:focus-visible{outline:2px solid var(--sky,#38bdf8);outline-offset:2px;border-radius:7px}
 .cal-ev-more{font-family:Manrope;font-weight:700;font-size:11px;color:var(--muted);padding:3px 7px;background:none;border:none;cursor:pointer;text-align:left}
 .cal-ev-more:hover{color:var(--sky,#38bdf8)}
 .cal-cell{position:relative}
@@ -1749,9 +1750,17 @@ table.acc select option{background:#0b1120}
 .cal-sdate input{background:rgba(8,14,28,.6);border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:#fff;font-family:Inter;font-size:13.5px;color-scheme:dark}
 .cal-sdate input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
 
+/* Agenda list — the phone-sized alternative to the month grid. */
+.cal-agenda{display:none;flex-direction:column;gap:12px}
+.cal-ag-day{border:1px solid var(--line-2);border-radius:12px;background:rgba(8,14,28,.35);padding:11px 13px}
+.cal-ag-today{border-color:var(--sky,#38bdf8)}
+.cal-ag-date{font-family:Manrope;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2);margin-bottom:8px}
+.cal-ag-evs{display:flex;flex-direction:column;gap:6px}
+.cal-ag-evs .cal-ev{white-space:normal}
+
 @media(max-width:620px){
-  .cal-cell{min-height:78px}
-  .cal-ev{font-size:10px;padding:2px 5px}
+  .cal-grid{display:none}
+  .cal-agenda{display:flex}
   .cal-srow{gap:10px}
   .cal-sdate input{padding:8px 9px}
 }

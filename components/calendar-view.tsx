@@ -19,6 +19,23 @@ export type CalLoad = {
 const WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_EVENTS_PER_CELL = 3;
 
+// Full detail on hover: kind, load number, route and the date it falls on.
+// A load carries dates only — there is no appointment time to show.
+function eventTitle(
+  e: { load: CalLoad; type: "pickup" | "delivery" },
+  y: number,
+  m: number,
+  d: number
+): string {
+  const kind = e.type === "pickup" ? "Pickup" : "Delivery";
+  const when = new Date(y, m, d).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  return `${kind} · ${when}\n${e.load.ref} — ${e.load.route}\nStatus: ${e.load.status}`;
+}
+
 function ymd(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
@@ -127,6 +144,10 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     month: "long",
     year: "numeric",
   });
+  // Spell the target month out in the arrows' labels — "Previous month" alone
+  // tells a screen-reader user nothing about where they'd land.
+  const prevMonthLabel = new Date(cur.y, cur.m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+  const nextMonthLabel = new Date(cur.y, cur.m + 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
   const todayStr = ymd(today.getFullYear(), today.getMonth(), today.getDate());
 
   function prev() {
@@ -199,6 +220,17 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     });
   }
 
+  // Only days that actually have (visible) events, in date order.
+  const agendaDays = useMemo(() => {
+    const out: { ds: string; day: number; evs: { load: CalLoad; type: "pickup" | "delivery" }[] }[] = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const ds = ymd(cur.y, cur.m, day);
+      const evs = (events.get(ds) || []).filter((e) => !hiddenTypes.has(e.type));
+      if (evs.length > 0) out.push({ ds, day, evs });
+    }
+    return out;
+  }, [cur, daysInMonth, events, hiddenTypes]);
+
   const toSchedule = loads.filter((l) => l.active);
 
   return (
@@ -206,9 +238,9 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
       <div className="cal-bar">
         <div className="cal-month" aria-live="polite">{monthLabel}</div>
         <div className="cal-nav">
-          <button type="button" onClick={prev} aria-label="Previous month"><ChevronLeft size={18} /></button>
+          <button type="button" onClick={prev} aria-label={`Previous month: ${prevMonthLabel}`}><ChevronLeft size={18} /></button>
           <button type="button" className="cal-today" onClick={goToday}>Today</button>
-          <button type="button" onClick={next} aria-label="Next month"><ChevronRight size={18} /></button>
+          <button type="button" onClick={next} aria-label={`Next month: ${nextMonthLabel}`}><ChevronRight size={18} /></button>
         </div>
       </div>
 
@@ -236,6 +268,40 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
         )}
       </div>
 
+      {/* Narrow screens get a date-ordered agenda instead of a 7-column grid:
+          a month of near-empty cells is unreadable on a phone. */}
+      <div className="cal-agenda">
+        {agendaDays.length === 0 ? (
+          <p className="px">Nothing scheduled this month.</p>
+        ) : (
+          agendaDays.map(({ ds, day, evs }) => (
+            <div className={`cal-ag-day${ds === todayStr ? " cal-ag-today" : ""}`} key={ds}>
+              <div className="cal-ag-date">
+                {new Date(cur.y, cur.m, day).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </div>
+              <div className="cal-ag-evs">
+                {evs.map((e, i) => (
+                  <Link
+                    key={`${e.load.id}-${e.type}-${i}`}
+                    href={`/loads/${e.load.id}`}
+                    className={`cal-ev ${e.type === "pickup" ? "ev-pick" : "ev-drop"}`}
+                    title={eventTitle(e, cur.y, cur.m, day)}
+                    aria-label={`${e.type === "pickup" ? "Pickup" : "Delivery"} ${e.load.ref}, ${e.load.route}`}
+                  >
+                    <span className="ev-dot" />
+                    {e.load.ref} · {e.load.route}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       <div className="cal-grid">
         {WEEK.map((w) => (
           <div className="cal-wd" key={w}>{w}</div>
@@ -257,7 +323,8 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                     key={`${e.load.id}-${e.type}-${i}`}
                     href={`/loads/${e.load.id}`}
                     className={`cal-ev ${e.type === "pickup" ? "ev-pick" : "ev-drop"}`}
-                    title={`${e.type === "pickup" ? "Pickup" : "Delivery"}: ${e.load.ref} — ${e.load.route}`}
+                    title={eventTitle(e, cur.y, cur.m, d)}
+                    aria-label={`${e.type === "pickup" ? "Pickup" : "Delivery"} ${e.load.ref}, ${e.load.route}`}
                   >
                     <span className="ev-dot" />
                     {e.load.ref}
@@ -267,6 +334,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                   <button
                     type="button"
                     className="cal-ev-more"
+                    aria-label={`Show all ${evs.length} events on this day`}
                     onClick={(e) => {
                       moreButtonRef.current = e.currentTarget;
                       setOpenDay(ds);
@@ -296,7 +364,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                           key={`${e.load.id}-${e.type}-${i}`}
                           href={`/loads/${e.load.id}`}
                           className={`cal-ev ${e.type === "pickup" ? "ev-pick" : "ev-drop"}`}
-                          title={`${e.type === "pickup" ? "Pickup" : "Delivery"}: ${e.load.ref} — ${e.load.route}`}
+                          title={eventTitle(e, cur.y, cur.m, d)}
                         >
                           <span className="ev-dot" />
                           {e.load.ref}
