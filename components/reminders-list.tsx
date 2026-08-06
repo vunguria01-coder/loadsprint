@@ -40,14 +40,18 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [type, setType] = useState<"" | "doc" | "maintenance">(
+    () => (searchParams.get("type") as "doc" | "maintenance") || ""
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (type) params.set("type", type);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, type]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -64,7 +68,9 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
   }, []);
 
   const query = q.trim().toLowerCase();
-  const shown = query ? rows.filter((r) => r.search.includes(query)) : rows;
+  const shown = rows
+    .filter((r) => !query || r.search.includes(query))
+    .filter((r) => !type || r.type === type);
 
   const overdue = shown.filter((r) => r.group === "overdue");
   const today = shown.filter((r) => r.group === "today");
@@ -91,8 +97,17 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
             <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
           )}
         </div>
+        <select
+          className="lb-status"
+          value={type}
+          onChange={(e) => setType(e.target.value as "" | "doc" | "maintenance")}
+        >
+          <option value="">All</option>
+          <option value="doc">Documents</option>
+          <option value="maintenance">Maintenance</option>
+        </select>
       </div>
-      {query && (
+      {(query || type) && (
         <p className="lb-count" aria-live="polite">
           {shown.length} of {rows.length} reminder{rows.length === 1 ? "" : "s"}
         </p>
@@ -101,9 +116,13 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
         <EmptyState
           icon={<Search size={26} />}
           title="No matching reminders"
-          sub={`No reminders match "${q}".`}
+          sub={query ? `No reminders match "${q}".` : "No reminders match this filter."}
           action={
-            <button type="button" className="lb-clear-filters" onClick={() => setQ("")}>
+            <button
+              type="button"
+              className="lb-clear-filters"
+              onClick={() => { setQ(""); setType(""); }}
+            >
               Clear
             </button>
           }
