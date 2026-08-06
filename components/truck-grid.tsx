@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Container, Search } from "lucide-react";
 import { money } from "@/lib/format";
+import { EmptyState } from "@/components/empty-state";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Active",
@@ -122,7 +123,20 @@ export function TruckGrid({ trucks }: { trucks: TruckSummary[] }) {
         </p>
       )}
       {shown.length === 0 ? (
-        <p className="px">No trucks match "{q}".</p>
+        <EmptyState
+          icon={<Search size={26} />}
+          title="No matching trucks"
+          sub={`No trucks match "${q}".`}
+          action={
+            <button
+              type="button"
+              className="lb-clear-filters"
+              onClick={() => { setQ(""); setSort(""); }}
+            >
+              Clear
+            </button>
+          }
+        />
       ) : (
         <div className="truck-grid">
           {shown.map((t) => (
