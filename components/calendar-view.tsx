@@ -183,6 +183,17 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openDay]);
 
+  const [hiddenTypes, setHiddenTypes] = useState<Set<"pickup" | "delivery">>(new Set());
+
+  function toggleType(type: "pickup" | "delivery") {
+    setHiddenTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }
+
   const toSchedule = loads.filter((l) => l.active);
 
   return (
@@ -197,8 +208,22 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
       </div>
 
       <div className="cal-legend">
-        <span><i className="ev-dot ev-pick-dot" /> Pickup</span>
-        <span><i className="ev-dot ev-drop-dot" /> Delivery</span>
+        <button
+          type="button"
+          className={`cal-legend-toggle${hiddenTypes.has("pickup") ? " off" : ""}`}
+          onClick={() => toggleType("pickup")}
+          aria-pressed={!hiddenTypes.has("pickup")}
+        >
+          <i className="ev-dot ev-pick-dot" /> Pickup
+        </button>
+        <button
+          type="button"
+          className={`cal-legend-toggle${hiddenTypes.has("delivery") ? " off" : ""}`}
+          onClick={() => toggleType("delivery")}
+          aria-pressed={!hiddenTypes.has("delivery")}
+        >
+          <i className="ev-dot ev-drop-dot" /> Delivery
+        </button>
       </div>
 
       <div className="cal-grid">
@@ -208,7 +233,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
         {cells.map((d, idx) => {
           if (d === null) return <div className="cal-cell cal-empty" key={`e${idx}`} />;
           const ds = ymd(cur.y, cur.m, d);
-          const evs = events.get(ds) || [];
+          const evs = (events.get(ds) || []).filter((e) => !hiddenTypes.has(e.type));
           return (
             <div
               className={`cal-cell${ds === todayStr ? " cal-now" : ""}${openDay === ds ? " cal-cell-open" : ""}`}
