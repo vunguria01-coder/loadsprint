@@ -148,6 +148,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
 
   const [openDay, setOpenDay] = useState<string | null>(null);
   const moreButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dayPopRef = useRef<HTMLDivElement>(null);
 
   function closeDayPopover() {
     setOpenDay(null);
@@ -156,8 +157,26 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
 
   useEffect(() => {
     if (!openDay) return;
+    dayPopRef.current?.querySelector<HTMLElement>("button, a")?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeDayPopover();
+      if (e.key === "Escape") {
+        closeDayPopover();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = dayPopRef.current?.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -220,9 +239,15 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
               {openDay === ds && (
                 <>
                   <div className="cab-acc-scrim" onClick={closeDayPopover} />
-                  <div className="cal-day-pop">
+                  <div
+                    ref={dayPopRef}
+                    className="cal-day-pop"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`cal-day-pop-title-${ds}`}
+                  >
                     <div className="cal-day-pop-head">
-                      <b>{new Date(cur.y, cur.m, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>
+                      <b id={`cal-day-pop-title-${ds}`}>{new Date(cur.y, cur.m, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>
                       <button type="button" onClick={closeDayPopover} aria-label="Close">✕</button>
                     </div>
                     <div className="cal-day-pop-list">
