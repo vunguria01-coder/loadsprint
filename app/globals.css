@@ -2039,6 +2039,7 @@ table.acc select option{background:#0b1120}
 
 /* ---------- Loadboard search / filter ---------- */
 .lb-count{color:var(--muted);font-size:13px;font-weight:600;margin:-10px 0 12px}
+.lb-price-summary{font-family:Manrope;font-weight:700;font-size:13.5px;color:var(--ink);margin:-8px 0 16px}
 .lb-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;position:sticky;top:64px;z-index:20;background:var(--bg);padding:10px 0}
 .lb-clear-filters{font-family:Manrope,sans-serif;font-weight:700;font-size:13px;color:var(--sky,#38bdf8);background:none;border:none;cursor:pointer;padding:4px 2px}
 .lb-clear-filters:hover{text-decoration:underline}

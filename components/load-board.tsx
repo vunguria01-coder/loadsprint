@@ -148,6 +148,13 @@ export function LoadBoard({
   const [groupBy, setGroupBy] = useState<"driver" | "status">(
     () => (searchParams.get("groupBy") as "status") || "driver"
   );
+  const [driverFilter, setDriverFilter] = useState(() => searchParams.get("driver") || "");
+  const [when, setWhen] = useState<"" | "today" | "7d" | "none">(
+    () => (searchParams.get("when") as "today" | "7d" | "none") || ""
+  );
+  const [has, setHas] = useState<"" | "messages" | "documents" | "photos">(
+    () => (searchParams.get("has") as "messages" | "documents" | "photos") || ""
+  );
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
 
@@ -187,10 +194,13 @@ export function LoadBoard({
     if (status) params.set("status", status);
     if (sort) params.set("sort", sort);
     if (groupBy !== "driver") params.set("groupBy", groupBy);
+    if (driverFilter) params.set("driver", driverFilter);
+    if (when) params.set("when", when);
+    if (has) params.set("has", has);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, status, sort, groupBy]);
+  }, [q, status, sort, groupBy, driverFilter, when, has]);
 
   // "/" jumps to the search box (unless it would steal a keystroke from
   // another field, e.g. the reference-number input while typing text).
@@ -219,10 +229,40 @@ export function LoadBoard({
     }
     return counts;
   }, [loads, query]);
+  // Same reasoning: reflects search, not the driver filter itself.
+  const driverCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of loads) {
+      if (query && !l.search.includes(query)) continue;
+      const name = l.driverName || "Unassigned";
+      counts.set(name, (counts.get(name) || 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [loads, query]);
+
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+  const next7Str = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
   const shown = useMemo(() => {
-    const filtered = loads.filter(
-      (l) => (!query || l.search.includes(query)) && (!status || l.status === status)
-    );
+    const filtered = loads.filter((l) => {
+      if (query && !l.search.includes(query)) return false;
+      if (status && l.status !== status) return false;
+      if (driverFilter && (l.driverName || "Unassigned") !== driverFilter) return false;
+      if (when === "today" && l.pickupDate !== todayStr) return false;
+      if (when === "7d" && !(l.pickupDate && l.pickupDate >= todayStr && l.pickupDate <= next7Str)) return false;
+      if (when === "none" && l.pickupDate) return false;
+      if (has === "messages" && l.messages <= 0) return false;
+      if (has === "documents" && l.docs <= 0) return false;
+      if (has === "photos" && l.photos <= 0) return false;
+      return true;
+    });
     if (sort === "ref") return [...filtered].sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true }));
     if (sort === "appt") {
       // No pickup date sorts last, not first — an unscheduled load isn't "soonest".
@@ -240,7 +280,17 @@ export function LoadBoard({
       });
     }
     return filtered;
-  }, [loads, query, status, sort]);
+  }, [loads, query, status, sort, driverFilter, when, has, todayStr, next7Str]);
+
+  const priceSummary = useMemo(() => {
+    let total = 0;
+    let noPrice = 0;
+    for (const l of shown) {
+      if (typeof l.loadRate === "number" && l.loadRate > 0) total += l.loadRate;
+      else noPrice++;
+    }
+    return { total, noPrice };
+  }, [shown]);
 
   const groups = useMemo(() => {
     if (!grouped) return null;
@@ -274,6 +324,15 @@ export function LoadBoard({
     try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify([])); } catch {}
   }
 
+  function clearFilters() {
+    setQ("");
+    setStatus("");
+    setSort("");
+    setDriverFilter("");
+    setWhen("");
+    setHas("");
+  }
+
   function exportCsv() {
     const header = ["Load", "Status", "Driver", "Origin", "Destination", "Rate"];
     const rows = shown.map((l) => [
@@ -296,7 +355,7 @@ export function LoadBoard({
 
   return (
     <div className={`lb-root${density === "compact" ? " lb-compact" : ""}`}>
-      {(query || status) && (
+      {(query || status || driverFilter || when || has) && (
         <p className="lb-count" aria-live="polite">
           {shown.length} of {loads.length} load{loads.length === 1 ? "" : "s"}
         </p>
@@ -332,6 +391,36 @@ export function LoadBoard({
         </select>
         <select
           className="lb-status"
+          value={driverFilter}
+          onChange={(e) => setDriverFilter(e.target.value)}
+        >
+          <option value="">All drivers</option>
+          {driverCounts.map(([name, count]) => (
+            <option key={name} value={name}>{name} ({count})</option>
+          ))}
+        </select>
+        <select
+          className="lb-status"
+          value={when}
+          onChange={(e) => setWhen(e.target.value as "" | "today" | "7d" | "none")}
+        >
+          <option value="">Any appointment</option>
+          <option value="today">Pickup today</option>
+          <option value="7d">Pickup next 7 days</option>
+          <option value="none">No appointment</option>
+        </select>
+        <select
+          className="lb-status"
+          value={has}
+          onChange={(e) => setHas(e.target.value as "" | "messages" | "documents" | "photos")}
+        >
+          <option value="">Anything</option>
+          <option value="messages">Has messages</option>
+          <option value="documents">Has documents</option>
+          <option value="photos">Has photos</option>
+        </select>
+        <select
+          className="lb-status"
           value={sort}
           onChange={(e) => setSort(e.target.value as "" | "appt" | "ref" | "price-desc" | "price-asc")}
           title="Order the loads were created — oldest first"
@@ -363,18 +452,14 @@ export function LoadBoard({
         <button type="button" className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={shown.length === 0}>
           Export CSV
         </button>
-        {(query || status || sort) && (
-          <button
-            type="button"
-            className="lb-clear-filters"
-            onClick={() => { setQ(""); setStatus(""); setSort(""); }}
-          >
+        {(query || status || sort || driverFilter || when || has) && (
+          <button type="button" className="lb-clear-filters" onClick={clearFilters}>
             Clear filters
           </button>
         )}
       </div>
 
-      {(query || status || sort) && (
+      {(query || status || sort || driverFilter || when || has) && (
         <div className="lb-filter-chips">
           {query && (
             <span className="lb-filter-chip">
@@ -388,6 +473,24 @@ export function LoadBoard({
               <button type="button" onClick={() => setStatus("")} aria-label="Clear status filter">✕</button>
             </span>
           )}
+          {driverFilter && (
+            <span className="lb-filter-chip">
+              Driver: {driverFilter}
+              <button type="button" onClick={() => setDriverFilter("")} aria-label="Clear driver filter">✕</button>
+            </span>
+          )}
+          {when && (
+            <span className="lb-filter-chip">
+              {when === "today" ? "Pickup today" : when === "7d" ? "Pickup next 7 days" : "No appointment"}
+              <button type="button" onClick={() => setWhen("")} aria-label="Clear appointment filter">✕</button>
+            </span>
+          )}
+          {has && (
+            <span className="lb-filter-chip">
+              Has {has}
+              <button type="button" onClick={() => setHas("")} aria-label="Clear has filter">✕</button>
+            </span>
+          )}
           {sort && (
             <span className="lb-filter-chip">
               Sort: {sort === "appt" ? "Appointment soonest" : sort === "ref" ? "Load number" : sort === "price-desc" ? "Highest price" : "Lowest price"}
@@ -395,6 +498,13 @@ export function LoadBoard({
             </span>
           )}
         </div>
+      )}
+
+      {shown.length > 0 && (
+        <p className="lb-price-summary">
+          {money(priceSummary.total)} total
+          {priceSummary.noPrice > 0 && ` · ${priceSummary.noPrice} load${priceSummary.noPrice === 1 ? "" : "s"} without a price`}
+        </p>
       )}
 
       {grouped && groups && groups.length > 1 && (
@@ -414,7 +524,7 @@ export function LoadBoard({
           title="No matching loads"
           sub="Try a different search term or status."
           action={
-            <button type="button" className="lb-clear-filters" onClick={() => { setQ(""); setStatus(""); }}>
+            <button type="button" className="lb-clear-filters" onClick={clearFilters}>
               Clear filters
             </button>
           }
