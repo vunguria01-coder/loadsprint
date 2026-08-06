@@ -106,6 +106,15 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
           <option value="doc">Documents</option>
           <option value="maintenance">Maintenance</option>
         </select>
+        {(q || type) && (
+          <button
+            type="button"
+            className="lb-clear-filters"
+            onClick={() => { setQ(""); setType(""); }}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
       {(query || type) && (
         <p className="lb-count" aria-live="polite">
