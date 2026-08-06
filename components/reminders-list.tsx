@@ -132,6 +132,21 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
   const overdue = shown.filter((r) => r.group === "overdue");
   const today = shown.filter((r) => r.group === "today");
   const soon = shown.filter((r) => r.group === "soon");
+  const visibleGroups = [
+    overdue.length > 0 && "overdue",
+    today.length > 0 && "today",
+    soon.length > 0 && "soon",
+  ].filter((g): g is string => !!g);
+
+  function collapseAll() {
+    const all = new Set(visibleGroups);
+    setCollapsed(all);
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...all])); } catch {}
+  }
+  function expandAll() {
+    setCollapsed(new Set());
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([])); } catch {}
+  }
 
   return (
     <>
@@ -195,6 +210,16 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
         />
       ) : (
         <>
+          {visibleGroups.length > 1 && (
+            <div className="lb-group-controls">
+              <button type="button" className="lb-clear-filters" onClick={collapseAll}>
+                Collapse all
+              </button>
+              <button type="button" className="lb-clear-filters" onClick={expandAll}>
+                Expand all
+              </button>
+            </div>
+          )}
           <Section
             id="overdue"
             title="Overdue"
