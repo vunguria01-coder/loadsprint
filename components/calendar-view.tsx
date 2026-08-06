@@ -82,14 +82,21 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     if (m) return { y: Number(m[1]), m: Number(m[2]) - 1 };
     return { y: today.getFullYear(), m: today.getMonth() };
   });
+  const [hiddenTypes, setHiddenTypes] = useState<Set<"pickup" | "delivery">>(() => {
+    const hide = (searchParams.get("hide") || "").split(",").filter(Boolean);
+    return new Set(hide.filter((t): t is "pickup" | "delivery" => t === "pickup" || t === "delivery"));
+  });
 
   useEffect(() => {
+    const params = new URLSearchParams();
     const monthParam = `${cur.y}-${String(cur.m + 1).padStart(2, "0")}`;
     const isCurrentMonth = cur.y === today.getFullYear() && cur.m === today.getMonth();
-    const qs = isCurrentMonth ? "" : `?month=${monthParam}`;
-    router.replace(`${pathname}${qs}`, { scroll: false });
+    if (!isCurrentMonth) params.set("month", monthParam);
+    if (hiddenTypes.size > 0) params.set("hide", [...hiddenTypes].join(","));
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cur]);
+  }, [cur, hiddenTypes]);
 
   // Map date string -> events ({ load, type })
   const events = useMemo(() => {
@@ -182,8 +189,6 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openDay]);
-
-  const [hiddenTypes, setHiddenTypes] = useState<Set<"pickup" | "delivery">>(new Set());
 
   function toggleType(type: "pickup" | "delivery") {
     setHiddenTypes((prev) => {
