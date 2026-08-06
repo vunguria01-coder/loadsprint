@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Download, Check, Percent, DollarSign } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Download, Check, Percent, DollarSign, Search } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { loadJsPDF, type JsPDFDoc } from "@/components/use-jspdf";
+import { EmptyState } from "@/components/empty-state";
 
 export type SettleLoad = { ref: string; route: string; rate: number };
 export type SettleDriver = {
@@ -245,6 +247,33 @@ export function SettlementsView({
   drivers: SettleDriver[];
   company: string;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/") return;
+      const el = document.activeElement;
+      const typing = el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   if (drivers.length === 0) {
     return (
       <div className="home-empty">
@@ -252,11 +281,65 @@ export function SettlementsView({
       </div>
     );
   }
+
+  const query = q.trim().toLowerCase();
+  const shown = query
+    ? drivers.filter(
+        (d) =>
+          d.name.toLowerCase().includes(query) ||
+          d.email.toLowerCase().includes(query) ||
+          d.loads.some((l) => l.ref.toLowerCase().includes(query))
+      )
+    : drivers;
+
+  // Pay at each driver's currently saved rate — the same figure their card
+  // shows before any unsaved edit in the rate field.
+  const totalPay = shown.reduce((s, d) => s + computePay(d.payType, d.payRate, d.gross, d.count), 0);
+
   return (
-    <div className="settle-list">
-      {drivers.map((d) => (
-        <DriverSettle key={d.email} d={d} company={company} />
-      ))}
-    </div>
+    <>
+      <div className="lb-controls">
+        <div className="driver-search lb-search">
+          <Search size={18} />
+          <input
+            ref={searchRef}
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
+            placeholder="Search by driver, email or load #… (press /)"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
+          )}
+        </div>
+      </div>
+      <p className="lb-count" aria-live="polite">
+        {query && `${shown.length} of ${drivers.length} drivers · `}
+        Total pay: <b>{money(totalPay)}</b>
+      </p>
+      {shown.length === 0 ? (
+        <EmptyState
+          icon={<Search size={26} />}
+          title="No matching drivers"
+          sub={`No drivers match "${q}".`}
+          action={
+            <button type="button" className="lb-clear-filters" onClick={() => setQ("")}>
+              Clear
+            </button>
+          }
+        />
+      ) : (
+        <div className="settle-list">
+          {shown.map((d) => (
+            <DriverSettle key={d.email} d={d} company={company} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
