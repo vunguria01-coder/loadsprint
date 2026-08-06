@@ -1,32 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, AlertTriangle, Clock, Container } from "lucide-react";
+import { BellRing, AlertTriangle, Clock } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { hasAccess } from "@/lib/auth";
-import { getTrucksByOwner, computeReminders, type Reminder } from "@/lib/trucks";
+import { getTrucksByOwner, computeReminders } from "@/lib/trucks";
 import { CabinetServer } from "@/components/cabinet-server";
+import { RemindersList, type ReminderRow } from "@/components/reminders-list";
 
 export const metadata: Metadata = {
   title: "Reminders — LoadSprint",
   robots: { index: false, follow: false },
 };
-
-function Row({ r }: { r: Reminder }) {
-  const cls = r.status === "overdue" ? "bad" : "warn";
-  return (
-    <Link href={`/trucks/${r.truckId}`} className="rem-row">
-      <span className={`rem-stripe ${cls}`} />
-      <div className="rem-mid">
-        <div className="rem-title">
-          {r.label} <span className="rem-type">{r.type === "doc" ? "document" : "maintenance"}</span>
-        </div>
-        <div className="rem-truck"><Container size={13} /> {r.truckName}</div>
-      </div>
-      <span className={`ar-days ${cls}`}>{r.detail}</span>
-    </Link>
-  );
-}
 
 export default async function RemindersPage() {
   const me = await currentUser();
@@ -36,12 +21,37 @@ export default async function RemindersPage() {
 
   const ownerId = me.ownerId || me.id;
   const trucks = getTrucksByOwner(ownerId);
+  const trucksById = new Map(trucks.map((t) => [t.id, t]));
   const all = computeReminders(trucks, new Date());
-  const overdue = all.filter((r) => r.status === "overdue");
-  // Mileage-based maintenance has no calendar "today" — only a document can
-  // expire on a specific date, so that's the only kind that lands here.
-  const today = all.filter((r) => r.status === "soon" && r.type === "doc" && r.detail === "expires today");
-  const soon = all.filter((r) => r.status === "soon" && !today.includes(r));
+
+  const rows: ReminderRow[] = all.map((r) => {
+    const t = trucksById.get(r.truckId);
+    // Mileage-based maintenance has no calendar "today" — only a document can
+    // expire on a specific date, so that's the only kind that lands there.
+    const group: ReminderRow["group"] =
+      r.status === "overdue"
+        ? "overdue"
+        : r.type === "doc" && r.detail === "expires today"
+        ? "today"
+        : "soon";
+    return {
+      truckId: r.truckId,
+      truckName: r.truckName,
+      type: r.type,
+      label: r.label,
+      status: r.status,
+      detail: r.detail,
+      group,
+      search: [r.truckName, t?.unit, t?.plate, r.label]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+    };
+  });
+
+  const overdue = rows.filter((r) => r.group === "overdue");
+  const today = rows.filter((r) => r.group === "today");
+  const soon = rows.filter((r) => r.group === "soon");
 
   return (
     <CabinetServer active="reminders">
@@ -84,29 +94,7 @@ export default async function RemindersPage() {
             )}
           </div>
         ) : (
-          <>
-            {overdue.length > 0 && (
-              <div className="ins-section">
-                <h3>Overdue</h3>
-                <p className="ins-sub">Handle these now.</p>
-                <div className="rem-list">{overdue.map((r, i) => <Row key={i} r={r} />)}</div>
-              </div>
-            )}
-            {today.length > 0 && (
-              <div className="ins-section">
-                <h3>Today</h3>
-                <p className="ins-sub">Expiring today.</p>
-                <div className="rem-list">{today.map((r, i) => <Row key={i} r={r} />)}</div>
-              </div>
-            )}
-            {soon.length > 0 && (
-              <div className="ins-section">
-                <h3>Upcoming</h3>
-                <p className="ins-sub">Within 30 days or 1,500 miles.</p>
-                <div className="rem-list">{soon.map((r, i) => <Row key={i} r={r} />)}</div>
-              </div>
-            )}
-          </>
+          <RemindersList rows={rows} />
         )}
       </div>
     </CabinetServer>
