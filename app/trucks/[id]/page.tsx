@@ -11,6 +11,7 @@ import { money } from "@/lib/format";
 import { CabinetServer } from "@/components/cabinet-server";
 import { DriverMap } from "@/components/driver-map";
 import { TruckDetail } from "@/components/truck-detail";
+import { CopyChip } from "@/components/copy-chip";
 
 export const metadata: Metadata = {
   title: "Truck — LoadSprint",
@@ -69,7 +70,6 @@ export default async function TruckDetailPage({
   const sub = [
     truck.unit && `Unit ${truck.unit}`,
     [truck.year, truck.make, truck.model].filter(Boolean).join(" "),
-    truck.plate,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -84,6 +84,12 @@ export default async function TruckDetailPage({
             {truck.name}
           </h2>
           <p className="lead">{sub || "No details yet"}</p>
+          {(truck.plate || truck.vin) && (
+            <div className="copy-chip-row">
+              {truck.plate && <CopyChip label="Plate" value={truck.plate} />}
+              {truck.vin && <CopyChip label="VIN" value={truck.vin} />}
+            </div>
+          )}
         </div>
 
         <div className="home-stats" style={{ marginBottom: 18 }}>
