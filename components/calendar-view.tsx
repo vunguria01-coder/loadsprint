@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
@@ -147,6 +147,22 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
   }, []);
 
   const [openDay, setOpenDay] = useState<string | null>(null);
+  const moreButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  function closeDayPopover() {
+    setOpenDay(null);
+    moreButtonRef.current?.focus();
+  }
+
+  useEffect(() => {
+    if (!openDay) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeDayPopover();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openDay]);
 
   const toSchedule = loads.filter((l) => l.active);
 
@@ -192,7 +208,10 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                   <button
                     type="button"
                     className="cal-ev-more"
-                    onClick={() => setOpenDay(ds)}
+                    onClick={(e) => {
+                      moreButtonRef.current = e.currentTarget;
+                      setOpenDay(ds);
+                    }}
                   >
                     +{evs.length - MAX_EVENTS_PER_CELL} more
                   </button>
@@ -200,11 +219,11 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
               </div>
               {openDay === ds && (
                 <>
-                  <div className="cab-acc-scrim" onClick={() => setOpenDay(null)} />
+                  <div className="cab-acc-scrim" onClick={closeDayPopover} />
                   <div className="cal-day-pop">
                     <div className="cal-day-pop-head">
                       <b>{new Date(cur.y, cur.m, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>
-                      <button type="button" onClick={() => setOpenDay(null)} aria-label="Close">✕</button>
+                      <button type="button" onClick={closeDayPopover} aria-label="Close">✕</button>
                     </div>
                     <div className="cal-day-pop-list">
                       {evs.map((e, i) => (
