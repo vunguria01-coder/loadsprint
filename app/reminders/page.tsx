@@ -38,7 +38,10 @@ export default async function RemindersPage() {
   const trucks = getTrucksByOwner(ownerId);
   const all = computeReminders(trucks, new Date());
   const overdue = all.filter((r) => r.status === "overdue");
-  const soon = all.filter((r) => r.status === "soon");
+  // Mileage-based maintenance has no calendar "today" — only a document can
+  // expire on a specific date, so that's the only kind that lands here.
+  const today = all.filter((r) => r.status === "soon" && r.type === "doc" && r.detail === "expires today");
+  const soon = all.filter((r) => r.status === "soon" && !today.includes(r));
 
   return (
     <CabinetServer active="reminders">
@@ -60,14 +63,19 @@ export default async function RemindersPage() {
             <div className="hs-val">{overdue.length}</div>
             <div className="hs-label">Overdue</div>
           </div>
+          <div className={`home-stat ${today.length ? "sx-blue" : "sx-green"}`}>
+            <div className="hs-ic"><Clock size={18} /></div>
+            <div className="hs-val">{today.length}</div>
+            <div className="hs-label">Today</div>
+          </div>
           <div className={`home-stat ${soon.length ? "sx-sky" : "sx-green"}`}>
             <div className="hs-ic"><Clock size={18} /></div>
             <div className="hs-val">{soon.length}</div>
-            <div className="hs-label">Due soon</div>
+            <div className="hs-label">Upcoming</div>
           </div>
         </div>
 
-        {overdue.length === 0 && soon.length === 0 ? (
+        {overdue.length === 0 && today.length === 0 && soon.length === 0 ? (
           <div className="home-empty">
             {trucks.length === 0 ? (
               <p>No trucks yet. <Link className="home-empty-link" href="/trucks">Add a truck</Link> and log its documents &amp; service intervals to get reminders.</p>
@@ -84,9 +92,16 @@ export default async function RemindersPage() {
                 <div className="rem-list">{overdue.map((r, i) => <Row key={i} r={r} />)}</div>
               </div>
             )}
+            {today.length > 0 && (
+              <div className="ins-section">
+                <h3>Today</h3>
+                <p className="ins-sub">Expiring today.</p>
+                <div className="rem-list">{today.map((r, i) => <Row key={i} r={r} />)}</div>
+              </div>
+            )}
             {soon.length > 0 && (
               <div className="ins-section">
-                <h3>Due soon</h3>
+                <h3>Upcoming</h3>
                 <p className="ins-sub">Within 30 days or 1,500 miles.</p>
                 <div className="rem-list">{soon.map((r, i) => <Row key={i} r={r} />)}</div>
               </div>
