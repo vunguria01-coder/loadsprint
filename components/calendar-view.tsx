@@ -17,6 +17,7 @@ export type CalLoad = {
 };
 
 const WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MAX_EVENTS_PER_CELL = 3;
 
 function ymd(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -174,7 +175,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
             >
               <div className="cal-dnum">{d}</div>
               <div className="cal-evs">
-                {evs.map((e, i) => (
+                {evs.slice(0, MAX_EVENTS_PER_CELL).map((e, i) => (
                   <Link
                     key={`${e.load.id}-${e.type}-${i}`}
                     href={`/loads/${e.load.id}`}
@@ -185,6 +186,9 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                     {e.load.ref}
                   </Link>
                 ))}
+                {evs.length > MAX_EVENTS_PER_CELL && (
+                  <span className="cal-ev-more">+{evs.length - MAX_EVENTS_PER_CELL} more</span>
+                )}
               </div>
             </div>
           );
