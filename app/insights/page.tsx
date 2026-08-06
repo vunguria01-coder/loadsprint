@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BarChart3, DollarSign, PackageCheck, Package, Receipt } from "lucide-react";
 import { currentUser } from "@/lib/guard";
@@ -21,14 +22,30 @@ function startOfWeek(d: Date) {
   return x;
 }
 
-export default async function InsightsPage() {
+const RANGES = [
+  { key: "7d", label: "7 days", days: 7 },
+  { key: "30d", label: "30 days", days: 30 },
+  { key: "90d", label: "90 days", days: 90 },
+  { key: "all", label: "All time", days: null },
+] as const;
+
+export default async function InsightsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
   const me = await currentUser();
   if (!me) redirect("/login");
   if (me.role !== "dispatcher" && me.role !== "admin") redirect("/dashboard");
   if (me.role === "dispatcher" && !hasAccess(me)) redirect("/pricing");
 
+  const { range: rangeParam } = await searchParams;
+  const range = RANGES.find((r) => r.key === rangeParam) || RANGES[3];
+
   const all: Load[] = me.role === "admin" ? getAllLoads() : getLoadsByDispatcher(me.id);
-  const completed = all.filter((l) => l.status === "Delivered" || l.status === "Closed");
+  const everCompleted = all.filter((l) => l.status === "Delivered" || l.status === "Closed");
+  const cutoff = range.days == null ? null : Date.now() - range.days * 86_400_000;
+  const completed = cutoff == null ? everCompleted : everCompleted.filter((l) => new Date(l.createdAt).getTime() >= cutoff);
 
   const totalRevenue = completed.reduce((s, l) => s + (l.loadRate || 0), 0);
   const avgPerLoad = completed.length ? totalRevenue / completed.length : 0;
@@ -91,6 +108,18 @@ export default async function InsightsPage() {
           <p className="lead">Revenue and performance from your delivered loads.</p>
         </div>
 
+        <div className="ins-range">
+          {RANGES.map((r) => (
+            <Link
+              key={r.key}
+              href={r.key === "all" ? "/insights" : `/insights?range=${r.key}`}
+              className={`ins-range-item${r.key === range.key ? " active" : ""}`}
+            >
+              {r.label}
+            </Link>
+          ))}
+        </div>
+
         <div className="home-stats">
           {kpis.map((k) => {
             const Icon = k.Icon;
@@ -106,7 +135,14 @@ export default async function InsightsPage() {
 
         {completed.length === 0 ? (
           <div className="home-empty">
-            <p>No delivered loads yet. Charts appear here as your drivers complete loads.</p>
+            {everCompleted.length === 0 ? (
+              <p>No delivered loads yet. Charts appear here as your drivers complete loads.</p>
+            ) : (
+              <>
+                <p>No delivered loads in the last {range.label.toLowerCase()}.</p>
+                <Link href="/insights" className="home-empty-link">Show all time</Link>
+              </>
+            )}
           </div>
         ) : (
           <>
