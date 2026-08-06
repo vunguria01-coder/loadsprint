@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, CreditCard, Settings2 } from "lucide-react";
+import { Plus, Trash2, CreditCard, Settings2, MoreVertical } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { money } from "@/lib/format";
 import type { Truck } from "@/lib/trucks";
@@ -46,6 +46,7 @@ export function TruckDetail({
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Expense form
   const [ex, setEx] = useState({
@@ -486,9 +487,36 @@ export function TruckDetail({
       </div>
 
       <div style={{ marginTop: 22 }}>
-        <button className="btn btn-danger btn-sm" onClick={removeTruck} disabled={busy}>
-          <Trash2 size={15} /> Delete truck
-        </button>
+        <div className="row-menu-wrap">
+          <button
+            type="button"
+            className="row-menu-btn"
+            onClick={() => setMenuOpen((v) => !v)}
+            title="More options"
+            aria-label="More options"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+          >
+            <MoreVertical size={17} />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="cab-acc-scrim" onClick={() => setMenuOpen(false)} />
+              <div className="row-menu">
+                <button
+                  className="row-menu-item danger"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    removeTruck();
+                  }}
+                  disabled={busy}
+                >
+                  <Trash2 size={15} /> Delete truck
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </>
   );
