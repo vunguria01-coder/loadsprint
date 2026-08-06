@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/guard";
 import { hasAccess } from "@/lib/auth";
 import { getLoadsByDispatcher, getAllLoads, type Load } from "@/lib/loads";
 import { CabinetServer } from "@/components/cabinet-server";
+import { InsightsExport } from "@/components/insights-export";
 
 export const metadata: Metadata = {
   title: "Insights — LoadSprint",
@@ -50,6 +51,26 @@ export default async function InsightsPage({
   const totalRevenue = completed.reduce((s, l) => s + (l.loadRate || 0), 0);
   const avgPerLoad = completed.length ? totalRevenue / completed.length : 0;
 
+  // Change vs. the immediately preceding period of the same length — only
+  // meaningful for a fixed window (7/30/90 days), not "All time".
+  let prevRevenue: number | null = null;
+  let prevCount: number | null = null;
+  if (cutoff != null && range.days != null) {
+    const prevCutoff = cutoff - range.days * 86_400_000;
+    const prevPeriod = everCompleted.filter((l) => {
+      const t = new Date(l.createdAt).getTime();
+      return t >= prevCutoff && t < cutoff;
+    });
+    prevRevenue = prevPeriod.reduce((s, l) => s + (l.loadRate || 0), 0);
+    prevCount = prevPeriod.length;
+  }
+  function pctChange(cur: number, prev: number | null): string | null {
+    if (prev == null) return null;
+    if (prev === 0) return cur > 0 ? "+100%" : null;
+    const pct = Math.round(((cur - prev) / prev) * 100);
+    return `${pct >= 0 ? "+" : ""}${pct}% vs prior ${range.label.toLowerCase()}`;
+  }
+
   const now = new Date();
   const ym = (d: Date) => d.getFullYear() * 12 + d.getMonth();
   const curYM = ym(now);
@@ -90,10 +111,10 @@ export default async function InsightsPage({
   const maxDriverRev = Math.max(1, ...drivers.map((d) => d.revenue));
 
   const kpis = [
-    { Icon: DollarSign, val: money(totalRevenue), label: "Total revenue", accent: "sx-emerald" },
-    { Icon: Receipt, val: money(thisMonth), label: "This month", accent: "sx-blue" },
-    { Icon: PackageCheck, val: String(completed.length), label: "Completed loads", accent: "sx-green" },
-    { Icon: Package, val: money(avgPerLoad), label: "Avg / load", accent: "sx-sky" },
+    { Icon: DollarSign, val: money(totalRevenue), label: "Total revenue", accent: "sx-emerald", delta: pctChange(totalRevenue, prevRevenue) },
+    { Icon: Receipt, val: money(thisMonth), label: "This month", accent: "sx-blue", delta: null },
+    { Icon: PackageCheck, val: String(completed.length), label: "Completed loads", accent: "sx-green", delta: pctChange(completed.length, prevCount) },
+    { Icon: Package, val: money(avgPerLoad), label: "Avg / load", accent: "sx-sky", delta: null },
   ];
 
   return (
@@ -109,15 +130,25 @@ export default async function InsightsPage({
         </div>
 
         <div className="ins-range">
-          {RANGES.map((r) => (
-            <Link
-              key={r.key}
-              href={r.key === "all" ? "/insights" : `/insights?range=${r.key}`}
-              className={`ins-range-item${r.key === range.key ? " active" : ""}`}
-            >
-              {r.label}
-            </Link>
-          ))}
+          <div className="ins-range-tabs">
+            {RANGES.map((r) => (
+              <Link
+                key={r.key}
+                href={r.key === "all" ? "/insights" : `/insights?range=${r.key}`}
+                className={`ins-range-item${r.key === range.key ? " active" : ""}`}
+              >
+                {r.label}
+              </Link>
+            ))}
+          </div>
+          <InsightsExport
+            data={{
+              rangeLabel: range.label,
+              kpis: kpis.map((k) => ({ label: k.label, val: k.val })),
+              weeks: weeks.map((w) => ({ label: w.label, total: w.total })),
+              drivers,
+            }}
+          />
         </div>
 
         <div className="home-stats">
@@ -128,6 +159,7 @@ export default async function InsightsPage({
                 <div className="hs-ic"><Icon size={18} /></div>
                 <div className="hs-val">{k.val}</div>
                 <div className="hs-label">{k.label}</div>
+                {k.delta && <div className="hs-delta">{k.delta}</div>}
               </div>
             );
           })}

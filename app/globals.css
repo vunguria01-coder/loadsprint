@@ -1569,10 +1569,12 @@ table.acc select option{background:#0b1120}
 /* ============================================================
    Insights (analytics) — pure-CSS charts.
    ============================================================ */
-.ins-range{display:flex;gap:8px;margin-bottom:18px}
+.ins-range{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.ins-range-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .ins-range-item{font-family:Manrope;font-weight:700;font-size:12.5px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:6px 13px;border-radius:999px;text-decoration:none}
 .ins-range-item:hover{color:var(--ink);border-color:rgba(56,189,248,.4)}
 .ins-range-item.active{color:#fff;background:var(--sky,#38bdf8);border-color:var(--sky,#38bdf8)}
+.hs-delta{font-family:Manrope;font-weight:700;font-size:11.5px;color:var(--muted);margin-top:4px}
 .ins-section{margin-top:28px}
 .ins-section h3{font-family:Poppins;font-weight:800;font-size:17px;color:#fff;margin:0 0 4px;letter-spacing:-.01em}
 .ins-section .ins-sub{color:var(--muted);font-size:13px;margin:0 0 14px}
