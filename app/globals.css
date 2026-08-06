@@ -1593,6 +1593,11 @@ table.acc select option{background:#0b1120}
 
 .ins-drv{display:flex;flex-direction:column;gap:15px}
 .ins-drv-row{display:flex;flex-direction:column;gap:7px}
+.ins-drv-link{text-decoration:none;padding:8px;margin:-8px;border-radius:10px;transition:background .15s ease}
+.ins-drv-link:hover{background:rgba(56,189,248,.06)}
+.ins-drv-link:focus-visible{outline:2px solid var(--sky,#38bdf8);outline-offset:2px}
+.hs-info{display:inline-flex;vertical-align:middle;margin-left:5px;color:var(--muted);cursor:help}
+.hs-info:hover,.hs-info:focus-visible{color:var(--sky,#38bdf8);outline:none}
 .ins-drv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ins-drv-name{font-family:Manrope;font-weight:700;font-size:14px;color:#fff}
 .ins-drv-meta{font-family:Manrope;font-weight:600;font-size:12.5px;color:var(--muted);white-space:nowrap}

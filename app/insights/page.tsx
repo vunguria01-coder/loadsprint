@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, DollarSign, PackageCheck, Package, Receipt } from "lucide-react";
+import { BarChart3, DollarSign, PackageCheck, Package, Receipt, Info } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { hasAccess } from "@/lib/auth";
 import { getLoadsByDispatcher, getAllLoads, type Load } from "@/lib/loads";
@@ -95,11 +95,12 @@ export default async function InsightsPage({
   const maxWeek = Math.max(1, ...weeks.map((w) => w.total));
 
   // By driver.
-  const byDriver = new Map<string, { name: string; loads: number; revenue: number }>();
+  const byDriver = new Map<string, { name: string; email: string; loads: number; revenue: number }>();
   for (const l of completed) {
     const key = (l.driverEmail || l.driverName || "unknown").toLowerCase();
     const cur = byDriver.get(key) || {
       name: l.driverName || l.driverEmail || "Unknown driver",
+      email: l.driverEmail || "",
       loads: 0,
       revenue: 0,
     };
@@ -111,10 +112,24 @@ export default async function InsightsPage({
   const maxDriverRev = Math.max(1, ...drivers.map((d) => d.revenue));
 
   const kpis = [
-    { Icon: DollarSign, val: money(totalRevenue), label: "Total revenue", accent: "sx-emerald", delta: pctChange(totalRevenue, prevRevenue) },
-    { Icon: Receipt, val: money(thisMonth), label: "This month", accent: "sx-blue", delta: null },
-    { Icon: PackageCheck, val: String(completed.length), label: "Completed loads", accent: "sx-green", delta: pctChange(completed.length, prevCount) },
-    { Icon: Package, val: money(avgPerLoad), label: "Avg / load", accent: "sx-sky", delta: null },
+    {
+      Icon: DollarSign, val: money(totalRevenue), label: "Total revenue", accent: "sx-emerald",
+      delta: pctChange(totalRevenue, prevRevenue),
+      info: `Sum of the load rate on every delivered/closed load in ${range.label.toLowerCase()}.`,
+    },
+    {
+      Icon: Receipt, val: money(thisMonth), label: "This month", accent: "sx-blue", delta: null,
+      info: "Sum of the load rate on loads completed in the current calendar month — not affected by the period filter above.",
+    },
+    {
+      Icon: PackageCheck, val: String(completed.length), label: "Completed loads", accent: "sx-green",
+      delta: pctChange(completed.length, prevCount),
+      info: `Count of delivered/closed loads in ${range.label.toLowerCase()}.`,
+    },
+    {
+      Icon: Package, val: money(avgPerLoad), label: "Avg / load", accent: "sx-sky", delta: null,
+      info: "Total revenue divided by completed loads, for the selected period.",
+    },
   ];
 
   return (
@@ -158,7 +173,12 @@ export default async function InsightsPage({
               <div className={`home-stat ${k.accent}`} key={k.label}>
                 <div className="hs-ic"><Icon size={18} /></div>
                 <div className="hs-val">{k.val}</div>
-                <div className="hs-label">{k.label}</div>
+                <div className="hs-label">
+                  {k.label}
+                  <span className="hs-info" tabIndex={0} title={k.info} aria-label={k.info}>
+                    <Info size={12} />
+                  </span>
+                </div>
                 {k.delta && <div className="hs-delta">{k.delta}</div>}
               </div>
             );
@@ -202,23 +222,38 @@ export default async function InsightsPage({
               <p className="ins-sub">Delivered revenue and load count per driver.</p>
               <div className="ins-card">
                 <div className="ins-drv">
-                  {drivers.map((d) => (
-                    <div className="ins-drv-row" key={d.name}>
-                      <div className="ins-drv-top">
-                        <span className="ins-drv-name">{d.name}</span>
-                        <span className="ins-drv-meta">
-                          {d.loads} load{d.loads === 1 ? "" : "s"} ·{" "}
-                          <span className="ins-drv-rev">{money(d.revenue)}</span>
-                        </span>
+                  {drivers.map((d) => {
+                    const inner = (
+                      <>
+                        <div className="ins-drv-top">
+                          <span className="ins-drv-name">{d.name}</span>
+                          <span className="ins-drv-meta">
+                            {d.loads} load{d.loads === 1 ? "" : "s"} ·{" "}
+                            <span className="ins-drv-rev">{money(d.revenue)}</span>
+                          </span>
+                        </div>
+                        <div className="ins-track">
+                          <div
+                            className="it-fill"
+                            style={{ width: `${Math.max(3, (d.revenue / maxDriverRev) * 100)}%` }}
+                          />
+                        </div>
+                      </>
+                    );
+                    return d.email ? (
+                      <Link
+                        href={`/drivers/${encodeURIComponent(d.email)}`}
+                        className="ins-drv-row ins-drv-link"
+                        key={d.name}
+                      >
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className="ins-drv-row" key={d.name}>
+                        {inner}
                       </div>
-                      <div className="ins-track">
-                        <div
-                          className="it-fill"
-                          style={{ width: `${Math.max(3, (d.revenue / maxDriverRev) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
