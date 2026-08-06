@@ -167,7 +167,11 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
           const ds = ymd(cur.y, cur.m, d);
           const evs = events.get(ds) || [];
           return (
-            <div className={`cal-cell${ds === todayStr ? " cal-now" : ""}`} key={ds}>
+            <div
+              className={`cal-cell${ds === todayStr ? " cal-now" : ""}`}
+              aria-current={ds === todayStr ? "date" : undefined}
+              key={ds}
+            >
               <div className="cal-dnum">{d}</div>
               <div className="cal-evs">
                 {evs.map((e, i) => (
