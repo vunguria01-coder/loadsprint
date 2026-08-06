@@ -229,6 +229,11 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
         >
           <i className="ev-dot ev-drop-dot" /> Delivery
         </button>
+        {hiddenTypes.size > 0 && (
+          <button type="button" className="cal-legend-showall" onClick={() => setHiddenTypes(new Set())}>
+            Show all
+          </button>
+        )}
       </div>
 
       <div className="cal-grid">
