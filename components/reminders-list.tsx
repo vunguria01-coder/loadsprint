@@ -189,6 +189,22 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
         )}
       </div>
       {(query || type) && (
+        <div className="lb-filter-chips">
+          {query && (
+            <span className="lb-filter-chip">
+              Search: "{q}"
+              <button type="button" onClick={() => setQ("")} aria-label="Clear search">✕</button>
+            </span>
+          )}
+          {type && (
+            <span className="lb-filter-chip">
+              {type === "doc" ? "Documents" : "Maintenance"}
+              <button type="button" onClick={() => setType("")} aria-label="Clear type filter">✕</button>
+            </span>
+          )}
+        </div>
+      )}
+      {(query || type) && (
         <p className="lb-count" aria-live="polite">
           {shown.length} of {rows.length} reminder{rows.length === 1 ? "" : "s"}
         </p>
