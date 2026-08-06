@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Sparkles, Send, CheckCircle2, RefreshCw, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Sparkles, Send, CheckCircle2, RefreshCw, RotateCcw, Search } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { EmptyState } from "@/components/empty-state";
 import type { SupportTicket } from "@/lib/support";
 
 const CAT_LABEL: Record<string, string> = {
@@ -17,11 +18,43 @@ const CAT_LABEL: Record<string, string> = {
 
 export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [busy, setBusy] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, t.reply || t.aiDraftReply || ""]))
   );
+
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [status, setStatus] = useState<"" | "open" | "resolved">(
+    () => (searchParams.get("status") as "open" | "resolved") || ""
+  );
+  const [sort, setSort] = useState<"" | "oldest">(() => (searchParams.get("sort") as "oldest") || "");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status) params.set("status", status);
+    if (sort) params.set("sort", sort);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, status, sort]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/") return;
+      const el = document.activeElement;
+      const typing = el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   async function act(id: string, body: Record<string, unknown>, ok: string) {
     setBusy(id + String(body.action));
@@ -48,9 +81,76 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
     return <div className="empty">No support tickets yet.</div>;
   }
 
+  const openCount = tickets.filter((t) => t.status !== "resolved").length;
+  const resolvedCount = tickets.length - openCount;
+
+  const query = q.trim().toLowerCase();
+  const shown = tickets
+    .filter((t) => !status || (status === "resolved" ? t.status === "resolved" : t.status !== "resolved"))
+    .filter(
+      (t) =>
+        !query ||
+        t.subject.toLowerCase().includes(query) ||
+        t.userName.toLowerCase().includes(query) ||
+        t.userEmail.toLowerCase().includes(query)
+    )
+    .sort((a, b) => (sort === "oldest" ? (a.createdAt > b.createdAt ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1));
+
   return (
-    <div className="asup-list">
-      {tickets.map((t) => {
+    <>
+      <div className="lb-controls">
+        <div className="driver-search lb-search">
+          <Search size={18} />
+          <input
+            ref={searchRef}
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
+            placeholder="Search by subject, name or email… (press /)"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
+          )}
+        </div>
+        <select className="lb-status" value={status} onChange={(e) => setStatus(e.target.value as "" | "open" | "resolved")}>
+          <option value="">All ({tickets.length})</option>
+          <option value="open">Open ({openCount})</option>
+          <option value="resolved">Resolved ({resolvedCount})</option>
+        </select>
+        <select className="lb-status" value={sort} onChange={(e) => setSort(e.target.value as "" | "oldest")}>
+          <option value="">Sort: newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        {(q || status || sort) && (
+          <button type="button" className="lb-clear-filters" onClick={() => { setQ(""); setStatus(""); setSort(""); }}>
+            Clear filters
+          </button>
+        )}
+      </div>
+      {(query || status) && (
+        <p className="lb-count" aria-live="polite">
+          {shown.length} of {tickets.length} ticket{tickets.length === 1 ? "" : "s"}
+        </p>
+      )}
+      {shown.length === 0 ? (
+        <EmptyState
+          icon={<Search size={26} />}
+          title="No matching tickets"
+          sub={query ? `No tickets match "${q}".` : "No tickets match this filter."}
+          action={
+            <button type="button" className="lb-clear-filters" onClick={() => { setQ(""); setStatus(""); setSort(""); }}>
+              Clear filters
+            </button>
+          }
+        />
+      ) : (
+      <div className="asup-list">
+      {shown.map((t) => {
         const draft = drafts[t.id] ?? "";
         return (
           <div key={t.id} className={`asup-card st-${t.status}`}>
@@ -151,6 +251,8 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
           </div>
         );
       })}
-    </div>
+      </div>
+      )}
+    </>
   );
 }
