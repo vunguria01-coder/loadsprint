@@ -38,14 +38,18 @@ export function TruckGrid({ trucks }: { trucks: TruckSummary[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [sort, setSort] = useState<"" | "unit-asc" | "unit-desc" | "plate-asc">(
+    () => (searchParams.get("sort") as "unit-asc" | "unit-desc" | "plate-asc") || ""
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (sort) params.set("sort", sort);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, sort]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -62,27 +66,46 @@ export function TruckGrid({ trucks }: { trucks: TruckSummary[] }) {
   }, []);
 
   const query = q.trim().toLowerCase();
-  const shown = query ? trucks.filter((t) => t.search.includes(query)) : trucks;
+  const filtered = query ? trucks.filter((t) => t.search.includes(query)) : trucks;
+  // Trucks without a unit/plate sort last, not first — a blank value isn't "A".
+  const shown = (() => {
+    if (sort === "unit-asc") return [...filtered].sort((a, b) => (a.unit || "￿").localeCompare(b.unit || "￿", undefined, { numeric: true }));
+    if (sort === "unit-desc") return [...filtered].sort((a, b) => (b.unit || "").localeCompare(a.unit || "", undefined, { numeric: true }));
+    if (sort === "plate-asc") return [...filtered].sort((a, b) => (a.plate || "￿").localeCompare(b.plate || "￿", undefined, { numeric: true }));
+    return filtered;
+  })();
 
   return (
     <>
-      <div className="driver-search lb-search" style={{ marginBottom: 16 }}>
-        <Search size={18} />
-        <input
-          ref={searchRef}
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Escape") return;
-            if (q) setQ("");
-            else (e.target as HTMLInputElement).blur();
-          }}
-          placeholder="Search by unit #, plate # or VIN… (press /)"
-        />
-        {q && (
-          <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
-        )}
+      <div className="lb-controls">
+        <div className="driver-search lb-search">
+          <Search size={18} />
+          <input
+            ref={searchRef}
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              if (q) setQ("");
+              else (e.target as HTMLInputElement).blur();
+            }}
+            placeholder="Search by unit #, plate # or VIN… (press /)"
+          />
+          {q && (
+            <button type="button" className="ds-clear" onClick={() => setQ("")}>✕</button>
+          )}
+        </div>
+        <select
+          className="lb-status"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "" | "unit-asc" | "unit-desc" | "plate-asc")}
+        >
+          <option value="">Sort: default</option>
+          <option value="unit-asc">Unit # A-Z</option>
+          <option value="unit-desc">Unit # Z-A</option>
+          <option value="plate-asc">License plate A-Z</option>
+        </select>
       </div>
       {query && (
         <p className="lb-count" aria-live="polite">
