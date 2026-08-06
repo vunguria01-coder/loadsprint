@@ -106,6 +106,15 @@ export function TruckGrid({ trucks }: { trucks: TruckSummary[] }) {
           <option value="unit-desc">Unit # Z-A</option>
           <option value="plate-asc">License plate A-Z</option>
         </select>
+        {(q || sort) && (
+          <button
+            type="button"
+            className="lb-clear-filters"
+            onClick={() => { setQ(""); setSort(""); }}
+          >
+            Clear
+          </button>
+        )}
       </div>
       {query && (
         <p className="lb-count" aria-live="polite">
