@@ -196,6 +196,11 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
         </div>
       </div>
 
+      <div className="cal-legend">
+        <span><i className="ev-dot ev-pick-dot" /> Pickup</span>
+        <span><i className="ev-dot ev-drop-dot" /> Delivery</span>
+      </div>
+
       <div className="cal-grid">
         {WEEK.map((w) => (
           <div className="cal-wd" key={w}>{w}</div>
@@ -269,11 +274,6 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
             </div>
           );
         })}
-      </div>
-
-      <div className="cal-legend">
-        <span><i className="ev-dot ev-pick-dot" /> Pickup</span>
-        <span><i className="ev-dot ev-drop-dot" /> Delivery</span>
       </div>
 
       <div className="cal-sched">
