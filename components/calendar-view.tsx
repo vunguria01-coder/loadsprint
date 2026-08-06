@@ -150,7 +150,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
   return (
     <div className="cal-wrap">
       <div className="cal-bar">
-        <div className="cal-month">{monthLabel}</div>
+        <div className="cal-month" aria-live="polite">{monthLabel}</div>
         <div className="cal-nav">
           <button type="button" onClick={prev} aria-label="Previous month"><ChevronLeft size={18} /></button>
           <button type="button" className="cal-today" onClick={goToday}>Today</button>
