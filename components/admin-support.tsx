@@ -132,6 +132,28 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
           </button>
         )}
       </div>
+      {(query || status || sort) && (
+        <div className="lb-filter-chips">
+          {query && (
+            <span className="lb-filter-chip">
+              Search: "{q}"
+              <button type="button" onClick={() => setQ("")} aria-label="Clear search">✕</button>
+            </span>
+          )}
+          {status && (
+            <span className="lb-filter-chip">
+              {status === "open" ? "Open" : "Resolved"}
+              <button type="button" onClick={() => setStatus("")} aria-label="Clear status filter">✕</button>
+            </span>
+          )}
+          {sort && (
+            <span className="lb-filter-chip">
+              Sort: Oldest
+              <button type="button" onClick={() => setSort("")} aria-label="Clear sort">✕</button>
+            </span>
+          )}
+        </div>
+      )}
       {(query || status) && (
         <p className="lb-count" aria-live="polite">
           {shown.length} of {tickets.length} ticket{tickets.length === 1 ? "" : "s"}
@@ -206,7 +228,7 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
                   disabled={busy !== "" || !draft.trim()}
                   onClick={() => act(t.id, { action: "reply", reply: draft }, "Reply sent.")}
                 >
-                  <Send size={15} /> {t.reply ? "Update reply" : "Send reply"}
+                  <Send size={15} /> {busy === t.id + "reply" ? "Sending…" : t.reply ? "Update reply" : "Send reply"}
                 </button>
                 {t.aiDraftReply && draft !== t.aiDraftReply && (
                   <button
@@ -227,7 +249,10 @@ export function AdminSupport({ tickets }: { tickets: SupportTicket[] }) {
                   <button
                     className="btn btn-ghost btn-sm"
                     disabled={busy !== ""}
-                    onClick={() => act(t.id, { action: "status", status: "resolved" }, "Resolved.")}
+                    onClick={() => {
+                      if (!confirm(`Mark "${t.subject}" as resolved?`)) return;
+                      act(t.id, { action: "status", status: "resolved" }, "Resolved.");
+                    }}
                   >
                     <CheckCircle2 size={15} /> Mark resolved
                   </button>
