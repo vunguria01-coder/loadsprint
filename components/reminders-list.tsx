@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Container, Search } from "lucide-react";
+import { ChevronDown, Container, Search } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 
 export type ReminderRow = {
@@ -16,6 +16,45 @@ export type ReminderRow = {
   group: "overdue" | "today" | "soon";
   search: string; // lowercased: unit, plate, truck name, item label
 };
+
+const COLLAPSED_KEY = "ls_reminders_collapsed_groups";
+
+function Section({
+  id,
+  title,
+  sub,
+  rows,
+  collapsed,
+  onToggle,
+}: {
+  id: string;
+  title: string;
+  sub: string;
+  rows: ReminderRow[];
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="ins-section">
+      <button
+        type="button"
+        className="ins-section-head"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+      >
+        <h3>{title} <span className="ins-count">{rows.length}</span></h3>
+        <ChevronDown className={`dg-chev${collapsed ? " collapsed" : ""}`} size={18} />
+      </button>
+      {!collapsed && (
+        <>
+          <p className="ins-sub">{sub}</p>
+          <div className="rem-list">{rows.map((r, i) => <Row key={i} r={r} />)}</div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function Row({ r }: { r: ReminderRow }) {
   const cls = r.status === "overdue" ? "bad" : "warn";
@@ -43,6 +82,24 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
   const [type, setType] = useState<"" | "doc" | "maintenance">(
     () => (searchParams.get("type") as "doc" | "maintenance") || ""
   );
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(COLLAPSED_KEY); } catch {}
+    if (!raw) return;
+    try { setCollapsed(new Set(JSON.parse(raw))); } catch {}
+  }, []);
+
+  function toggleGroup(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -138,27 +195,30 @@ export function RemindersList({ rows }: { rows: ReminderRow[] }) {
         />
       ) : (
         <>
-          {overdue.length > 0 && (
-            <div className="ins-section">
-              <h3>Overdue</h3>
-              <p className="ins-sub">Handle these now.</p>
-              <div className="rem-list">{overdue.map((r, i) => <Row key={i} r={r} />)}</div>
-            </div>
-          )}
-          {today.length > 0 && (
-            <div className="ins-section">
-              <h3>Today</h3>
-              <p className="ins-sub">Expiring today.</p>
-              <div className="rem-list">{today.map((r, i) => <Row key={i} r={r} />)}</div>
-            </div>
-          )}
-          {soon.length > 0 && (
-            <div className="ins-section">
-              <h3>Upcoming</h3>
-              <p className="ins-sub">Within 30 days or 1,500 miles.</p>
-              <div className="rem-list">{soon.map((r, i) => <Row key={i} r={r} />)}</div>
-            </div>
-          )}
+          <Section
+            id="overdue"
+            title="Overdue"
+            sub="Handle these now."
+            rows={overdue}
+            collapsed={collapsed.has("overdue")}
+            onToggle={() => toggleGroup("overdue")}
+          />
+          <Section
+            id="today"
+            title="Today"
+            sub="Expiring today."
+            rows={today}
+            collapsed={collapsed.has("today")}
+            onToggle={() => toggleGroup("today")}
+          />
+          <Section
+            id="soon"
+            title="Upcoming"
+            sub="Within 30 days or 1,500 miles."
+            rows={soon}
+            collapsed={collapsed.has("soon")}
+            onToggle={() => toggleGroup("soon")}
+          />
         </>
       )}
     </>
