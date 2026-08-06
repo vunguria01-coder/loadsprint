@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { useToast } from "@/components/toast";
 
@@ -72,8 +72,23 @@ function ScheduleRow({ load }: { load: CalLoad }) {
 }
 
 export function CalendarView({ loads }: { loads: CalLoad[] }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const today = new Date();
-  const [cur, setCur] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const [cur, setCur] = useState(() => {
+    const m = /^(\d{4})-(\d{2})$/.exec(searchParams.get("month") || "");
+    if (m) return { y: Number(m[1]), m: Number(m[2]) - 1 };
+    return { y: today.getFullYear(), m: today.getMonth() };
+  });
+
+  useEffect(() => {
+    const monthParam = `${cur.y}-${String(cur.m + 1).padStart(2, "0")}`;
+    const isCurrentMonth = cur.y === today.getFullYear() && cur.m === today.getMonth();
+    const qs = isCurrentMonth ? "" : `?month=${monthParam}`;
+    router.replace(`${pathname}${qs}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cur]);
 
   // Map date string -> events ({ load, type })
   const events = useMemo(() => {
