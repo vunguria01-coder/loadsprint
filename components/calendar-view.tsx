@@ -131,6 +131,20 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     setCur({ y: today.getFullYear(), m: today.getMonth() });
   }
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const el = document.activeElement;
+      const typing = el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      if (e.key === "ArrowLeft") prev();
+      else next();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toSchedule = loads.filter((l) => l.active);
 
   return (
