@@ -1716,7 +1716,15 @@ table.acc select option{background:#0b1120}
 .ev-drop{color:#86efac;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35)}
 .ev-drop .ev-dot{background:#4ade80}
 .cal-ev:hover{filter:brightness(1.15)}
-.cal-ev-more{font-family:Manrope;font-weight:700;font-size:11px;color:var(--muted);padding:3px 7px}
+.cal-ev-more{font-family:Manrope;font-weight:700;font-size:11px;color:var(--muted);padding:3px 7px;background:none;border:none;cursor:pointer;text-align:left}
+.cal-ev-more:hover{color:var(--sky,#38bdf8)}
+.cal-cell{position:relative}
+.cal-cell-open{overflow:visible;z-index:70}
+.cal-day-pop{position:absolute;top:0;left:0;z-index:71;width:220px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:10px;animation:drawer-fade .12s ease}
+.cal-day-pop-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-day-pop-head b{font-family:Poppins;font-size:13px}
+.cal-day-pop-head button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px}
+.cal-day-pop-list{display:flex;flex-direction:column;gap:5px}
 
 .cal-legend{display:flex;gap:18px;margin:12px 2px 0}
 .cal-legend span{display:inline-flex;align-items:center;gap:7px;font-family:Manrope;font-weight:600;font-size:12.5px;color:var(--muted)}

@@ -146,6 +146,8 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [openDay, setOpenDay] = useState<string | null>(null);
+
   const toSchedule = loads.filter((l) => l.active);
 
   return (
@@ -169,7 +171,7 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
           const evs = events.get(ds) || [];
           return (
             <div
-              className={`cal-cell${ds === todayStr ? " cal-now" : ""}`}
+              className={`cal-cell${ds === todayStr ? " cal-now" : ""}${openDay === ds ? " cal-cell-open" : ""}`}
               aria-current={ds === todayStr ? "date" : undefined}
               key={ds}
             >
@@ -187,9 +189,39 @@ export function CalendarView({ loads }: { loads: CalLoad[] }) {
                   </Link>
                 ))}
                 {evs.length > MAX_EVENTS_PER_CELL && (
-                  <span className="cal-ev-more">+{evs.length - MAX_EVENTS_PER_CELL} more</span>
+                  <button
+                    type="button"
+                    className="cal-ev-more"
+                    onClick={() => setOpenDay(ds)}
+                  >
+                    +{evs.length - MAX_EVENTS_PER_CELL} more
+                  </button>
                 )}
               </div>
+              {openDay === ds && (
+                <>
+                  <div className="cab-acc-scrim" onClick={() => setOpenDay(null)} />
+                  <div className="cal-day-pop">
+                    <div className="cal-day-pop-head">
+                      <b>{new Date(cur.y, cur.m, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>
+                      <button type="button" onClick={() => setOpenDay(null)} aria-label="Close">✕</button>
+                    </div>
+                    <div className="cal-day-pop-list">
+                      {evs.map((e, i) => (
+                        <Link
+                          key={`${e.load.id}-${e.type}-${i}`}
+                          href={`/loads/${e.load.id}`}
+                          className={`cal-ev ${e.type === "pickup" ? "ev-pick" : "ev-drop"}`}
+                          title={`${e.type === "pickup" ? "Pickup" : "Delivery"}: ${e.load.ref} — ${e.load.route}`}
+                        >
+                          <span className="ev-dot" />
+                          {e.load.ref}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
