@@ -51,6 +51,29 @@ function fmtMin(v: number | null): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
+// A clock is the dispatcher's real signal: out of hours means this driver
+// legally cannot keep driving, low means don't plan another pickup on it.
+// Thresholds are per-clock — 45 min left on the break timer is normal, 45
+// min left on the 70-hour cycle is not.
+function clockLevel(v: number | null, lowBelowMin: number): "" | "low" | "out" {
+  if (v == null) return "";
+  if (v <= 0) return "out";
+  return v < lowBelowMin ? "low" : "";
+}
+
+// How fresh the provider's own numbers are. Deliberately not a "Live" badge:
+// no provider sync cadence is agreed yet (see docs/eld-providers-research.md),
+// so this only reports the measured age of the data.
+function freshness(iso: string | null): { cls: string; label: string } {
+  if (!iso) return { cls: "", label: NOT_AVAILABLE };
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return { cls: "", label: NOT_AVAILABLE };
+  const minutes = Math.max(0, Math.floor((Date.now() - then) / 60000));
+  if (minutes <= 15) return { cls: "live", label: fmtUpdatedAgo(iso) };
+  if (minutes <= 60) return { cls: "", label: fmtUpdatedAgo(iso) };
+  return { cls: "stale", label: fmtUpdatedAgo(iso) };
+}
+
 // Deliberately exact, not a vague "Live" badge — the real sync cadence
 // isn't agreed with any provider yet (see the ELD research doc), so this
 // only ever states what's actually known: when it was last updated.
@@ -104,31 +127,51 @@ export function EldStatusCard({ email }: { email: string }) {
           {STATE_COPY[data.state]}
         </p>
       ) : (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 20, fontWeight: 600 }}>{DUTY_STATUS_LABELS[data.dutyStatus] || data.dutyStatus}</div>
-          <div className="fgrid" style={{ marginTop: 12 }}>
-            <div className="field">
-              <label>Drive remaining</label>
-              <div>{fmtMin(data.driveRemainingMin)}</div>
+        (() => {
+          const clocks = [
+            { label: "Drive remaining", v: data.driveRemainingMin, low: 60 },
+            { label: "Shift remaining", v: data.shiftRemainingMin, low: 60 },
+            { label: "Cycle remaining", v: data.cycleRemainingMin, low: 120 },
+            { label: "Break remaining", v: data.breakRemainingMin, low: 15 },
+          ].map((c) => ({ ...c, level: clockLevel(c.v, c.low) }));
+          const out = clocks.filter((c) => c.level === "out");
+          const fresh = freshness(data.sourceUpdatedAt || data.fetchedAt);
+
+          return (
+            <div>
+              <div className="dc-eld-duty">
+                <span className="dc-eld-status">
+                  {DUTY_STATUS_LABELS[data.dutyStatus] || data.dutyStatus}
+                </span>
+                <span className={`dc-eld-conn${fresh.cls ? ` ${fresh.cls}` : ""}`}>{fresh.label}</span>
+              </div>
+
+              {out.length > 0 && (
+                <div className="dc-eld-viol">
+                  Out of hours: {out.map((c) => c.label.replace(" remaining", "")).join(", ")} — this
+                  driver can&apos;t legally keep driving.
+                </div>
+              )}
+
+              <div className="dc-eld-grid">
+                {clocks.map((c) => (
+                  <div key={c.label} className={`dc-eld-cell${c.level ? ` ${c.level}` : ""}`}>
+                    <label>{c.label.replace(" remaining", "")}</label>
+                    <div className="v">{fmtMin(c.v)}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="dc-eld-foot">
+                <span>
+                  {data.vehicleName || NOT_AVAILABLE}
+                  {data.vehicleVin ? ` · ${data.vehicleVin}` : ""}
+                </span>
+                <span>Connected</span>
+              </div>
             </div>
-            <div className="field">
-              <label>Shift remaining</label>
-              <div>{fmtMin(data.shiftRemainingMin)}</div>
-            </div>
-            <div className="field">
-              <label>Cycle remaining</label>
-              <div>{fmtMin(data.cycleRemainingMin)}</div>
-            </div>
-            <div className="field">
-              <label>Break remaining</label>
-              <div>{fmtMin(data.breakRemainingMin)}</div>
-            </div>
-          </div>
-          <p className="px" style={{ marginTop: 10 }}>
-            {data.vehicleName || NOT_AVAILABLE}
-            {data.vehicleVin ? ` (${data.vehicleVin})` : ""} · {fmtUpdatedAgo(data.sourceUpdatedAt || data.fetchedAt)}
-          </p>
-        </div>
+          );
+        })()
       )}
     </div>
   );
