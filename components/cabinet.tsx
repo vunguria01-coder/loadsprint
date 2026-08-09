@@ -89,12 +89,11 @@ export function Cabinet({
   const [acc, setAcc] = useState(false); // account dropdown
   const router = useRouter();
   const pathname = usePathname();
-  // Home is the root of the app, and the top-level Active loads / Drivers
-  // lists aren't "into" anything — "Back" has nowhere meaningful to go from
-  // any of them. Their own detail pages (a load, a driver) keep it.
-  const ROOT_LIST_PATHS = ["/dashboard", "/active-loads", "/drivers"];
-  const showBack = !ROOT_LIST_PATHS.includes(pathname);
   const items = navForRole(role, isOwner);
+  // Every sidebar destination is a root list — nothing to go "back" from
+  // within the app's primary flow, the sidebar already goes anywhere. Only
+  // pages one level below a list (a load, a driver, a truck...) keep Back.
+  const showBack = !items.some((i) => i.href === pathname);
   const expired = tier !== "none" && daysLeft !== null && daysLeft < 0;
 
   async function logout() {
