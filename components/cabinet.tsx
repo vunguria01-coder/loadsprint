@@ -172,6 +172,9 @@ export function Cabinet({
                   {role === "dispatcher" && (
                     <Link href="/invoice-settings" className="cab-acc-item" onClick={() => setAcc(false)}>Invoice details</Link>
                   )}
+                  {role === "dispatcher" && (
+                    <Link href="/load-sources" className="cab-acc-item" onClick={() => setAcc(false)}>Load sources</Link>
+                  )}
                   <button className="cab-acc-item logout" onClick={logout}>Log out</button>
                 </div>
               </>

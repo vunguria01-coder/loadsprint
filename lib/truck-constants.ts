@@ -59,6 +59,40 @@ export const MAINT_LABELS: Record<MaintKind, string> = {
   other: "Other",
 };
 
+// Same trailer types offered on the public quote form (components/quote-form.tsx)
+// — the one place LoadSprint already asks for an equipment type today.
+export const EQUIPMENT_TYPES = [
+  "dry_van",
+  "reefer",
+  "flatbed",
+  "step_deck",
+  "box_truck",
+] as const;
+export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
+
+export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
+  dry_van: "Dry Van (53′)",
+  reefer: "Reefer",
+  flatbed: "Flatbed",
+  step_deck: "Step Deck",
+  box_truck: "Box Truck",
+};
+
+// Compass-style run preference, the common shorthand dispatchers use when
+// asking a driver which direction they want their next load headed.
+export const DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+export type Direction = (typeof DIRECTIONS)[number];
+export const DIRECTION_LABELS: Record<Direction, string> = {
+  N: "North",
+  NE: "Northeast",
+  E: "East",
+  SE: "Southeast",
+  S: "South",
+  SW: "Southwest",
+  W: "West",
+  NW: "Northwest",
+};
+
 export const TRUCK_STATUSES = ["active", "in_shop", "parked", "sold"] as const;
 export type TruckStatus = (typeof TRUCK_STATUSES)[number];
 

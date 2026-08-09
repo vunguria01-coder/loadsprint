@@ -835,6 +835,44 @@ table.acc select option{background:#0b1120}
 .ld-head .route{color:var(--muted);font-size:16px;margin-top:4px;display:flex;align-items:center;gap:8px}
 .ld-head .route svg{width:15px;height:15px;color:var(--sky)}
 
+/* ---------- driver card: header actions ---------- */
+.dc-actions{display:flex;gap:10px;flex-wrap:wrap}
+.dc-btn{display:inline-flex;align-items:center;gap:7px;background:var(--navy-800);border:1px solid var(--line-2);color:#fff;font-family:Manrope;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:11px;cursor:pointer;text-decoration:none}
+.dc-btn:hover{border-color:var(--sky);color:var(--sky)}
+.dc-btn.primary{background:var(--sky);border-color:var(--sky);color:#06283d}
+.dc-btn.primary:hover{opacity:.9;color:#06283d}
+.dc-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- driver card: section tabs ---------- */
+.dc-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+.dc-tab{appearance:none;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:Manrope;font-weight:700;font-size:14px;padding:12px 4px;margin-right:22px;cursor:pointer;white-space:nowrap}
+.dc-tab:hover{color:#fff}
+.dc-tab.active{color:var(--sky);border-bottom-color:var(--sky)}
+
+/* ---------- driver card: timeline (current load / activity) ---------- */
+.dc-timeline{display:flex;flex-direction:column}
+.dc-tl-item{display:flex;gap:14px;position:relative;padding-bottom:22px}
+.dc-tl-item:last-child{padding-bottom:0}
+.dc-tl-dot{width:12px;height:12px;border-radius:50%;background:var(--line-2);border:2px solid var(--line-2);flex:none;margin-top:3px;z-index:1}
+.dc-tl-item.done .dc-tl-dot{background:var(--sky);border-color:var(--sky)}
+.dc-tl-item.warn .dc-tl-dot{background:#fbbf24;border-color:#fbbf24}
+.dc-tl-item:not(:last-child)::before{content:"";position:absolute;left:5px;top:15px;bottom:0;width:2px;background:var(--line-2)}
+.dc-tl-body{flex:1}
+.dc-tl-kind{font-family:Manrope;font-weight:700;font-size:13px;color:#fff}
+.dc-tl-addr{color:var(--muted);font-size:13.5px;margin-top:2px}
+.dc-tl-time{color:var(--muted);font-size:12px;margin-top:3px}
+
+/* ---------- driver card: documents tab ---------- */
+.dc-doc-group{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.dc-doc-group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+.dc-doc-group-head .ref{font-family:Poppins;font-weight:700;font-size:15px}
+.dc-doc-list{display:flex;flex-direction:column;gap:8px}
+.dc-doc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:9px;background:var(--navy-800)}
+.dc-doc-row .name{font-size:13.5px;color:#fff}
+.dc-doc-row .meta{font-size:12px;color:var(--muted);margin-top:2px}
+.dc-doc-row .btns{display:flex;gap:4px}
+.dc-doc-row button{background:none;border:none;color:var(--sky);font-family:Manrope;font-weight:700;font-size:12.5px;cursor:pointer;padding:4px 8px}
+
 /* map */
 .lmap{height:440px;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0a1424}
 .coords{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:Manrope;font-size:13px}

@@ -137,3 +137,76 @@ export const adminAccountSchema = z.object({
 export const inviteSchema = z.object({
   email: z.string().email("Enter a valid email"),
 });
+
+/* ---------- driver load-search profile ---------- */
+// Empty string / undefined on any field means "no filter" on that
+// dimension — this schema only trims and bounds what was actually typed,
+// it never invents a default the dispatcher didn't set. The preprocess
+// turns a blank textbox ("") into undefined BEFORE z.coerce.number() runs,
+// since Number("") is 0, not undefined — without it, clearing a field
+// would silently save a real 0 filter instead of "no filter."
+const optionalNumber = (max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.coerce.number().min(0).max(max).optional()
+  );
+
+export const driverSearchProfileSchema = z.object({
+  equipment: z.string().max(40).optional().default(""),
+  trailerLengthFt: optionalNumber(60),
+  deadheadRadiusMi: optionalNumber(2000),
+  preferredDirections: z.array(z.string().max(4)).max(8).optional().default([]),
+  minRatePerMile: optionalNumber(50),
+});
+export type DriverSearchProfileValues = z.infer<typeof driverSearchProfileSchema>;
+
+/* ---------- load-board source connections ---------- */
+export const loadSourceConnectSchema = z.object({
+  provider: z.enum(["dat", "123loadboard", "truckstop", "uber_freight"]),
+  // Whatever the provider's credential looks like today (API key, or a
+  // "key:secret" pair typed as one string) — scaffolding only, no real
+  // provider call is made against this value yet.
+  secret: z.string().min(1, "Enter a value").max(4000),
+});
+export type LoadSourceConnectValues = z.infer<typeof loadSourceConnectSchema>;
+
+/* ---------- ELD connections ---------- */
+export const eldConnectSchema = z.object({
+  provider: z.enum(["motive", "samsara", "geotab", "verizon_connect"]),
+  // Whatever the provider's credential looks like (API key, OAuth client
+  // secret, database+username string, etc.) — scaffolding only, no real
+  // ELD call is made against this value yet.
+  secret: z.string().min(1, "Enter a value").max(4000),
+});
+export type EldConnectValues = z.infer<typeof eldConnectSchema>;
+
+/* ---------- ELD driver link ---------- */
+export const eldDriverLinkSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  provider: z.enum(["motive", "samsara", "geotab", "verizon_connect"]),
+  // Only an identifier — never trusted as-is. lib/eld-driver-links.ts
+  // re-verifies it against a fresh listDrivers() call before saving
+  // anything.
+  externalDriverId: z.string().min(1, "Choose an external driver").max(200),
+});
+export type EldDriverLinkValues = z.infer<typeof eldDriverLinkSchema>;
+
+/* ---------- load-board provider policy (admin-only) ---------- */
+// provider is validated separately (against LOAD_SOURCE_PROVIDERS) in the
+// route before this ever runs, so it isn't re-declared here.
+export const loadProviderPolicyInputSchema = z.object({
+  status: z.enum(["pending", "approved", "revoked"]),
+  // A reference number into wherever the actual signed agreement lives —
+  // never the agreement text itself, so no length ceiling beyond "not a
+  // pasted document."
+  agreementRef: z.string().max(200).nullable().optional().default(null),
+  approvedAt: z.string().max(40).nullable().optional().default(null),
+  expiresAt: z.string().max(40).nullable().optional().default(null),
+  allowFetch: z.boolean(),
+  allowStore: z.boolean(),
+  allowDisplay: z.boolean(),
+  cacheTtlSeconds: z.coerce.number().int().min(0).max(86_400),
+  refreshIntervalSeconds: z.coerce.number().int().min(0).max(86_400),
+  allowBrokerContactStorage: z.boolean(),
+});
+export type LoadProviderPolicyInput = z.infer<typeof loadProviderPolicyInputSchema>;

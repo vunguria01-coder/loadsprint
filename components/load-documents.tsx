@@ -5,7 +5,7 @@ import { FileText, File as FileIcon } from "lucide-react";
 import type { LoadView } from "@/lib/load-view";
 import { fileToDataUrl, timeAgo } from "@/lib/format";
 
-const DOC_LABELS: Record<string, string> = {
+export const DOC_LABELS: Record<string, string> = {
   rate_confirmation: "Rate Con",
   bol: "BOL",
   pod: "POD",
@@ -15,7 +15,7 @@ const DOC_LABELS: Record<string, string> = {
 };
 
 // Download a data-URL document to the device.
-function downloadDataUrl(dataUrl: string, name: string) {
+export function downloadDataUrl(dataUrl: string, name: string) {
   try {
     const a = document.createElement("a");
     a.href = dataUrl;
@@ -30,7 +30,7 @@ function downloadDataUrl(dataUrl: string, name: string) {
 
 // Open a data-URL document in a real browser tab. Phones often refuse to render
 // a PDF inside an in-page <iframe>, so this gives a reliable full-screen view.
-function openInTab(dataUrl: string) {
+export function openInTab(dataUrl: string) {
   if (dataUrl.startsWith("data:image")) {
     const w = window.open();
     if (w) w.document.write(`<img src="${dataUrl}" style="max-width:100%"/>`);

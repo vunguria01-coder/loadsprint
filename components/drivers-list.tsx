@@ -16,6 +16,69 @@ type DriverRow = {
   search: string; // lowercased haystack: name, email, load refs, broker names
 };
 
+type EldBatchState = "not_linked" | "not_connected" | "not_verified" | "no_data" | "available" | "temporarily_unavailable";
+
+type EldBatchEntry =
+  | { email: string; state: Exclude<EldBatchState, "available"> }
+  | {
+      email: string;
+      state: "available";
+      dutyStatus: string;
+      driveRemainingMin: number | null;
+      shiftRemainingMin: number | null;
+      cycleRemainingMin: number | null;
+      vehicleName: string | null;
+      vehicleVin: string | null;
+      sourceUpdatedAt: string | null;
+      fetchedAt: string;
+    };
+
+const ELD_DUTY_LABELS: Record<string, string> = {
+  off_duty: "Off duty",
+  sleeper: "Sleeper berth",
+  driving: "Driving",
+  on_duty: "On duty",
+  yard_move: "Yard move",
+  personal_conveyance: "Personal conveyance",
+  unknown: "Unknown",
+};
+
+// One calm, honest line per non-available state — never a button, never a
+// guess. not_connected and not_verified collapse into the same copy: both
+// mean "this company's ELD connection can't be used for HOS right now,"
+// which is all a dispatcher scanning the fleet list needs to know.
+const ELD_EMPTY_COPY: Record<Exclude<EldBatchState, "available">, string> = {
+  not_linked: "Not linked",
+  not_connected: "ELD not connected",
+  not_verified: "ELD not connected",
+  no_data: "Waiting for data",
+  temporarily_unavailable: "Unavailable",
+};
+
+function fmtEldMin(v: number | null): string {
+  if (v == null) return "Not available";
+  const h = Math.floor(v / 60);
+  const m = v % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// Exact elapsed time, not a vague "Live" badge — same reasoning as the
+// individual driver page's ELD card: the real sync cadence isn't agreed
+// with any provider yet, so this only ever states what's actually known.
+function fmtEldUpdatedAgo(iso: string | null): string {
+  if (!iso) return "Not available";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "Not available";
+  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (seconds < 60) return `Updated ${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Updated ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Updated ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `Updated ${days}d ago`;
+}
+
 function locationAgo(iso: string): string {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (s < 90) return "just now";
@@ -50,6 +113,28 @@ export function DriversList({
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [eldMap, setEldMap] = useState<Record<string, EldBatchEntry>>({});
+
+  // One batch request for the whole roster — never one request per driver
+  // row. The route only reads stored snapshots (no adapter/network calls),
+  // so this is cheap even for a large fleet.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/eld-status-batch", { cache: "no-store" });
+        const json = await res.json();
+        if (!cancelled && json.ok) {
+          setEldMap(Object.fromEntries((json.drivers as EldBatchEntry[]).map((d) => [d.email, d])));
+        }
+      } catch {
+        /* ignore — rows just show no ELD info */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Same reason as Active loads: a reload or a back-navigation from a
   // driver's detail page should return to the same search, not reset it.
@@ -248,6 +333,32 @@ export function DriversList({
                       <span className="drv-chip">No location yet</span>
                     )}
                   </div>
+                  {(() => {
+                    const eld = eldMap[d.email];
+                    if (!eld) return null;
+                    if (eld.state !== "available") {
+                      return (
+                        <div className="drv-chips" style={{ marginTop: 6 }}>
+                          <span className="drv-chip">{ELD_EMPTY_COPY[eld.state]}</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="drv-chips" style={{ marginTop: 6, alignItems: "center" }}>
+                        <span style={{ fontWeight: 700, color: "#fff", fontSize: 13 }}>
+                          {ELD_DUTY_LABELS[eld.dutyStatus] || eld.dutyStatus}
+                        </span>
+                        <span style={{ fontWeight: 800, color: "#fff", fontSize: 13 }}>
+                          {fmtEldMin(eld.driveRemainingMin)} drive
+                        </span>
+                        <span className="drv-chip">
+                          Shift {fmtEldMin(eld.shiftRemainingMin)} · Cycle {fmtEldMin(eld.cycleRemainingMin)}
+                        </span>
+                        <span className="drv-chip">{eld.vehicleName || "Not available"}</span>
+                        <span className="drv-chip">{fmtEldUpdatedAgo(eld.sourceUpdatedAt || eld.fetchedAt)}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <ChevronRight className="drv-chev" />
               </Link>
