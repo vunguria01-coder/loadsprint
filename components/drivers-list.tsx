@@ -106,8 +106,8 @@ export function DriversList({
   const [sort, setSort] = useState<"" | "name-asc" | "name-desc" | "active">(
     () => (searchParams.get("sort") as "name-asc" | "name-desc" | "active") || ""
   );
-  const [filter, setFilter] = useState<"" | "with" | "without">(
-    () => (searchParams.get("filter") as "with" | "without") || ""
+  const [filter, setFilter] = useState<"" | "with" | "without" | "attention">(
+    () => (searchParams.get("filter") as "with" | "without" | "attention") || ""
   );
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
@@ -164,20 +164,54 @@ export function DriversList({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // What actually needs a dispatcher's attention right now: an ELD that was
+  // linked and stopped reporting, HOS hours run low, or GPS gone stale.
+  // "Not linked" isn't a problem — most fleets don't have ELD on every truck.
+  const attentionReasons = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const d of drivers) {
+      const reasons: string[] = [];
+      const eld = eldMap[d.email];
+      if (eld && (eld.state === "not_connected" || eld.state === "not_verified" || eld.state === "temporarily_unavailable")) {
+        reasons.push("ELD offline");
+      }
+      if (eld?.state === "available" && eld.driveRemainingMin != null && eld.driveRemainingMin < 60) {
+        reasons.push("HOS low");
+      }
+      const at = locationAt[d.email];
+      if (at && Date.now() - new Date(at).getTime() > 24 * 60 * 60 * 1000) {
+        reasons.push("Location stale");
+      }
+      if (reasons.length) map[d.email] = reasons;
+    }
+    return map;
+  }, [drivers, eldMap, locationAt]);
+
   const query = q.trim().toLowerCase();
   // Counts respect the current search but not the filter itself, same
   // reasoning as the status counts on Active loads.
   const searched = query ? drivers.filter((d) => d.search.includes(query)) : drivers;
   const withCount = searched.filter((d) => d.active > 0).length;
   const withoutCount = searched.length - withCount;
+  const attentionCount = searched.filter((d) => attentionReasons[d.email]).length;
   const shown = (() => {
     let filtered = searched;
     if (filter === "with") filtered = filtered.filter((d) => d.active > 0);
     else if (filter === "without") filtered = filtered.filter((d) => d.active === 0);
+    else if (filter === "attention") filtered = filtered.filter((d) => attentionReasons[d.email]);
     if (sort === "name-asc") return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "name-desc") return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
     if (sort === "active") return [...filtered].sort((a, b) => b.active - a.active);
-    return filtered;
+    // Default: drivers that need attention float to the top, otherwise the
+    // roster keeps its original order — this is the "problems first" view.
+    return filtered
+      .map((d, i) => ({ d, i }))
+      .sort((a, b) => {
+        const pa = attentionReasons[a.d.email] ? 1 : 0;
+        const pb = attentionReasons[b.d.email] ? 1 : 0;
+        return pb - pa || a.i - b.i;
+      })
+      .map((x) => x.d);
   })();
 
   async function remove(email: string) {
@@ -244,9 +278,10 @@ export function DriversList({
         <select
           className="lb-status"
           value={filter}
-          onChange={(e) => setFilter(e.target.value as "" | "with" | "without")}
+          onChange={(e) => setFilter(e.target.value as "" | "with" | "without" | "attention")}
         >
           <option value="">All ({searched.length})</option>
+          <option value="attention">Needs attention ({attentionCount})</option>
           <option value="with">With active loads ({withCount})</option>
           <option value="without">Without active loads ({withoutCount})</option>
         </select>
@@ -277,7 +312,7 @@ export function DriversList({
           )}
           {filter && (
             <span className="lb-filter-chip">
-              {filter === "with" ? "With active loads" : "Without active loads"}
+              {filter === "with" ? "With active loads" : filter === "without" ? "Without active loads" : "Needs attention"}
               <button type="button" onClick={() => setFilter("")} aria-label="Clear filter">✕</button>
             </span>
           )}
@@ -317,6 +352,11 @@ export function DriversList({
                     <span className={`drv-badge ${d.joined ? "ok" : "pending"}`}>
                       {d.joined ? "Active" : "Pending"}
                     </span>
+                    {attentionReasons[d.email] && (
+                      <span className="drv-badge attention" title={attentionReasons[d.email].join(", ")}>
+                        ⚠ {attentionReasons[d.email].join(" · ")}
+                      </span>
+                    )}
                   </div>
                   <div className="drv-email">{d.email}</div>
                   <div className="drv-chips">
