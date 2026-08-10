@@ -4,6 +4,7 @@ import { getInvitesByRole } from "@/lib/invites";
 import { getEldDriverLink } from "@/lib/eld-driver-links";
 import { getEldConnectionGate, checkEldConnectionGate } from "@/lib/eld-connections";
 import { getEldSnapshotStatus, getDecryptedEldSnapshot } from "@/lib/eld-snapshots";
+import type { EldStatusState } from "@/lib/eld-format";
 
 // GET /api/eld-status-batch — one tenant-scoped read covering this
 // dispatcher's ENTIRE roster, for the Drivers list page. Deliberately takes
@@ -19,16 +20,8 @@ import { getEldSnapshotStatus, getDecryptedEldSnapshot } from "@/lib/eld-snapsho
 // other per-driver failure) is caught and reported as
 // temporarily_unavailable for that entry only; it never aborts the batch
 // or 500s the whole response.
-export type EldBatchState =
-  | "not_linked"
-  | "not_connected"
-  | "not_verified"
-  | "no_data"
-  | "available"
-  | "temporarily_unavailable";
-
 export type EldBatchEntry =
-  | { email: string; state: Exclude<EldBatchState, "available"> }
+  | { email: string; state: Exclude<EldStatusState, "available"> }
   | {
       email: string;
       state: "available";

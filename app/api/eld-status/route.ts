@@ -4,6 +4,7 @@ import { getInvitesByRole } from "@/lib/invites";
 import { getEldDriverLink } from "@/lib/eld-driver-links";
 import { getEldConnectionGate, checkEldConnectionGate } from "@/lib/eld-connections";
 import { getEldSnapshotStatus, getDecryptedEldSnapshot } from "@/lib/eld-snapshots";
+import type { EldStatusState } from "@/lib/eld-format";
 
 // GET /api/eld-status?email=... — tenant-scoped ELD/HOS status for one
 // driver's card. Same roster check as /api/driver-search-profile and
@@ -18,14 +19,6 @@ import { getEldSnapshotStatus, getDecryptedEldSnapshot } from "@/lib/eld-snapsho
 // the driver card: duty status, the four HOS clocks, vehicle name/VIN, and
 // the two timestamps (when the provider last computed this vs when
 // LoadSprint fetched it).
-export type EldStatusState =
-  | "not_linked"
-  | "not_connected"
-  | "not_verified"
-  | "no_data"
-  | "available"
-  | "temporarily_unavailable";
-
 function checkAccess(
   me: { id: string; role: string },
   target: string

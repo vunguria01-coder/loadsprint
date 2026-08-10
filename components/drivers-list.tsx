@@ -6,6 +6,7 @@ import { ChevronRight, MapPin, MoreVertical, Search, Trash2 } from "lucide-react
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { EmptyState } from "@/components/empty-state";
+import { type EldStatusState, ELD_DUTY_LABELS, fmtEldMin, fmtEldUpdatedAgo } from "@/lib/eld-format";
 
 type DriverRow = {
   email: string;
@@ -16,10 +17,8 @@ type DriverRow = {
   search: string; // lowercased haystack: name, email, load refs, broker names
 };
 
-type EldBatchState = "not_linked" | "not_connected" | "not_verified" | "no_data" | "available" | "temporarily_unavailable";
-
 type EldBatchEntry =
-  | { email: string; state: Exclude<EldBatchState, "available"> }
+  | { email: string; state: Exclude<EldStatusState, "available"> }
   | {
       email: string;
       state: "available";
@@ -33,51 +32,17 @@ type EldBatchEntry =
       fetchedAt: string;
     };
 
-const ELD_DUTY_LABELS: Record<string, string> = {
-  off_duty: "Off duty",
-  sleeper: "Sleeper berth",
-  driving: "Driving",
-  on_duty: "On duty",
-  yard_move: "Yard move",
-  personal_conveyance: "Personal conveyance",
-  unknown: "Unknown",
-};
-
 // One calm, honest line per non-available state — never a button, never a
 // guess. not_connected and not_verified collapse into the same copy: both
 // mean "this company's ELD connection can't be used for HOS right now,"
 // which is all a dispatcher scanning the fleet list needs to know.
-const ELD_EMPTY_COPY: Record<Exclude<EldBatchState, "available">, string> = {
+const ELD_EMPTY_COPY: Record<Exclude<EldStatusState, "available">, string> = {
   not_linked: "Not linked",
   not_connected: "ELD not connected",
   not_verified: "ELD not connected",
   no_data: "Waiting for data",
   temporarily_unavailable: "Unavailable",
 };
-
-function fmtEldMin(v: number | null): string {
-  if (v == null) return "Not available";
-  const h = Math.floor(v / 60);
-  const m = v % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
-// Exact elapsed time, not a vague "Live" badge — same reasoning as the
-// individual driver page's ELD card: the real sync cadence isn't agreed
-// with any provider yet, so this only ever states what's actually known.
-function fmtEldUpdatedAgo(iso: string | null): string {
-  if (!iso) return "Not available";
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "Not available";
-  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
-  if (seconds < 60) return `Updated ${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `Updated ${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Updated ${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `Updated ${days}d ago`;
-}
 
 function locationAgo(iso: string): string {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
