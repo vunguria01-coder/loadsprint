@@ -14,6 +14,7 @@ import { DriverPanel } from "@/components/driver-panel";
 import { DriverSearchProfileForm } from "@/components/driver-search-profile-form";
 import { NearbyLoadsSearch } from "@/components/nearby-loads-search";
 import { EldStatusCard } from "@/components/eld-status-card";
+import { Button } from "@/components/button";
 import { DriverCardTabs } from "@/components/driver-card-tabs";
 import { DriverCurrentLoad } from "@/components/driver-current-load";
 import { DriverDocuments, type DriverDocGroup } from "@/components/driver-documents";
@@ -168,17 +169,15 @@ export default async function DriverDetailPage({
               <p className="lead">{email}{user ? "" : " · invite pending"}</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <div className="dc-actions">
-                <a className="dc-btn" href={activeLoad ? `/loads/${activeLoad.id}` : `mailto:${email}`}>
-                  <MessageSquare size={15} /> Message
-                </a>
-                <a className="dc-btn" href="#driver-map">
-                  <MapPin size={15} /> Locate
-                </a>
-                <a className="dc-btn primary" href="#new-load">
-                  <Plus size={15} /> Create load
-                </a>
-              </div>
+              <Button variant="ghost" size="sm" href={activeLoad ? `/loads/${activeLoad.id}` : `mailto:${email}`}>
+                <MessageSquare size={15} /> Message
+              </Button>
+              <Button variant="ghost" size="sm" href="#driver-map">
+                <MapPin size={15} /> Locate
+              </Button>
+              <Button variant="primary" size="sm" href="#new-load">
+                <Plus size={15} /> Create load
+              </Button>
               <DriverPanel name={name} email={email} stats={stats} history={history} />
             </div>
           </div>
