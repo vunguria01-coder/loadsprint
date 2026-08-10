@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
-    "lint": "next lint"
+    "lint": "next lint",
+    "fresh": "node scripts/dev-fresh.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
