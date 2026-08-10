@@ -51,16 +51,6 @@ function fmtMin(v: number | null): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-// A clock is the dispatcher's real signal: out of hours means this driver
-// legally cannot keep driving, low means don't plan another pickup on it.
-// Thresholds are per-clock — 45 min left on the break timer is normal, 45
-// min left on the 70-hour cycle is not.
-function clockLevel(v: number | null, lowBelowMin: number): "" | "low" | "out" {
-  if (v == null) return "";
-  if (v <= 0) return "out";
-  return v < lowBelowMin ? "low" : "";
-}
-
 // How fresh the provider's own numbers are. Deliberately not a "Live" badge:
 // no provider sync cadence is agreed yet (see docs/eld-providers-research.md),
 // so this only reports the measured age of the data.
@@ -128,13 +118,15 @@ export function EldStatusCard({ email }: { email: string }) {
         </p>
       ) : (
         (() => {
-          const clocks = [
-            { label: "Drive remaining", v: data.driveRemainingMin, low: 60 },
-            { label: "Shift remaining", v: data.shiftRemainingMin, low: 60 },
-            { label: "Cycle remaining", v: data.cycleRemainingMin, low: 120 },
-            { label: "Break remaining", v: data.breakRemainingMin, low: 15 },
-          ].map((c) => ({ ...c, level: clockLevel(c.v, c.low) }));
-          const out = clocks.filter((c) => c.level === "out");
+          // Drive is the number a dispatcher actually acts on (can this driver
+          // take another leg right now); Shift/Cycle/Break are context, shown
+          // smaller. No color thresholds here — this app doesn't know any
+          // provider's actual HOS rules, so it never guesses at a violation.
+          const secondary = [
+            { label: "Shift", v: data.shiftRemainingMin },
+            { label: "Cycle", v: data.cycleRemainingMin },
+            { label: "Break", v: data.breakRemainingMin },
+          ];
           const fresh = freshness(data.sourceUpdatedAt || data.fetchedAt);
 
           return (
@@ -146,17 +138,15 @@ export function EldStatusCard({ email }: { email: string }) {
                 <span className={`dc-eld-conn${fresh.cls ? ` ${fresh.cls}` : ""}`}>{fresh.label}</span>
               </div>
 
-              {out.length > 0 && (
-                <div className="dc-eld-viol">
-                  Out of hours: {out.map((c) => c.label.replace(" remaining", "")).join(", ")} — this
-                  driver can&apos;t legally keep driving.
-                </div>
-              )}
+              <div className="dc-eld-drive">
+                <label>Drive remaining</label>
+                <div className="v">{fmtMin(data.driveRemainingMin)}</div>
+              </div>
 
               <div className="dc-eld-grid">
-                {clocks.map((c) => (
-                  <div key={c.label} className={`dc-eld-cell${c.level ? ` ${c.level}` : ""}`}>
-                    <label>{c.label.replace(" remaining", "")}</label>
+                {secondary.map((c) => (
+                  <div key={c.label} className="dc-eld-cell">
+                    <label>{c.label}</label>
                     <div className="v">{fmtMin(c.v)}</div>
                   </div>
                 ))}
@@ -167,7 +157,6 @@ export function EldStatusCard({ email }: { email: string }) {
                   {data.vehicleName || NOT_AVAILABLE}
                   {data.vehicleVin ? ` · ${data.vehicleVin}` : ""}
                 </span>
-                <span>Connected</span>
               </div>
             </div>
           );

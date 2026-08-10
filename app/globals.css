@@ -865,17 +865,15 @@ table.acc select option{background:#0b1120}
 .dc-eld-conn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted)}
 .dc-eld-conn.live{color:#4ade80;border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.1)}
 .dc-eld-conn.stale{color:#fbbf24;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.12)}
-.dc-eld-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
-@media(max-width:760px){.dc-eld-grid{grid-template-columns:1fr 1fr}}
-.dc-eld-cell{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--navy-800)}
-.dc-eld-cell label{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.dc-eld-cell .v{font-family:Poppins;font-weight:700;font-size:19px}
-.dc-eld-cell.low{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.08)}
-.dc-eld-cell.low .v{color:#fbbf24}
-.dc-eld-cell.out{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.08)}
-.dc-eld-cell.out .v{color:#f87171}
+.dc-eld-drive{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--navy-800)}
+.dc-eld-drive label{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.dc-eld-drive .v{font-family:Poppins;font-weight:700;font-size:28px}
+.dc-eld-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+@media(max-width:760px){.dc-eld-grid{grid-template-columns:1fr 1fr 1fr}}
+.dc-eld-cell{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--navy-800)}
+.dc-eld-cell label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.dc-eld-cell .v{font-family:Poppins;font-weight:700;font-size:15px}
 .dc-eld-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
-.dc-eld-viol{margin-top:14px;border:1px solid rgba(248,113,113,.45);background:rgba(248,113,113,.08);color:#f87171;border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:700}
 
 /* ---------- driver card: documents tab ---------- */
 .dc-doc-group{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
