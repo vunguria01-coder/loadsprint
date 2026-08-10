@@ -7,6 +7,7 @@ import { Search, Image as ImageIcon, FileText, PackageCheck } from "lucide-react
 import type { Load } from "@/lib/loads";
 import { BrokerPackage } from "@/components/broker-package";
 import { EmptyState } from "@/components/empty-state";
+import { StatusChip } from "@/components/status-chip";
 
 export function ReviewList({ loads }: { loads: Load[] }) {
   const router = useRouter();
@@ -204,7 +205,7 @@ export function ReviewList({ loads }: { loads: Load[] }) {
                   <Link href={`/loads/${l.id}`} className="rev-main" style={{ textDecoration: "none" }}>
                     <div className="lc-top">
                       <span className="lc-ref">{l.ref}</span>
-                      <span className="status-chip">{l.status}</span>
+                      <StatusChip status={l.status} />
                       {typeof l.loadRate === "number" && (
                         <span className="rev-price">${l.loadRate.toLocaleString("en-US")}</span>
                       )}

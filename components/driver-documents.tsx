@@ -2,6 +2,8 @@
 
 import { FileText, Image as ImageIcon } from "lucide-react";
 import { downloadDataUrl, openInTab, DOC_LABELS } from "@/components/load-documents";
+import { StatusChip } from "@/components/status-chip";
+import type { LoadStatus } from "@/lib/loads";
 import { timeAgo } from "@/lib/format";
 
 const PHOTO_LABELS: Record<string, string> = {
@@ -16,7 +18,7 @@ type PhotoItem = { id: string; phase: string; dataUrl: string; caption: string; 
 export type DriverDocGroup = {
   id: string;
   ref: string;
-  status: string;
+  status: LoadStatus;
   documents: DocItem[];
   photos: PhotoItem[];
 };
@@ -34,7 +36,7 @@ export function DriverDocuments({ groups }: { groups: DriverDocGroup[] }) {
         <div key={g.id} className="dc-doc-group">
           <div className="dc-doc-group-head">
             <span className="ref">{g.ref}</span>
-            <span className="status-chip">{g.status}</span>
+            <StatusChip status={g.status} />
           </div>
           <div className="dc-doc-list">
             {g.documents.map((d) => (

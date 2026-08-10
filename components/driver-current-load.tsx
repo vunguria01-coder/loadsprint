@@ -1,9 +1,12 @@
+import { StatusChip } from "@/components/status-chip";
+import type { LoadStatus } from "@/lib/loads";
+
 type Stop = { id: string; kind: "pickup" | "dropoff"; address: string; time?: string; done?: boolean };
 
 export type CurrentLoad = {
   id: string;
   ref: string;
-  status: string;
+  status: LoadStatus;
   originName: string;
   destName: string;
   stops?: Stop[];
@@ -46,7 +49,7 @@ export function DriverCurrentLoad({ load }: { load: CurrentLoad | null }) {
   return (
     <div className="panel">
       <h3>
-        Current load <span className="status-chip" style={{ marginLeft: 4 }}>{load.status}</span>
+        Current load <StatusChip status={load.status} />
       </h3>
       <p className="px" style={{ marginTop: 4 }}>{load.ref}</p>
       <div className="dc-timeline" style={{ marginTop: 4 }}>

@@ -5,6 +5,7 @@ import { PackageCheck } from "lucide-react";
 import { currentUser } from "@/lib/guard";
 import { CabinetServer } from "@/components/cabinet-server";
 import { EmptyState } from "@/components/empty-state";
+import { StatusChip } from "@/components/status-chip";
 import {
   getLoadsByDispatcher,
   getLoadsByBrokerEmail,
@@ -57,7 +58,7 @@ export default async function HistoryPage() {
                   <div className="lc-main">
                     <div className="lc-top">
                       <span className="lc-ref">{l.ref}</span>
-                      <span className="status-chip">{l.status}</span>
+                      <StatusChip status={l.status} />
                     </div>
                     <div className="lc-route">{l.originName} → {l.destName}</div>
                     <div className="px" style={{ marginTop: 4 }}>Driver: {l.driverName || l.driverEmail}</div>

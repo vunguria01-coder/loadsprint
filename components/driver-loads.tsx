@@ -4,13 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { StatusChip } from "@/components/status-chip";
+import type { LoadStatus } from "@/lib/loads";
 
 type Item = {
   id: string;
   ref: string;
   originName: string;
   destName: string;
-  status: string;
+  status: LoadStatus;
   remainingMeters?: number;
   etaSeconds?: number;
 };
@@ -74,7 +76,7 @@ export function DriverLoads({ loads }: { loads: Item[] }) {
             <div className="lc-main">
               <div className="lc-top">
                 <span className="lc-ref">{l.ref}</span>
-                <span className="status-chip">{l.status}</span>
+                <StatusChip status={l.status} />
               </div>
               <div className="lc-route">
                 {l.originName} → {l.destName}
