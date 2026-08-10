@@ -73,6 +73,7 @@ export function Cabinet({
   expiresAt,
   isOwner = false,
   active,
+  backHref,
   children,
 }: {
   role?: string;
@@ -83,6 +84,10 @@ export function Cabinet({
   expiresAt?: string;
   isOwner?: boolean;
   active?: string;
+  // Explicit target for a detail page's Back button (e.g. a driver page
+  // sets "/drivers"). Falls back to browser history when a page doesn't
+  // know its own parent list.
+  backHref?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false); // mobile sidebar
@@ -140,11 +145,15 @@ export function Cabinet({
       <div className="cab-main">
         <header className="cab-top">
           <button className="cab-burger" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={22} /></button>
-          {showBack && (
+          {showBack && (backHref ? (
+            <Link href={backHref} className="cab-back" aria-label="Go back">
+              <ArrowLeft size={18} /> <span>Back</span>
+            </Link>
+          ) : (
             <button className="cab-back" onClick={() => router.back()} aria-label="Go back">
               <ArrowLeft size={18} /> <span>Back</span>
             </button>
-          )}
+          ))}
           <div style={{ flex: 1 }} />
           <NotificationsBell />
           <div className="cab-acc">

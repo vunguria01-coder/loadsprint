@@ -159,7 +159,7 @@ export default async function DriverDetailPage({
   );
 
   return (
-    <CabinetServer active="drivers">
+    <CabinetServer active="drivers" backHref="/drivers">
         <div className="wrap" style={{ maxWidth: 820 }}>
           <div className="shead" style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
             <div>

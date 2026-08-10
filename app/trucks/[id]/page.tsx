@@ -75,7 +75,7 @@ export default async function TruckDetailPage({
     .join(" · ");
 
   return (
-    <CabinetServer active="trucks">
+    <CabinetServer active="trucks" backHref="/trucks">
       <div className="wrap" style={{ maxWidth: 860 }}>
         <div className="shead" style={{ marginBottom: 18 }}>
           <span className="eyebrow">Truck</span>

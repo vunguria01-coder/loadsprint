@@ -8,9 +8,11 @@ import { ensureDispatcherDemo, hasDispatcherDemo } from "@/lib/demo";
 
 export async function CabinetServer({
   active,
+  backHref,
   children,
 }: {
   active?: string;
+  backHref?: string;
   children: ReactNode;
 }) {
   const me = await currentUser();
@@ -34,6 +36,7 @@ export async function CabinetServer({
       expiresAt={me.tierExpiresAt}
       isOwner={isOwner}
       active={active}
+      backHref={backHref}
     >
       {showDemo && <DemoBanner />}
       {children}
