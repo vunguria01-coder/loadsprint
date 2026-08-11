@@ -350,10 +350,10 @@ export function DriversList({
                     }
                     return (
                       <div className="drv-chips" style={{ marginTop: 6, alignItems: "center" }}>
-                        <span style={{ fontWeight: 700, color: "#fff", fontSize: 13 }}>
+                        <span style={{ fontWeight: 700, color: "var(--ink)", fontSize: 13 }}>
                           {ELD_DUTY_LABELS[eld.dutyStatus] || eld.dutyStatus}
                         </span>
-                        <span style={{ fontWeight: 800, color: "#fff", fontSize: 13 }}>
+                        <span style={{ fontWeight: 800, color: "var(--ink)", fontSize: 13 }}>
                           {fmtEldMin(eld.driveRemainingMin)} drive
                         </span>
                         <span className="drv-chip">
