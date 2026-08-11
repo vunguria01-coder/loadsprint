@@ -2170,10 +2170,12 @@ table.acc select option{background:#0b1120}
   .driver-name-lg,.stop-addr,.addr-val,.ai-addr,.ai-head,.track-val,
   .inv-meta b,.inv-line b,.inv-from div,.collapsible-head,.wiz-step.on,
   .dm-email,.invite .ie,.pdf-head b,.pdfp-picked,.pdfp-zlabel,.pricing-tier,
-  .pricing-amount,.pricing-head h3,.dg-name,.driver-name-lg,.coords .c b){color:var(--ink)}
+  .pricing-amount,.pricing-head h3,.dg-name,.driver-name-lg,.coords .c b,
+  .dc-tl-kind,.dc-doc-row .name,.doc-row .dn){color:var(--ink)}
 .cab .dp-stat span{color:var(--ink)}
 .cab .rep-table td{color:var(--ink)}
 .cab .lc-route{color:var(--muted)}
+.cab .dc-tab:hover{color:var(--ink)}
 
 /* Inputs / selects / textareas → light fills */
 .cab :is(.field input,.field select,.field textarea,.dm-add input,
