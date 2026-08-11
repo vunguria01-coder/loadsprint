@@ -2171,7 +2171,7 @@ table.acc select option{background:#0b1120}
   .inv-meta b,.inv-line b,.inv-from div,.collapsible-head,.wiz-step.on,
   .dm-email,.invite .ie,.pdf-head b,.pdfp-picked,.pdfp-zlabel,.pricing-tier,
   .pricing-amount,.pricing-head h3,.dg-name,.driver-name-lg,.coords .c b,
-  .dc-tl-kind,.dc-doc-row .name,.doc-row .dn){color:var(--ink)}
+  .dc-tl-kind,.dc-doc-row .name,.doc-row .dn,.modal .box .mh b){color:var(--ink)}
 .cab .dp-stat span{color:var(--ink)}
 .cab .rep-table td{color:var(--ink)}
 .cab .lc-route{color:var(--muted)}
