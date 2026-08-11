@@ -2176,6 +2176,7 @@ table.acc select option{background:#0b1120}
 .cab .rep-table td{color:var(--ink)}
 .cab .lc-route{color:var(--muted)}
 .cab .dc-tab:hover{color:var(--ink)}
+.cab .dp-x:hover{color:var(--ink)}
 
 /* Inputs / selects / textareas → light fills */
 .cab :is(.field input,.field select,.field textarea,.dm-add input,
