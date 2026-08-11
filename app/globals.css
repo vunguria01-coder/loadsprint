@@ -2253,6 +2253,12 @@ table.acc select option{background:#0b1120}
 .cab :is(.plan-card,.rev-card,.billing-banner,.bp-shell,.doc-row,
   .uploader,.dist-chip,.sp-rate,.da-input,.dp-pw,.ai-scope-opt,.drate-input,
   .pkg-item,.dm-row,.settle-card,.stat-box){background:#F6FAF9}
+/* Those same panels' own input/selected-state text was still hardcoded
+   white too — invisible now that the panel under it went light. */
+.cab :is(.da-input,.dp-pw,.drate-input input,.ai-scope-opt.on){color:var(--ink)}
+/* Status stepper: labels only turn white on done/active/hover — exactly
+   the states meant to stand out, invisible on a white load card. */
+.cab :is(.sv.done .sl,.sv.active .sl,.sv:hover .sl){color:var(--ink)}
 .cab .modal .box{background:#fff}
 .cab .cal-cell{background:#fff}
 .cab .cal-cell.dim{background:#F1F6F4}
